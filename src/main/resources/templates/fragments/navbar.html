@@ -8,9 +8,9 @@
 
 <!-- ── Vendor CSS（放進 <head> 用） ───────────────────────── -->
 <th:block th:fragment="vendor-css">
+    <!-- 全站共用的第三方樣式（例：SweetAlert2） -->
     <link rel="stylesheet" href="/css/vendor/sweetalert2.v11.10.6.min.css"/>
 </th:block>
-
 
 <!-- ── Top Navbar ───────────────────────────────────────────── -->
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark" th:fragment="topnav">
@@ -18,22 +18,24 @@
     <a class="navbar-brand ps-3" th:href="@{/}">Start Bootstrap</a>
 
     <!-- Sidebar Toggle -->
-    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle">
+    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" aria-label="Toggle sidebar">
         <i class="fas fa-bars"></i>
     </button>
 
     <!-- Search -->
-    <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+    <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0" role="search">
         <div class="input-group">
             <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." aria-describedby="btnNavbarSearch" />
-            <button class="btn btn-primary" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
+            <button class="btn btn-primary" id="btnNavbarSearch" type="button" aria-label="Search"><i class="fas fa-search"></i></button>
         </div>
     </form>
 
     <!-- User -->
     <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
+            <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
+                <i class="fas fa-user fa-fw"></i>
+            </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                 <li><a class="dropdown-item" href="#!">Settings</a></li>
                 <li><a class="dropdown-item" href="#!">Activity Log</a></li>
@@ -81,10 +83,10 @@
             </div>
 
             <div class="sb-sidenav-menu-heading">功能區</div>
-<!--            <a class="nav-link" th:href="@{/ccTest}">-->
-<!--                <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>-->
-<!--                信用卡功能測試-->
-<!--            </a>-->
+            <!-- <a class="nav-link" th:href="@{/ccTest}">
+                <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
+                信用卡功能測試
+            </a> -->
 
             <a class="nav-link" th:href="@{/ccAnalysis}">
                 <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
@@ -110,7 +112,7 @@
 
 <!-- ── Vendor JS（放在 </body> 前用） ─────────────────────── -->
 <th:block th:fragment="vendor-js">
-    <!-- 若全站都需要 WebSocket / Alert，就在主版載入；否則把 sockjs/stomp 移到特定頁面 -->
+    <!-- 全站共用第三方腳本；若僅部分頁需要，請改到該頁的 page-js 中載入 -->
     <script defer src="/js/vendor/sockjs.v1.6.1.min.js"></script>
     <script defer src="/js/vendor/stomp.umd.v7.0.0.min.js"></script>
     <script defer src="/js/vendor/sweetalert2.all.v11.10.6.min.js"></script>
