@@ -1,254 +1,214 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::page-js})}">
+
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>信用卡分析 - SB Admin</title>
-
-    <!-- CSS 改用 Spring 靜態路徑 -->
-    <link th:href="@{/css/styles.css}" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-
-    <!-- 需要 CSRF 時，Thymeleaf 會注入 -->
-    <meta name="_csrf" th:content="${_csrf?.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
-
-    <style>
-        /* 新增：切換顯示用 */
-        .is-hidden { display: none !important; }
-        /* 拖曳區小互動 */
-        .cc-drop-wrapper { border: 2px dashed #f5b7b1; border-radius: 16px; padding: 24px; }
-        .cc-drop-inner { display:flex; align-items:center; flex-direction:column; gap:8px; padding:40px 16px; }
-        .cc-drop-button { background:#ff6b5a; border:none; color:#fff; border-radius:28px; padding:12px 28px; box-shadow:0 8px 20px rgba(255,107,90,.3); }
-        .cc-drop-inner.is-dragover { outline: 3px dashed #2ecc71; outline-offset: 6px; }
-        .cc-steps { display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:16px; }
-        .cc-step { display:flex; align-items:center; gap:8px; opacity:.5; }
-        .cc-step--active { opacity:1; font-weight:600; }
-        .cc-step-icon { width:28px; height:28px; border-radius:50%; background:#e9ecef; display:flex; align-items:center; justify-content:center; }
-        .cc-next-wrap { display:flex; justify-content:center; margin-top:16px; }
-        .cc-next-btn { background:#2ecc71; color:#fff; border:none; border-radius:10px; padding:10px 24px; }
-    </style>
+    <title>信用卡分析</title>
 </head>
 
-<body class="sb-nav-fixed">
-<!-- Top Navbar -->
-<div th:replace="fragments/navbar :: topnav"></div>
+<!-- ★★★ 第3層：頁面內容插槽 ★★★ -->
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <h1 class="mt-4">信用卡分析</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/}">Dashboard</a></li>
+            <li class="breadcrumb-item active">信用卡分析</li>
+        </ol>
 
-<div id="layoutSidenav">
-    <div id="layoutSidenav_nav">
-        <!-- Side Navbar -->
-        <div th:replace="fragments/navbar :: sidenav"></div>
-    </div>
+        <!-- 本頁樣式（僅此頁需要） -->
+        <style>
+            .is-hidden { display: none !important; }
+            .cc-drop-wrapper { border: 2px dashed #f5b7b1; border-radius: 16px; padding: 24px; }
+            .cc-drop-inner { display:flex; align-items:center; flex-direction:column; gap:8px; padding:40px 16px; }
+            .cc-drop-button { background:#ff6b5a; border:none; color:#fff; border-radius:28px; padding:12px 28px; box-shadow:0 8px 20px rgba(255,107,90,.3); }
+            .cc-drop-inner.is-dragover { outline: 3px dashed #2ecc71; outline-offset: 6px; }
+            .cc-steps { display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:16px; }
+            .cc-step { display:flex; align-items:center; gap:8px; opacity:.5; }
+            .cc-step--active { opacity:1; font-weight:600; }
+            .cc-step-icon { width:28px; height:28px; border-radius:50%; background:#e9ecef; display:flex; align-items:center; justify-content:center; }
+            .cc-next-wrap { display:flex; justify-content:center; margin-top:16px; }
+            .cc-next-btn { background:#2ecc71; color:#fff; border:none; border-radius:10px; padding:10px 24px; }
+        </style>
 
-    <div id="layoutSidenav_content">
-        <main>
-            <div class="container-fluid px-4">
-                <h1 class="mt-4">信用卡分析</h1>
-                <ol class="breadcrumb mb-4">
-                    <li class="breadcrumb-item"><a th:href="@{/}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">信用卡分析</li>
-                </ol>
-
-                <section class="cc-wrap my-5">
-                    <!-- 流程步驟列 -->
-                    <div class="cc-steps">
-                        <div class="cc-step cc-step--active">
-                            <div class="cc-step-icon">1</div>
-                            <div class="cc-step-label">上傳檔案</div>
-                        </div>
-                        <div class="cc-step-arrow">➜</div>
-                        <div class="cc-step">
-                            <div class="cc-step-icon">2</div>
-                            <div class="cc-step-label">資料預覽</div>
-                        </div>
-                        <div class="cc-step-arrow">➜</div>
-                        <div class="cc-step">
-                            <div class="cc-step-icon">3</div>
-                            <div class="cc-step-label">資料編輯</div>
-                        </div>
-                        <div class="cc-step-arrow">➜</div>
-                        <div class="cc-step">
-                            <div class="cc-step-icon">4</div>
-                            <div class="cc-step-label">資料上傳</div>
-                        </div>
-                    </div>
-
-                    <!-- 拖曳上傳區（步驟一，可見） -->
-                    <div class="cc-drop-wrapper" id="dropWrap">
-                        <div class="cc-drop-inner">
-                            <h2 class="cc-drop-title">信用卡帳單上傳</h2>
-                            <p class="cc-drop-subtitle">幾秒內匯入帳單並開始分析。</p>
-
-                            <button class="cc-drop-button" type="button">
-                                <span class="cc-drop-icon">📤</span>
-                                選擇檔案
-                            </button>
-
-                            <p class="cc-drop-hint">或將檔案拖曳至此 · 支援 PDF / CSV / XLSX</p>
-                        </div>
-                    </div>
-
-                    <!-- 資料預覽（步驟二，預設隱藏） -->
-                    <section class="my-4 is-hidden" id="previewSection">
-                        <h3 class="mb-2">資料預覽</h3>
-                        <div id="preview" class="border rounded p-3 bg-light" style="white-space:pre-wrap;"></div>
-                    </section>
-
-                    <!-- 下一步（按下才會上傳與解析） -->
-                    <div class="cc-next-wrap">
-                        <button class="cc-next-btn" id="nextBtn" type="button">下一步</button>
-                    </div>
-                </section>
-
-
-            </div>
-        </main>
-
-        <footer class="py-4 bg-light mt-auto">
-            <div class="container-fluid px-4">
-                <div class="d-flex align-items-center justify-content-between small">
-                    <div class="text-muted">Copyright &copy; Your Website 2023</div>
-                    <div>
-                        <a href="#">Privacy Policy</a>
-                        &middot;
-                        <a href="#">Terms &amp; Conditions</a>
-                    </div>
+        <section class="cc-wrap my-5">
+            <!-- 流程步驟列 -->
+            <div class="cc-steps">
+                <div class="cc-step cc-step--active">
+                    <div class="cc-step-icon">1</div>
+                    <div class="cc-step-label">上傳檔案</div>
+                </div>
+                <div class="cc-step-arrow">➜</div>
+                <div class="cc-step">
+                    <div class="cc-step-icon">2</div>
+                    <div class="cc-step-label">資料預覽</div>
+                </div>
+                <div class="cc-step-arrow">➜</div>
+                <div class="cc-step">
+                    <div class="cc-step-icon">3</div>
+                    <div class="cc-step-label">資料編輯</div>
+                </div>
+                <div class="cc-step-arrow">➜</div>
+                <div class="cc-step">
+                    <div class="cc-step-icon">4</div>
+                    <div class="cc-step-label">資料上傳</div>
                 </div>
             </div>
-        </footer>
+
+            <!-- 拖曳上傳區（步驟一，可見） -->
+            <div class="cc-drop-wrapper" id="dropWrap">
+                <div class="cc-drop-inner">
+                    <h2 class="cc-drop-title">信用卡帳單上傳</h2>
+                    <p class="cc-drop-subtitle">幾秒內匯入帳單並開始分析。</p>
+
+                    <button class="cc-drop-button" type="button">
+                        <span class="cc-drop-icon">📤</span>
+                        選擇檔案
+                    </button>
+
+                    <p class="cc-drop-hint">或將檔案拖曳至此 · 支援 PDF / CSV / XLSX</p>
+                </div>
+            </div>
+
+            <!-- 資料預覽（步驟二，預設隱藏） -->
+            <section class="my-4 is-hidden" id="previewSection">
+                <h3 class="mb-2">資料預覽</h3>
+                <div id="preview" class="border rounded p-3 bg-light" style="white-space:pre-wrap;"></div>
+            </section>
+
+            <!-- 下一步（按下才會上傳與解析） -->
+            <div class="cc-next-wrap">
+                <button class="cc-next-btn" id="nextBtn" type="button">下一步</button>
+            </div>
+        </section>
     </div>
-</div>
+</th:block>
 
-<!-- 3rd-party JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="js/scripts.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
-<script src="js/datatables-simple-demo.js"></script>
+<!-- ★★★（可選）本頁 JS 插槽：會被 base.html 插在 </body> 前 ★★★ -->
+<th:block th:fragment="page-js">
+    <!-- 若需 DataTables、ChartJS 等本頁專用第三方，也可在這裡額外載入 -->
+    <!-- <script defer src="/js/vendor/some-lib.min.js"></script> -->
 
-<!-- 上傳/解析流程 -->
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const area = document.querySelector('.cc-drop-inner');
-        const btnChoose  = document.querySelector('.cc-drop-button');
-        const preview = document.getElementById('preview');
-        const btnNext = document.getElementById('nextBtn');
-        const dropWrap = document.getElementById('dropWrap');
-        const previewSection = document.getElementById('previewSection');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const area = document.querySelector('.cc-drop-inner');
+            const btnChoose  = document.querySelector('.cc-drop-button');
+            const preview = document.getElementById('preview');
+            const btnNext = document.getElementById('nextBtn');
+            const dropWrap = document.getElementById('dropWrap');
+            const previewSection = document.getElementById('previewSection');
 
-        if (!area || !btnChoose || !preview) {
-            console.error('[ccUpload] 必要元素找不到', { area, btnChoose, preview });
-            return;
-        }
-
-        let pickedFile = null;
-
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.pdf,.csv,.xlsx,.xls';
-        input.style.display = 'none';
-        document.body.appendChild(input);
-
-        btnChoose.addEventListener('click', () => input.click());
-        input.addEventListener('change', e => handleFiles(e.target.files));
-
-        ['dragenter','dragover'].forEach(ev =>
-            area.addEventListener(ev, e => { e.preventDefault(); area.classList.add('is-dragover'); })
-        );
-        ['dragleave','drop'].forEach(ev =>
-            area.addEventListener(ev, e => { e.preventDefault(); area.classList.remove('is-dragover'); })
-        );
-        area.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
-
-        function handleFiles(files){
-            if (!files || !files.length) return;
-            const f = files[0];
-            if (!/\.pdf$/i.test(f.name)) { alert('請上傳 PDF'); return; }
-            pickedFile = f;
-            area.querySelector('.cc-drop-title').textContent = f.name;
-            area.querySelector('.cc-drop-hint').textContent = '已選擇 1 個檔案（按「下一步」開始解析）';
-            preview.textContent = `檔案：${f.name}\n\n尚未解析，請按「下一步」。`;
-        }
-
-        if (btnNext) {
-            btnNext.addEventListener('click', async (e) => {
-                e.preventDefault();
-                if (!pickedFile) { alert('請先選擇檔案'); return; }
-                preview.textContent = '解析中…';
-                btnNext.disabled = true;
-
-                try {
-                    const fd = new FormData();
-                    fd.append('file', pickedFile);
-
-                    const csrf = document.querySelector('meta[name="_csrf"]')?.content;
-                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-                    const headers = csrf && csrfHeader ? { [csrfHeader]: csrf } : {};
-
-                    const res = await fetch('/api/cc/upload', { method: 'POST', body: fd, headers });
-                    if (!res.ok) {
-                        const errText = await res.text().catch(()=> '');
-                        preview.textContent = `上傳或解析失敗（${res.status}）：${errText || '無回應內容'}`;
-                        return;
-                    }
-
-                    const data = await res.json();
-                    renderPreview(data, pickedFile.name);
-
-                    // 切到步驟 2 並顯示預覽
-                    document.querySelectorAll('.cc-step').forEach(el => el.classList.remove('cc-step--active'));
-                    document.querySelectorAll('.cc-step')[1]?.classList.add('cc-step--active');
-                    dropWrap?.classList.add('is-hidden');
-                    previewSection?.classList.remove('is-hidden');
-
-                } catch (err) {
-                    preview.textContent = '上傳或解析發生例外：' + err.message;
-                } finally {
-                    btnNext.disabled = false;
-                }
-            });
-        }
-
-        function renderPreview(data, filename){
-            const hdr = `${data.bank || ''} ${data.statementMonth || ''}`.trim();
-
-            if (Array.isArray(data.items) && data.items.length){
-                const table = document.createElement('table');
-                table.className = 'table table-sm table-striped';
-                table.innerHTML = `
-        <thead><tr>
-          <th>交易日期</th><th>入帳日期</th><th>交易項目</th>
-          <th>幣別</th><th class="text-end">金額</th><th class="text-end">新臺幣</th>
-        </tr></thead><tbody></tbody>`;
-                const tbody = table.querySelector('tbody');
-                data.items.forEach(it => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-          <td>${it.txnDate ?? ''}</td>
-          <td>${it.postDate ?? ''}</td>
-          <td>${escapeHtml(it.description ?? '')}</td>
-          <td>${it.currency ?? ''}</td>
-          <td class="text-end">${it.amount ?? ''}</td>
-          <td class="text-end">${it.twd ?? ''}</td>`;
-                    tbody.appendChild(tr);
-                });
-
-                preview.innerHTML = `<div class="mb-2">檔案：${filename} ${hdr ? `| ${hdr}` : ''}</div>`;
-                preview.appendChild(table);
-            } else {
-                const text = (data.rawHeader && data.rawHeader.trim()) ? data.rawHeader : (data.rawTableText || '');
-                preview.textContent = `檔案：${filename}\n\n${text || '[無內容]'}`;
+            if (!area || !btnChoose || !preview) {
+                console.error('[ccUpload] 必要元素找不到', { area, btnChoose, preview });
+                return;
             }
-        }
 
-        function escapeHtml(s){
-            return s.replace(/[&<>"']/g, ch =>
-                ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])
+            let pickedFile = null;
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pdf,.csv,.xlsx,.xls';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+
+            btnChoose.addEventListener('click', () => input.click());
+            input.addEventListener('change', e => handleFiles(e.target.files));
+
+            ['dragenter','dragover'].forEach(ev =>
+                area.addEventListener(ev, e => { e.preventDefault(); area.classList.add('is-dragover'); })
             );
-        }
-    });
-</script>
+            ['dragleave','drop'].forEach(ev =>
+                area.addEventListener(ev, e => { e.preventDefault(); area.classList.remove('is-dragover'); })
+            );
+            area.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
 
+            function handleFiles(files){
+                if (!files || !files.length) return;
+                const f = files[0];
+                if (!/\.pdf$/i.test(f.name)) { alert('請上傳 PDF'); return; }
+                pickedFile = f;
+                area.querySelector('.cc-drop-title').textContent = f.name;
+                area.querySelector('.cc-drop-hint').textContent = '已選擇 1 個檔案（按「下一步」開始解析）';
+                preview.textContent = `檔案：${f.name}\n\n尚未解析，請按「下一步」。`;
+            }
 
-</body>
+            if (btnNext) {
+                btnNext.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (!pickedFile) { alert('請先選擇檔案'); return; }
+                    preview.textContent = '解析中…';
+                    btnNext.disabled = true;
+
+                    try {
+                        const fd = new FormData();
+                        fd.append('file', pickedFile);
+
+                        const csrf = document.querySelector('meta[name="_csrf"]')?.content;
+                        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+                        const headers = csrf && csrfHeader ? { [csrfHeader]: csrf } : {};
+
+                        const res = await fetch('/api/cc/upload', { method: 'POST', body: fd, headers });
+                        if (!res.ok) {
+                            const errText = await res.text().catch(()=> '');
+                            preview.textContent = `上傳或解析失敗（${res.status}）：${errText || '無回應內容'}`;
+                            return;
+                        }
+
+                        const data = await res.json();
+                        renderPreview(data, pickedFile.name);
+
+                        // 切到步驟 2 並顯示預覽
+                        document.querySelectorAll('.cc-step').forEach(el => el.classList.remove('cc-step--active'));
+                        document.querySelectorAll('.cc-step')[1]?.classList.add('cc-step--active');
+                        dropWrap?.classList.add('is-hidden');
+                        previewSection?.classList.remove('is-hidden');
+
+                    } catch (err) {
+                        preview.textContent = '上傳或解析發生例外：' + err.message;
+                    } finally {
+                        btnNext.disabled = false;
+                    }
+                });
+            }
+
+            function renderPreview(data, filename){
+                const hdr = `${data.bank || ''} ${data.statementMonth || ''}`.trim();
+
+                if (Array.isArray(data.items) && data.items.length){
+                    const table = document.createElement('table');
+                    table.className = 'table table-sm table-striped';
+                    table.innerHTML = `
+            <thead><tr>
+              <th>交易日期</th><th>入帳日期</th><th>交易項目</th>
+              <th>幣別</th><th class="text-end">金額</th><th class="text-end">新臺幣</th>
+            </tr></thead><tbody></tbody>`;
+                    const tbody = table.querySelector('tbody');
+                    data.items.forEach(it => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+              <td>${it.txnDate ?? ''}</td>
+              <td>${it.postDate ?? ''}</td>
+              <td>${escapeHtml(it.description ?? '')}</td>
+              <td>${it.currency ?? ''}</td>
+              <td class="text-end">${it.amount ?? ''}</td>
+              <td class="text-end">${it.twd ?? ''}</td>`;
+                        tbody.appendChild(tr);
+                    });
+
+                    preview.innerHTML = `<div class="mb-2">檔案：${filename} ${hdr ? `| ${hdr}` : ''}</div>`;
+                    preview.appendChild(table);
+                } else {
+                    const text = (data.rawHeader && data.rawHeader.trim()) ? data.rawHeader : (data.rawTableText || '');
+                    preview.textContent = `檔案：${filename}\n\n${text || '[無內容]'}`;
+                }
+            }
+
+            function escapeHtml(s){
+                return s.replace(/[&<>"']/g, ch =>
+                    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])
+                );
+            }
+        });
+    </script>
+</th:block>
+
 </html>
