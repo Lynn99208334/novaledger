@@ -5,10 +5,9 @@ import com.example.tableaudemov2.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -48,5 +47,16 @@ public class AuthController {
         authService.register(request);
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
+
+        authService.verifyEmail(token);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Email 驗證成功，請重新登入"
+        ));
     }
 }

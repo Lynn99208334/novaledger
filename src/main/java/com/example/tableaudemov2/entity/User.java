@@ -60,6 +60,22 @@ public class User {
     private LocalDateTime verifiedAt;
 
     // ========================
+    // Email 驗證流程
+    // ========================
+
+    /**
+     * Email 驗證 Token
+     */
+    @Column(name = "email_verify_token", length = 100)
+    private String emailVerifyToken;
+
+    /**
+     * Email 驗證 Token 過期時間
+     */
+    @Column(name = "email_verify_expired_at")
+    private LocalDateTime emailVerifyExpiredAt;
+
+    // ========================
     // 系統時間欄位
     // ========================
 
@@ -147,6 +163,22 @@ public class User {
 
     public void setVerifiedAt(LocalDateTime verifiedAt) {
         this.verifiedAt = verifiedAt;
+    }
+
+    public String getEmailVerifyToken() {
+        return emailVerifyToken;
+    }
+
+    public void setEmailVerifyToken(String emailVerifyToken) {
+        this.emailVerifyToken = emailVerifyToken;
+    }
+
+    public LocalDateTime getEmailVerifyExpiredAt() {
+        return emailVerifyExpiredAt;
+    }
+
+    public void setEmailVerifyExpiredAt(LocalDateTime emailVerifyExpiredAt) {
+        this.emailVerifyExpiredAt = emailVerifyExpiredAt;
     }
 
     public LocalDateTime getCreatedAt() {
