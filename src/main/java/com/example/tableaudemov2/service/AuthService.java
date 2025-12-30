@@ -15,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
@@ -100,102 +99,102 @@ public class AuthService {
     }
 
 
-    public void verifyEmail(String token) {
-
-        User user = userRepository.findByEmailVerifyToken(token)
-                .orElseThrow(() ->
-                        new BusinessException(
-                                ErrorCode.EMAIL_VERIFY_TOKEN_INVALID.getMessage(),
-                                ErrorCode.EMAIL_VERIFY_TOKEN_INVALID,
-                                HttpStatus.BAD_REQUEST
-                        )
-                );
-
-        // 1️⃣ 已驗證過（防重複點）
-        if (Boolean.TRUE.equals(user.getEmailVerified())) {
-            throw new BusinessException(
-                    ErrorCode.EMAIL_ALREADY_VERIFIED.getMessage(),
-                    ErrorCode.EMAIL_ALREADY_VERIFIED,
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
-        // 2️⃣ token 過期判斷（重點）
-        if (user.getEmailVerifyExpiredAt() == null ||
-                user.getEmailVerifyExpiredAt().isBefore(LocalDateTime.now())) {
-
-            throw new BusinessException(
-                    ErrorCode.EMAIL_VERIFY_TOKEN_EXPIRED.getMessage(),
-                    ErrorCode.EMAIL_VERIFY_TOKEN_EXPIRED,
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
-        // 3️⃣ 驗證成功 → 更新狀態
-        user.setEmailVerified(true);
-        user.setVerifiedAt(LocalDateTime.now());
-        user.setEmailVerifyToken(null);
-        user.setEmailVerifyExpiredAt(null);
-
-        userRepository.save(user);
-    }
-
-    public void resendVerificationEmail(String email) {
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new BusinessException(
-                                ErrorCode.USER_NOT_FOUND.getMessage(),
-                                ErrorCode.USER_NOT_FOUND,
-                                HttpStatus.BAD_REQUEST
-                        )
-                );
-
-        if (Boolean.TRUE.equals(user.getEmailVerified())) {
-            throw new BusinessException(
-                    ErrorCode.EMAIL_ALREADY_VERIFIED.getMessage(),
-                    ErrorCode.EMAIL_ALREADY_VERIFIED,
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
-        // 限制重發頻率
-        System.out.println("resendCooldownSeconds=" + resendCooldownSeconds);
-        System.out.println("user.getEmailVerifyExpiredAt()=" + user.getEmailVerifyExpiredAt());
-        if (resendCooldownSeconds > 0 && user.getEmailVerifyExpiredAt() != null) {
-            LocalDateTime lastSendTime =
-                    user.getEmailVerifyExpiredAt().minusMinutes(15); // 原本 token 期限
-
-            System.out.println("lastSendTime=" + lastSendTime);
-            long secondsSinceLastSend =
-                    Duration.between(lastSendTime, LocalDateTime.now()).getSeconds();
-
-            System.out.println("secondsSinceLastSend=" + secondsSinceLastSend);
-            if (secondsSinceLastSend < resendCooldownSeconds) {
-                throw new BusinessException(
-                        ErrorCode.EMAIL_RESEND_TOO_FREQUENT.getMessage(),
-                        ErrorCode.EMAIL_RESEND_TOO_FREQUENT,
-                        HttpStatus.TOO_MANY_REQUESTS
-                );
-            }
-        }
-
-
-        String newToken = generateEmailVerifyToken();
-        LocalDateTime newExpiredAt = generateEmailVerifyExpiredAt();
-
-        user.setEmailVerifyToken(newToken);
-        user.setEmailVerifyExpiredAt(newExpiredAt);
-
-        userRepository.save(user);
-
-        String verifyLink =
-                "http://localhost:8111/api/auth/verify-email?token=" + newToken;
-
-        emailService.sendVerifyEmail(user.getEmail(), verifyLink);
-    }
-
-
+//    public void verifyEmail(String token) {
+//
+//        User user = userRepository.findByEmailVerifyToken(token)
+//                .orElseThrow(() ->
+//                        new BusinessException(
+//                                ErrorCode.EMAIL_VERIFY_TOKEN_INVALID.getMessage(),
+//                                ErrorCode.EMAIL_VERIFY_TOKEN_INVALID,
+//                                HttpStatus.BAD_REQUEST
+//                        )
+//                );
+//
+//        // 1️⃣ 已驗證過（防重複點）
+//        if (Boolean.TRUE.equals(user.getEmailVerified())) {
+//            throw new BusinessException(
+//                    ErrorCode.EMAIL_ALREADY_VERIFIED.getMessage(),
+//                    ErrorCode.EMAIL_ALREADY_VERIFIED,
+//                    HttpStatus.BAD_REQUEST
+//            );
+//        }
+//
+//        // 2️⃣ token 過期判斷（重點）
+//        if (user.getEmailVerifyExpiredAt() == null ||
+//                user.getEmailVerifyExpiredAt().isBefore(LocalDateTime.now())) {
+//
+//            throw new BusinessException(
+//                    ErrorCode.EMAIL_VERIFY_TOKEN_EXPIRED.getMessage(),
+//                    ErrorCode.EMAIL_VERIFY_TOKEN_EXPIRED,
+//                    HttpStatus.BAD_REQUEST
+//            );
+//        }
+//
+//        // 3️⃣ 驗證成功 → 更新狀態
+//        user.setEmailVerified(true);
+//        user.setVerifiedAt(LocalDateTime.now());
+//        user.setEmailVerifyToken(null);
+//        user.setEmailVerifyExpiredAt(null);
+//
+//        userRepository.save(user);
+//    }
+//
+//    public void resendVerificationEmail(String email) {
+//
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() ->
+//                        new BusinessException(
+//                                ErrorCode.USER_NOT_FOUND.getMessage(),
+//                                ErrorCode.USER_NOT_FOUND,
+//                                HttpStatus.BAD_REQUEST
+//                        )
+//                );
+//
+//        if (Boolean.TRUE.equals(user.getEmailVerified())) {
+//            throw new BusinessException(
+//                    ErrorCode.EMAIL_ALREADY_VERIFIED.getMessage(),
+//                    ErrorCode.EMAIL_ALREADY_VERIFIED,
+//                    HttpStatus.BAD_REQUEST
+//            );
+//        }
+//
+//        // 限制重發頻率
+//        System.out.println("resendCooldownSeconds=" + resendCooldownSeconds);
+//        System.out.println("user.getEmailVerifyExpiredAt()=" + user.getEmailVerifyExpiredAt());
+//        if (resendCooldownSeconds > 0 && user.getEmailVerifyExpiredAt() != null) {
+//            LocalDateTime lastSendTime =
+//                    user.getEmailVerifyExpiredAt().minusMinutes(15); // 原本 token 期限
+//
+//            System.out.println("lastSendTime=" + lastSendTime);
+//            long secondsSinceLastSend =
+//                    Duration.between(lastSendTime, LocalDateTime.now()).getSeconds();
+//
+//            System.out.println("secondsSinceLastSend=" + secondsSinceLastSend);
+//            if (secondsSinceLastSend < resendCooldownSeconds) {
+//                throw new BusinessException(
+//                        ErrorCode.EMAIL_RESEND_TOO_FREQUENT.getMessage(),
+//                        ErrorCode.EMAIL_RESEND_TOO_FREQUENT,
+//                        HttpStatus.TOO_MANY_REQUESTS
+//                );
+//            }
+//        }
+//
+//
+//        String newToken = generateEmailVerifyToken();
+//        LocalDateTime newExpiredAt = generateEmailVerifyExpiredAt();
+//
+//        user.setEmailVerifyToken(newToken);
+//        user.setEmailVerifyExpiredAt(newExpiredAt);
+//
+//        userRepository.save(user);
+//
+//        String verifyLink =
+//                "http://localhost:8111/api/auth/verify-email?token=" + newToken;
+//
+//        emailService.sendVerifyEmail(user.getEmail(), verifyLink);
+//    }
+//
+//
     private String generateEmailVerifyToken() {
         return UUID.randomUUID().toString();
     }

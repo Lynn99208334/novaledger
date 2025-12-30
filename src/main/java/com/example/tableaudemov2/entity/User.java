@@ -75,6 +75,13 @@ public class User {
     @Column(name = "email_verify_expired_at")
     private LocalDateTime emailVerifyExpiredAt;
 
+
+    /**
+     * 最後一次寄送 Email 驗證信時間
+     */
+    @Column(name = "email_verify_last_sent_at")
+    private LocalDateTime emailVerifyLastSentAt;
+
     // ========================
     // 系統時間欄位
     // ========================
@@ -179,6 +186,14 @@ public class User {
 
     public void setEmailVerifyExpiredAt(LocalDateTime emailVerifyExpiredAt) {
         this.emailVerifyExpiredAt = emailVerifyExpiredAt;
+    }
+
+    public LocalDateTime getEmailVerifyLastSentAt() {
+        return emailVerifyLastSentAt;
+    }
+
+    public void setEmailVerifyLastSentAt(LocalDateTime emailVerifyLastSentAt) {
+        this.emailVerifyLastSentAt = emailVerifyLastSentAt;
     }
 
     public LocalDateTime getCreatedAt() {

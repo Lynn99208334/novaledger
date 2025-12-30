@@ -3,6 +3,7 @@ package com.example.tableaudemov2.controller;
 import com.example.tableaudemov2.dto.RegisterRequest;
 import com.example.tableaudemov2.dto.ResendVerificationRequest;
 import com.example.tableaudemov2.service.AuthService;
+import com.example.tableaudemov2.service.EmailVerificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +16,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, EmailVerificationService emailVerificationService) {
         this.authService = authService;
+        this.emailVerificationService = emailVerificationService;
     }
 
     @PostMapping("/logout")
@@ -53,7 +56,7 @@ public class AuthController {
     @GetMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
 
-        authService.verifyEmail(token);
+        emailVerificationService.verifyEmail(token);
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -66,7 +69,7 @@ public class AuthController {
             @Valid @RequestBody ResendVerificationRequest request
     ) {
 
-        authService.resendVerificationEmail(request.getEmail());
+        emailVerificationService.resendVerificationEmail(request.getEmail());
 
         return ResponseEntity.ok(Map.of(
                 "success", true,

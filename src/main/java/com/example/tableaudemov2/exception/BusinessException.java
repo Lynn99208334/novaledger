@@ -14,6 +14,16 @@ public class BusinessException extends RuntimeException {
         this.status = status;
     }
 
+    /**
+     * 最常用的建構子
+     * 只傳 ErrorCode
+     */
+    public BusinessException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
+        this.errorCode = errorCode;
+        this.status = errorCode.getHttpStatus();
+    }
+
     public ErrorCode getErrorCode() {
         return errorCode;
     }
