@@ -27,7 +27,7 @@ public class JwtUtil {
         );
     }
 
-    public String generateJti() {
+    public static String generateJti() {
         return UUID.randomUUID().toString();
     }
 

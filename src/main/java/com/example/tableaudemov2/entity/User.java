@@ -1,76 +1,206 @@
 package com.example.tableaudemov2.entity;
 
+import com.example.tableaudemov2.enums.UserStatus;
 import jakarta.persistence.*;
-import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Entity
-@Data
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_users_username", columnNames = "username"),
+                @UniqueConstraint(name = "uk_users_email", columnNames = "email")
+        }
+)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    // ========================
+    // 基本帳號資訊
+    // ========================
+
+    @Column(nullable = false, length = 100)
     private String username;
 
-    @Column(nullable = false, unique = true, length = 150)
+    @Column(nullable = false, length = 150)
     private String email;
 
-    @Column(name = "password", nullable = false)
-    private String passwordHash;
+    @Column(nullable = false, length = 255)
+    private String password;
 
+    /**
+     * 系統層級啟用狀態（通常永遠為 true）
+     * 只有在法遵 / 資安需求才會關掉
+     */
     @Column(nullable = false)
-    private boolean enabled = true;
+    private Boolean enabled = true;
 
-    @Column(name = "created_at", updatable = false)
+    // ========================
+    // 帳號生命週期（核心）
+    // ========================
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserStatus status = UserStatus.REGISTERED;
+
+    /**
+     * 是否完成 Email 驗證
+     */
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
+
+    /**
+     * Email 驗證完成時間
+     */
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
+    // ========================
+    // Email 驗證流程
+    // ========================
+
+    /**
+     * Email 驗證 Token
+     */
+    @Column(name = "email_verify_token", length = 100)
+    private String emailVerifyToken;
+
+    /**
+     * Email 驗證 Token 過期時間
+     */
+    @Column(name = "email_verify_expired_at")
+    private LocalDateTime emailVerifyExpiredAt;
+
+
+    /**
+     * 最後一次寄送 Email 驗證信時間
+     */
+    @Column(name = "email_verify_last_sent_at")
+    private LocalDateTime emailVerifyLastSentAt;
+
+    // ========================
+    // 系統時間欄位
+    // ========================
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // --- RBAC (add later if not yet) ---
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_role",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles;
+    // ========================
+    // JPA Lifecycle
+    // ========================
 
-    public Set<Role> getRoles() {
-        return roles;
-    }
-
-    // --- lifecycle ---
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = createdAt;
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
-    // --- getters ---
-    public String getPasswordHash() {
-        return passwordHash;
+    // ========================
+    // Getter / Setter
+    // ========================
+
+    public Long getId() {
+        return id;
     }
 
-    public boolean isActive() {
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Boolean getEnabled() {
         return enabled;
     }
 
-    public boolean isEmailVerified() {
-        return enabled; // TEMP (you can split later)
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 
+    public UserStatus getStatus() {
+        return status;
+    }
 
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
 
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
+    public LocalDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public String getEmailVerifyToken() {
+        return emailVerifyToken;
+    }
+
+    public void setEmailVerifyToken(String emailVerifyToken) {
+        this.emailVerifyToken = emailVerifyToken;
+    }
+
+    public LocalDateTime getEmailVerifyExpiredAt() {
+        return emailVerifyExpiredAt;
+    }
+
+    public void setEmailVerifyExpiredAt(LocalDateTime emailVerifyExpiredAt) {
+        this.emailVerifyExpiredAt = emailVerifyExpiredAt;
+    }
+
+    public LocalDateTime getEmailVerifyLastSentAt() {
+        return emailVerifyLastSentAt;
+    }
+
+    public void setEmailVerifyLastSentAt(LocalDateTime emailVerifyLastSentAt) {
+        this.emailVerifyLastSentAt = emailVerifyLastSentAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 }

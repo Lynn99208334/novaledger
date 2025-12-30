@@ -1,44 +1,49 @@
 package com.example.tableaudemov2.service;
 
 import com.example.tableaudemov2.adapter.cache.RedisCacheAdapter;
-import com.example.tableaudemov2.security.JwtTokenProvider;
-import com.example.tableaudemov2.testutil.TestSecurityContextFactory;
 import com.example.tableaudemov2.util.JwtUtil;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.sql.Date;
 
-@SpringBootTest
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    @Autowired
-    private AuthService authService;
-
-    @Autowired
+    @Mock
     private RedisCacheAdapter redisCacheAdapter;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Autowired
+    @Mock
     private JwtUtil jwtUtil;
+
+    @InjectMocks
+    private AuthService authService;
 
     @Test
     void logout_should_blacklist_jti() {
-        // 1️⃣ 用正式系統產 JWT（不是自己造）
-        String jwt = jwtTokenProvider.generateToken(
-                TestSecurityContextFactory.authenticatedAdmin()
-        );
+        // given
+        String jwt = "fake.jwt.token";
+        String jti = "test-jti";
 
-        // 2️⃣ 呼叫 logout
+        Date expiration = new Date(System.currentTimeMillis() + 60_000); // 1 分鐘後過期
+
+        when(jwtUtil.getJti(jwt)).thenReturn(jti);
+        when(jwtUtil.getExpiration(jwt)).thenReturn(expiration);
+
+        // when
         authService.logout(jwt);
 
-        // 3️⃣ 用同一個 JwtUtil 解析 jti
-        String jti = jwtUtil.getJti(jwt);
+        // then
+        verify(redisCacheAdapter)
+                .putBlacklistJti(eq(jti), anyLong());
 
-        // 4️⃣ 驗證 Redis blacklist
-        assertTrue(redisCacheAdapter.isJtiBlacklisted(jti));
     }
+
 }

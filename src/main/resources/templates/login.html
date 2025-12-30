@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -18,32 +18,27 @@
                 <div class="row justify-content-center">
                     <div class="col-lg-5">
                         <div class="card shadow-lg border-0 rounded-lg mt-5">
+
+                            <!-- Header -->
                             <div class="card-header">
                                 <h3 class="text-center font-weight-light my-4">Login</h3>
                             </div>
 
+                            <!-- Body -->
                             <div class="card-body">
-                                <div class="card-body">
 
-                                    <!-- ✅ 登出成功提示 -->
-                                    <div th:if="${param.logout}" class="alert alert-success">
-                                        已成功登出
-                                    </div>
-
-                                    <!-- ❌ 登入失敗提示（順便一起加） -->
-                                    <div th:if="${param.error}" class="alert alert-danger">
-                                        帳號或密碼錯誤
-                                    </div>
-
-                                    <form method="post" action="/login">
-                                        ...
-                                    </form>
-
+                                <!-- 登出成功提示 -->
+                                <div th:if="${param.logout}" class="alert alert-success">
+                                    已成功登出
                                 </div>
 
+                                <!-- 登入失敗提示 -->
+                                <div th:if="${param.error}" class="alert alert-danger">
+                                    帳號或密碼錯誤
+                                </div>
 
-                                <!-- ✅ 一定要是 POST /login -->
-                                <form method="post" action="/login">
+                                <!-- ✅ 登入表單（只有這一個） -->
+                                <form th:action="@{/login}" method="post">
 
                                     <div class="form-floating mb-3">
                                         <input class="form-control"
@@ -63,6 +58,9 @@
                                         <label>Password</label>
                                     </div>
 
+                                    <!-- CSRF token (required if Spring Security CSRF is enabled) -->
+<!--                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />-->
+
                                     <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
                                         <button type="submit" class="btn btn-primary">
                                             Login
@@ -72,9 +70,10 @@
                                 </form>
                             </div>
 
+                            <!-- Footer（一定在 form 外面） -->
                             <div class="card-footer text-center py-3">
                                 <div class="small">
-                                    <a href="/register">Need an account? Sign up!</a>
+                                    <a th:href="@{/register}">Need an account? Sign up!</a>
                                 </div>
                             </div>
 
@@ -89,5 +88,16 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         crossorigin="anonymous"></script>
 <script src="/js/scripts.js"></script>
+<style>
+    .card-footer {
+        position: relative;
+        z-index: 999;
+    }
+
+    .card-footer a {
+        pointer-events: auto !important;
+    }
+</style>
+
 </body>
 </html>

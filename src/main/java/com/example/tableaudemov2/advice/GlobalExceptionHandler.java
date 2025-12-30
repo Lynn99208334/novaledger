@@ -47,8 +47,16 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest req) {
-        ApiErrorResponse error = buildError(req, ErrorCode.BUSINESS_ERROR, ex.getStatus(), ex.getMessage());
+    public ResponseEntity<ApiErrorResponse> handleBusiness(
+            BusinessException ex,
+            HttpServletRequest req
+    ) {
+        ApiErrorResponse error = buildError(
+                req,
+                ex.getErrorCode(),   // ⭐ 關鍵
+                ex.getStatus(),
+                ex.getMessage()
+        );
         return ResponseEntity.status(ex.getStatus()).body(error);
     }
 
@@ -57,4 +65,20 @@ public class GlobalExceptionHandler {
         ApiErrorResponse error = buildError(req, ErrorCode.INTERNAL_ERROR, HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest req
+    ) {
+        ApiErrorResponse error = buildError(
+                req,
+                ErrorCode.BUSINESS_ERROR,
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+        return ResponseEntity.badRequest().body(error);
+    }
+
+
 }

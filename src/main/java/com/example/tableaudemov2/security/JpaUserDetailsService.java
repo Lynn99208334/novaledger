@@ -1,7 +1,11 @@
 package com.example.tableaudemov2.security;
 
 import com.example.tableaudemov2.entity.User;
+import com.example.tableaudemov2.enums.ErrorCode;
+import com.example.tableaudemov2.exception.BusinessException;
 import com.example.tableaudemov2.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,6 +15,9 @@ import org.springframework.stereotype.Service;
 public class JpaUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+
+    @Value("${app.auth.skip-email-verify:false}")
+    private boolean skipEmailVerify;
 
     public JpaUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -22,8 +29,23 @@ public class JpaUserDetailsService implements UserDetailsService {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found: " + email)
+                        new UsernameNotFoundException(
+                                ErrorCode.USER_NOT_FOUND.getMessage()
+                        )
                 );
+        // ✅ 關鍵：登入時擋未完成 Email 驗證的帳號
+        if (!skipEmailVerify && !Boolean.TRUE.equals(user.getEmailVerified())) {
+            throw new BusinessException(
+                    ErrorCode.EMAIL_NOT_VERIFIED.getMessage(),
+                    ErrorCode.EMAIL_NOT_VERIFIED,
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+
+        // （選擇性）如果你未來有停權狀態
+        // if (user.getStatus() != UserStatus.ACTIVE) {
+        //     throw new RuntimeException("ACCOUNT_NOT_ACTIVE");
+        // }
 
         return new SecurityUser(user);
     }
