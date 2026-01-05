@@ -1,4 +1,4 @@
-package com.example.tableaudemov2.shared.exception;
+package com.example.tableaudemov2.common.exception;
 
 public class BusinessException extends RuntimeException {
 
