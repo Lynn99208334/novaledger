@@ -31,3 +31,28 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# ===== Node / Frontend =====
+node_modules/
+node/
+npm-debug.log*
+yarn-error.log*
+
+# ===== Frontend build output =====
+src/main/resources/static/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+
+# ===== Java =====
+target/
+*.log
+
+# npm lock file (frontend build only)
+package-lock.json
