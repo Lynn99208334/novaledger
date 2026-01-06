@@ -1,6 +1,6 @@
 package com.example.tableaudemov2.adapter.cache;
 
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
@@ -8,9 +8,12 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class RedisCacheAdapter {
 
-    private final RedisTemplate<String, String> redisTemplate;
+//    @Qualifier("redisTemplate")
+//    private final RedisTemplate<String, String> redisTemplate;
 
-    public RedisCacheAdapter(RedisTemplate<String, String> redisTemplate) {
+    private final StringRedisTemplate redisTemplate;
+
+    public RedisCacheAdapter(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

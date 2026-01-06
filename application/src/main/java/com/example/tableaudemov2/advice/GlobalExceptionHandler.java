@@ -1,7 +1,8 @@
 package com.example.tableaudemov2.advice;
 
-import com.example.tableaudemov2.exception.ApiErrorResponse;
-import com.example.tableaudemov2.exception.BusinessException;
+import com.example.tableaudemov2.common.exception.BusinessException;
+import com.example.tableaudemov2.common.exception.ErrorCode;
+import com.example.tableaudemov2.response.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,12 +53,16 @@ public class GlobalExceptionHandler {
     ) {
         ApiErrorResponse error = buildError(
                 req,
-                ex.getErrorCode(),   // ⭐ 關鍵
-                ex.getStatus(),
+                ex.getErrorCode(),
+                ex.getErrorCode().getHttpStatusEnum(),  // ⭐ 改這裡
                 ex.getMessage()
         );
-        return ResponseEntity.status(ex.getStatus()).body(error);
+
+        return ResponseEntity
+                .status(ex.getErrorCode().getHttpStatus())
+                .body(error);
     }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleException(Exception ex, HttpServletRequest req) {

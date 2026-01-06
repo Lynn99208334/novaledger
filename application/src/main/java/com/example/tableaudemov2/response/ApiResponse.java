@@ -1,7 +1,5 @@
 package com.example.tableaudemov2.response;
 
-import com.example.tableaudemov2.exception.ApiErrorResponse;
-
 public class ApiResponse<T> {
     private boolean success;
     private T data;

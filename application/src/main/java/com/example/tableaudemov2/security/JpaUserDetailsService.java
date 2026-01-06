@@ -1,10 +1,10 @@
 package com.example.tableaudemov2.security;
 
+import com.example.tableaudemov2.common.exception.BusinessException;
+import com.example.tableaudemov2.common.exception.ErrorCode;
 import com.example.tableaudemov2.entity.User;
-import com.example.tableaudemov2.exception.BusinessException;
 import com.example.tableaudemov2.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,9 +35,7 @@ public class JpaUserDetailsService implements UserDetailsService {
         // ✅ 關鍵：登入時擋未完成 Email 驗證的帳號
         if (!skipEmailVerify && !Boolean.TRUE.equals(user.getEmailVerified())) {
             throw new BusinessException(
-                    ErrorCode.EMAIL_NOT_VERIFIED.getMessage(),
-                    ErrorCode.EMAIL_NOT_VERIFIED,
-                    HttpStatus.UNAUTHORIZED
+                    ErrorCode.EMAIL_NOT_VERIFIED
             );
         }
 

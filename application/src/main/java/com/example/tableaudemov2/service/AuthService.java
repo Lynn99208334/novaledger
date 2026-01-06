@@ -1,15 +1,15 @@
 package com.example.tableaudemov2.service;
 
 import com.example.tableaudemov2.adapter.cache.RedisCacheAdapter;
+import com.example.tableaudemov2.common.exception.BusinessException;
+import com.example.tableaudemov2.common.exception.ErrorCode;
 import com.example.tableaudemov2.dto.RegisterRequest;
 import com.example.tableaudemov2.entity.User;
 import com.example.tableaudemov2.enums.UserStatus;
-import com.example.tableaudemov2.exception.BusinessException;
 import com.example.tableaudemov2.repository.UserRepository;
 import com.example.tableaudemov2.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,11 +65,11 @@ public class AuthService {
     public void register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS.getMessage(),ErrorCode.EMAIL_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS.getMessage(),ErrorCode.USERNAME_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
         String verifyToken = generateEmailVerifyToken();
