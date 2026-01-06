@@ -1,5 +1,7 @@
 package com.example.tableaudemov2.common.exception;
 
+import org.springframework.http.HttpStatus;
+
 public enum ErrorCode {
 
     // ========================
@@ -60,5 +62,9 @@ public enum ErrorCode {
 
     public int getHttpStatus() {
         return httpStatus;
+    }
+
+    public HttpStatus getHttpStatusEnum() {
+        return HttpStatus.valueOf(this.httpStatus);
     }
 }
