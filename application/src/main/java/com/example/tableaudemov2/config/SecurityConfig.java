@@ -1,5 +1,8 @@
 package com.example.tableaudemov2.config;
 
+import com.example.tableaudemov2.adapter.cache.RedisCacheAdapter;
+import com.example.tableaudemov2.security.JwtAuthenticationFilter;
+import com.example.tableaudemov2.util.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +15,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter(
+            RedisCacheAdapter redisCacheAdapter,
+            JwtUtil jwtUtil
+    ) {
+        return new JwtAuthenticationFilter(redisCacheAdapter, jwtUtil);
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
