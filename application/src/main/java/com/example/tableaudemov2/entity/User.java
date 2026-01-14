@@ -1,5 +1,6 @@
 package com.example.tableaudemov2.entity;
 
+import com.example.tableaudemov2.common.entity.BaseEntity;
 import com.example.tableaudemov2.enums.UserStatus;
 import jakarta.persistence.*;
 
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(name = "uk_users_email", columnNames = "email")
         }
 )
-public class User {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -81,32 +82,6 @@ public class User {
      */
     @Column(name = "email_verify_last_sent_at")
     private LocalDateTime emailVerifyLastSentAt;
-
-    // ========================
-    // 系統時間欄位
-    // ========================
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    // ========================
-    // JPA Lifecycle
-    // ========================
-
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 
     // ========================
     // Getter / Setter
@@ -194,13 +169,5 @@ public class User {
 
     public void setEmailVerifyLastSentAt(LocalDateTime emailVerifyLastSentAt) {
         this.emailVerifyLastSentAt = emailVerifyLastSentAt;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
     }
 }

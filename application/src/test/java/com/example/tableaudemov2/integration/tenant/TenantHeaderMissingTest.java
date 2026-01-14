@@ -1,25 +1,39 @@
 package com.example.tableaudemov2.integration.tenant;
 
+import com.example.tableaudemov2.common.tenant.TenantInterceptor;
+import com.example.tableaudemov2.controller.TenantDebugController;
+import com.example.tableaudemov2.service.TenantDebugService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(
+        controllers = TenantDebugController.class
+//        excludeFilters = @ComponentScan.Filter(
+//                type = FilterType.ASSIGNABLE_TYPE,
+//                classes = JwtAuthenticationFilter.class
+//        )
+)
+@Import(TenantInterceptor.class)
 class TenantHeaderMissingTest {
 
     @Autowired
     MockMvc mockMvc;
 
+    @MockitoBean
+    TenantDebugService tenantDebugService;
+
     @Test
-    //當 request 沒有帶 X-Tenant-Id header 時，系統必須在 Web 邊界就拒絕請求（401）
     void request_without_tenant_header_should_be_rejected() throws Exception {
         mockMvc.perform(get("/api/debug/tenant"))
                 .andExpect(status().isUnauthorized());
     }
 }
+
