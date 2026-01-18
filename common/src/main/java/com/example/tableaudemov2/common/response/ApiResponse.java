@@ -1,5 +1,8 @@
-package com.example.tableaudemov2.response;
+package com.example.tableaudemov2.common.response;
 
+import lombok.Data;
+
+@Data
 public class ApiResponse<T> {
     private boolean success;
     private T data;
@@ -12,8 +15,14 @@ public class ApiResponse<T> {
         return r;
     }
 
-    public static ApiResponse<?> fail(ApiErrorResponse error) {
-        ApiResponse<?> r = new ApiResponse<>();
+    public static ApiResponse<Void> ok() {
+        ApiResponse<Void> r = new ApiResponse<>();
+        r.success = true;
+        return r;
+    }
+
+    public static ApiResponse<Void> fail(ApiErrorResponse error) {
+        ApiResponse<Void> r = new ApiResponse<>();
         r.success = false;
         r.error = error;
         return r;

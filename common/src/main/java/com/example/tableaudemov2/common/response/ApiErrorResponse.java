@@ -1,4 +1,4 @@
-package com.example.tableaudemov2.response;
+package com.example.tableaudemov2.common.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
