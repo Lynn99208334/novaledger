@@ -1,9 +1,11 @@
 package com.example.tableaudemov2.common.tenant;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TenantContextTest {
 
@@ -17,6 +19,7 @@ class TenantContextTest {
      * 測試set / get 是否正常運作
      * */
     @Test
+    @DisplayName("TenantContext should isolate tenantId between threads")
     void setAndGetTenantId_shouldReturnSameValue() {
         // given
         Long tenantId = 100L;
