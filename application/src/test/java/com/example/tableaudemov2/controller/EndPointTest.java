@@ -1,33 +1,26 @@
-package com.example.tableaudemov2.integration.tenant;
+package com.example.tableaudemov2.controller;
 
 import com.example.tableaudemov2.common.tenant.TenantInterceptor;
-import com.example.tableaudemov2.controller.TenantDebugController;
-import com.example.tableaudemov2.service.TenantDebugService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
-@WebMvcTest(controllers = TenantDebugController.class)
+@WebMvcTest(controllers = HealthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(TenantInterceptor.class)
-class TenantHeaderMissingTest {
-
+public class EndPointTest {
     @Autowired
     MockMvc mockMvc;
 
-    @MockitoBean
-    TenantDebugService tenantDebugService;
-
     @Test
-    void request_without_tenant_header_should_be_rejected() throws Exception {
-        mockMvc.perform(get("/api/debug/tenant"))
-                .andExpect(status().isUnauthorized());
+    void health_should_pass_without_tenant_header() throws Exception {
+        mockMvc.perform(get("/health"))
+                .andExpect(status().isOk());
     }
 }
-

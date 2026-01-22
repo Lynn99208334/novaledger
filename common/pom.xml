@@ -27,10 +27,18 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Spring Web MVC（HandlerInterceptor / WebMvcConfigurer） -->
+        <!-- for HandlerInterceptor / WebMvcConfigurer -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+        </dependency>
+
+
+        <!-- Servlet API (for HttpServletRequest / Response) -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

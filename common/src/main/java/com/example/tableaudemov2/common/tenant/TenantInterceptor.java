@@ -7,15 +7,19 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class TenantInterceptor implements HandlerInterceptor {
-    // 定義 bypass 路徑清單
-    private static final List<String> BYPASS_PATHS = List.of(
+    private static final List<String> SYSTEM_ENDPOINTS = List.of(
+            "/health",
+            "/info"
+    );
+
+    private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/index",
             "/login",
-            "/auth/login",
-            "/health"
+            "/auth/login"
     );
 
     private static final String TENANT_HEADER = "X-Tenant-Id";
@@ -30,7 +34,10 @@ public class TenantInterceptor implements HandlerInterceptor {
         String path = request.getRequestURI();
 
         // ✅ Step 1：bypass login / health
-        if (BYPASS_PATHS.stream().anyMatch(path::startsWith)) {
+        if (Stream.concat(
+                SYSTEM_ENDPOINTS.stream(),
+                PUBLIC_ENDPOINTS.stream()
+        ).anyMatch(path::startsWith)) {
             return true;
         }
 

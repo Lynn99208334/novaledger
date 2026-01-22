@@ -36,6 +36,11 @@
             <artifactId>finance-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>health</artifactId>
+        </dependency>
+
 
         <!-- Spring Boot 基礎 -->
         <dependency>
@@ -102,29 +107,29 @@
         </dependency>
 
         <!-- PDF / OCR（暫時仍放 application） -->
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>2.0.30</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.pdfbox</groupId>-->
+<!--            <artifactId>pdfbox</artifactId>-->
+<!--            <version>2.0.30</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox-tools</artifactId>
-            <version>2.0.30</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.pdfbox</groupId>-->
+<!--            <artifactId>pdfbox-tools</artifactId>-->
+<!--            <version>2.0.30</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>jbig2-imageio</artifactId>
-            <version>3.0.4</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.pdfbox</groupId>-->
+<!--            <artifactId>jbig2-imageio</artifactId>-->
+<!--            <version>3.0.4</version>-->
+<!--        </dependency>-->
 
-        <dependency>
-            <groupId>technology.tabula</groupId>
-            <artifactId>tabula</artifactId>
-            <version>1.0.5</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>technology.tabula</groupId>-->
+<!--            <artifactId>tabula</artifactId>-->
+<!--            <version>1.0.5</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

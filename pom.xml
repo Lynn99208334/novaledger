@@ -13,6 +13,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>health</module>
         <module>common</module>
         <module>auth</module>
         <module>finance-core</module>
@@ -36,6 +37,12 @@
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>health</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>

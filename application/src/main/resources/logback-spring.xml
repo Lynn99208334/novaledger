@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- ================================================= -->
+    <!-- 基本屬性設定 -->
+    <!-- ================================================= -->
+
+    <!-- 由 Spring Boot 注入的應用名稱 -->
+    <springProperty scope="context"
+                    name="APP_NAME"
+                    source="spring.application.name"
+                    defaultValue="NovaLedger"/>
+
+    <!-- 通用 log pattern（可 grep、可讀、適合 CI / prod） -->
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"/>
+
+    <!-- ================================================= -->
+    <!-- Appenders -->
+    <!-- ================================================= -->
+
+    <!-- Console Appender -->
+    <appender name="CONSOLE"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ================================================= -->
+    <!-- default（沒有指定 spring.profiles.active 時） -->
+    <!-- ================================================= -->
+    <!-- ⚠️ 一定要存在，否則 default context 沒有 root -->
+    <root level="info">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- ================================================= -->
+    <!-- local / dev：本機開發 -->
+    <!-- ================================================= -->
+    <springProfile name="local,dev">
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <!-- 專案自己的 package 開 DEBUG -->
+        <logger name="com.example.tableaudemov2" level="DEBUG"/>
+
+    </springProfile>
+
+    <!-- ================================================= -->
+    <!-- test：單元測試 / CI -->
+    <!-- ================================================= -->
+    <springProfile name="test">
+
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <logger name="com.example.tableaudemov2" level="INFO"/>
+
+    </springProfile>
+
+    <!-- ================================================= -->
+    <!-- prod：正式環境 -->
+    <!-- ================================================= -->
+    <springProfile name="prod">
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <!-- 生產環境不開 DEBUG -->
+        <logger name="com.example.tableaudemov2" level="INFO"/>
+
+    </springProfile>
+
+</configuration>
