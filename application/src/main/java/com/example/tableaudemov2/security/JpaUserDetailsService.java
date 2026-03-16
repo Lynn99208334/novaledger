@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,6 +33,10 @@ public class JpaUserDetailsService implements UserDetailsService {
                                 ErrorCode.USER_NOT_FOUND.getMessage()
                         )
                 );
+        System.out.println(">>> FOUND USER: " + user.getEmail() + ", verified=" + user.getEmailVerified() + ", password=" + user.getPassword());
+        System.out.println(">>> PASSWORD MATCH: " + new BCryptPasswordEncoder().matches("password123", user.getPassword()));
+        System.out.println(new BCryptPasswordEncoder().encode("password123"));
+
         // ✅ 關鍵：登入時擋未完成 Email 驗證的帳號
         if (!skipEmailVerify && !Boolean.TRUE.equals(user.getEmailVerified())) {
             throw new BusinessException(

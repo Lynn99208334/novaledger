@@ -83,6 +83,12 @@ public class User extends BaseEntity {
     @Column(name = "email_verify_last_sent_at")
     private LocalDateTime emailVerifyLastSentAt;
 
+    @Column(name = "is_system_admin", nullable = false)
+    private Boolean isSystemAdmin = false;
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
     // ========================
     // Getter / Setter
     // ========================
@@ -169,5 +175,25 @@ public class User extends BaseEntity {
 
     public void setEmailVerifyLastSentAt(LocalDateTime emailVerifyLastSentAt) {
         this.emailVerifyLastSentAt = emailVerifyLastSentAt;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Boolean getSystemAdmin() {
+        return isSystemAdmin;
+    }
+
+    public void setSystemAdmin(Boolean systemAdmin) {
+        isSystemAdmin = systemAdmin;
+    }
+
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
     }
 }

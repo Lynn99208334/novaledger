@@ -17,9 +17,17 @@ public class TenantInterceptor implements HandlerInterceptor {
     );
 
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
+            "/",
             "/index",
             "/login",
-            "/auth/login"
+            "/register",
+            "/auth/login",
+            "/css/",
+            "/js/",
+            "/images/",
+            "/fonts/",
+            "/favicon.ico",
+            "/error"
     );
 
     private static final String TENANT_HEADER = "X-Tenant-Id";
