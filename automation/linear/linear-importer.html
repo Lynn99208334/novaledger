@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Issue Importer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0d0f12;
+    --surface: #161920;
+    --border: #2a2d35;
+    --accent: #5e6ad2;
+    --accent-hover: #7c85e0;
+    --success: #26c17a;
+    --error: #e5534b;
+    --warn: #e3a946;
+    --text: #e2e4e9;
+    --muted: #7a7f8e;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Noto Sans TC', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    font-family: var(--mono);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    font-family: var(--mono);
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: var(--mono);
+  }
+
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+
+  input:focus { border-color: var(--accent); }
+
+  .row { display: flex; gap: 12px; align-items: flex-end; }
+  .row > div { flex: 1; }
+
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    resize: vertical;
+    min-height: 200px;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    font-family: var(--mono);
+    line-height: 1.6;
+  }
+
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 11px 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.03em;
+  }
+
+  .btn:hover { background: var(--accent-hover); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+
+  .actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  #log {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    min-height: 120px;
+    max-height: 320px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+
+  .log-success { color: var(--success); }
+  .log-error { color: var(--error); }
+  .log-warn { color: var(--warn); }
+  .log-info { color: var(--muted); }
+  .log-title { color: var(--text); }
+
+  .stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .stat {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-weight: 600;
+  }
+
+  .badge-ready { background: #1a3a2a; color: var(--success); }
+  .badge-error { background: #3a1a1a; color: var(--error); }
+
+  #status-badge { margin-left: 8px; }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⬡ LINEAR ISSUE IMPORTER</h1>
+  <div class="subtitle">NovaLedger automation · paste JSON · create issues</div>
+
+  <!-- Config -->
+  <div class="card">
+    <div class="card-title">Config
+      <span id="status-badge"></span>
+    </div>
+    <div class="row">
+      <div>
+        <label>LINEAR_API_KEY</label>
+        <input type="password" id="apiKey" placeholder="lin_api_xxxxxxxx" />
+      </div>
+      <div>
+        <label>LINEAR_TEAM_ID</label>
+        <input type="text" id="teamId" placeholder="cb7ed435-..." />
+      </div>
+    </div>
+    <button class="btn btn-outline" onclick="testConnection()" id="testBtn">測試連線</button>
+  </div>
+
+  <!-- JSON Input -->
+  <div class="card">
+    <div class="card-title">Issues JSON</div>
+    <textarea id="jsonInput" placeholder='[
+  {
+    "title": "[Phase 0] Setup dev environment",
+    "labels": ["infra", "phase-0"],
+    "milestone": "M1 – Foundation Ready",
+    "description": "## Tasks\n- [ ] 建立 Flyway 目錄\n- [ ] 撰寫 V1__init.sql"
+  }
+]'></textarea>
+    <div class="hint">貼上 issues.json 的內容 · labels 要和 Linear 裡的名稱一致（大小寫不敏感）</div>
+    <div class="actions">
+      <button class="btn" onclick="startImport()" id="importBtn">🚀 開始建立 Issues</button>
+      <button class="btn btn-outline" onclick="clearLog()">清除 Log</button>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="card">
+    <div class="card-title">執行 Log</div>
+    <div id="log"><span class="log-info">等待執行...</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num" id="statTotal" style="color:var(--text)">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="statSuccess" style="color:var(--success)">0</div>
+        <div class="stat-label">Success</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="statFail" style="color:var(--error)">0</div>
+        <div class="stat-label">Failed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GQL_URL = "https://api.linear.app/graphql";
+let labelMap = {};
+let milestoneMap = {};
+
+function getConfig() {
+  return {
+    apiKey: document.getElementById("apiKey").value.trim(),
+    teamId: document.getElementById("teamId").value.trim(),
+  };
+}
+
+function log(msg, type = "info") {
+  const el = document.getElementById("log");
+  const line = document.createElement("div");
+  line.className = `log-${type}`;
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById("log").innerHTML = '<span class="log-info">Log 已清除</span>';
+  setStats(0, 0, 0);
+  document.getElementById("progressFill").style.width = "0%";
+}
+
+function setStats(total, success, fail) {
+  document.getElementById("statTotal").textContent = total;
+  document.getElementById("statSuccess").textContent = success;
+  document.getElementById("statFail").textContent = fail;
+}
+
+async function gql(query, variables = {}) {
+  const { apiKey } = getConfig();
+  const res = await fetch(GQL_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": apiKey,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  return res.json();
+}
+
+async function testConnection() {
+  const { apiKey, teamId } = getConfig();
+  if (!apiKey || !teamId) {
+    alert("請先填入 API Key 和 Team ID");
+    return;
+  }
+
+  const btn = document.getElementById("testBtn");
+  btn.disabled = true;
+  btn.textContent = "連線中...";
+  document.getElementById("log").innerHTML = "";
+
+  try {
+    // fetch labels
+    const res = await gql(`
+      query($teamId: String!) {
+        team(id: $teamId) {
+          name
+          labels { nodes { id name } }
+        }
+      }
+    `, { teamId });
+
+    if (res.errors) {
+      log("❌ 連線失敗：" + JSON.stringify(res.errors), "error");
+      setBadge(false);
+      return;
+    }
+
+    const team = res.data.team;
+    labelMap = {};
+    team.labels.nodes.forEach(l => { labelMap[l.name.toLowerCase()] = l.id; });
+
+    log(`✅ 連線成功：Team "${team.name}"`, "success");
+    log(`📌 找到 Labels: ${Object.keys(labelMap).join(", ") || "(無)"}`, "info");
+
+    // fetch milestones
+    const res2 = await gql(`
+      query {
+        projects { nodes { id name projectMilestones { nodes { id name } } } }
+      }
+    `);
+
+    milestoneMap = {};
+    if (res2.data) {
+      res2.data.projects.nodes.forEach(p => {
+        p.projectMilestones.nodes.forEach(m => { milestoneMap[m.name] = m.id; });
+      });
+    }
+
+    if (Object.keys(milestoneMap).length > 0) {
+      log(`🎯 找到 Milestones: ${Object.keys(milestoneMap).join(", ")}`, "info");
+    } else {
+      log(`⚠️  沒有找到 Milestones（milestone 欄位將被略過）`, "warn");
+    }
+
+    setBadge(true);
+  } catch (e) {
+    log("❌ 錯誤：" + e.message, "error");
+    setBadge(false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "測試連線";
+  }
+}
+
+function setBadge(ok) {
+  const el = document.getElementById("status-badge");
+  el.innerHTML = ok
+    ? '<span class="badge badge-ready">● CONNECTED</span>'
+    : '<span class="badge badge-error">● ERROR</span>';
+}
+
+async function startImport() {
+  const { apiKey, teamId } = getConfig();
+  if (!apiKey || !teamId) { alert("請先填入 API Key 和 Team ID"); return; }
+
+  const raw = document.getElementById("jsonInput").value.trim();
+  if (!raw) { alert("請貼上 issues.json 內容"); return; }
+
+  let issues;
+  try {
+    issues = JSON.parse(raw);
+    if (!Array.isArray(issues)) throw new Error("JSON 必須是陣列 []");
+  } catch (e) {
+    alert("JSON 格式錯誤：" + e.message);
+    return;
+  }
+
+  // 如果還沒測試連線，先抓一次
+  if (Object.keys(labelMap).length === 0) {
+    await testConnection();
+    if (Object.keys(labelMap).length === 0) return;
+  }
+
+  const btn = document.getElementById("importBtn");
+  btn.disabled = true;
+  btn.textContent = "建立中...";
+
+  log("", "info");
+  log(`━━━ 開始建立 ${issues.length} 個 Issues ━━━`, "title");
+
+  let success = 0, fail = 0;
+  setStats(issues.length, 0, 0);
+
+  for (let i = 0; i < issues.length; i++) {
+    const issue = issues[i];
+    const title = (issue.title || "").trim();
+    log(`[${i+1}/${issues.length}] ${title}`, "title");
+
+    const labelIds = (issue.labels || []).map(n => {
+      const id = labelMap[n.trim().toLowerCase()];
+      if (!id) log(`    ⚠️  Label 不存在: "${n}"`, "warn");
+      return id;
+    }).filter(Boolean);
+
+    const milestoneId = milestoneMap[(issue.milestone || "").trim()] || null;
+
+    const variables = {
+      teamId,
+      title,
+      description: (issue.description || "").trim(),
+      labelIds,
+    };
+    if (milestoneId) variables.projectMilestoneId = milestoneId;
+
+    try {
+      const res = await gql(`
+        mutation CreateIssue(
+          $teamId: String!
+          $title: String!
+          $description: String
+          $labelIds: [String!]
+          $projectMilestoneId: String
+        ) {
+          issueCreate(input: {
+            teamId: $teamId
+            title: $title
+            description: $description
+            labelIds: $labelIds
+            projectMilestoneId: $projectMilestoneId
+          }) {
+            success
+            issue { identifier title }
+          }
+        }
+      `, variables);
+
+      if (res.data?.issueCreate?.success) {
+        const d = res.data.issueCreate.issue;
+        log(`    ✅ ${d.identifier} 建立成功`, "success");
+        success++;
+      } else {
+        log(`    ❌ 失敗：${JSON.stringify(res.errors || res)}`, "error");
+        fail++;
+      }
+    } catch (e) {
+      log(`    ❌ 錯誤：${e.message}`, "error");
+      fail++;
+    }
+
+    setStats(issues.length, success, fail);
+    document.getElementById("progressFill").style.width =
+      `${Math.round(((i+1)/issues.length)*100)}%`;
+
+    // 避免 rate limit
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  log("", "info");
+  log(`━━━ 完成！成功 ${success} 個，失敗 ${fail} 個 ━━━`, success === issues.length ? "success" : "warn");
+
+  btn.disabled = false;
+  btn.textContent = "🚀 開始建立 Issues";
+}
+</script>
+</body>
+</html>
