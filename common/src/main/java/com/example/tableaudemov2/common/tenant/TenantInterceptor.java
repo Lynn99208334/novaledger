@@ -17,7 +17,6 @@ public class TenantInterceptor implements HandlerInterceptor {
     );
 
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-            "/",
             "/index",
             "/login",
             "/register",
@@ -38,10 +37,15 @@ public class TenantInterceptor implements HandlerInterceptor {
             HttpServletResponse response,
             Object handler
     ) throws IOException {
-
+        System.out.println(">>> preHandle called: " + request.getRequestURI());
         String path = request.getRequestURI();
 
-        // ✅ Step 1：bypass login / health
+        // 精確比對根路徑
+        if (path.equals("/")) {
+            return true;
+        }
+
+        // 其他 public endpoints 用 startsWith
         if (Stream.concat(
                 SYSTEM_ENDPOINTS.stream(),
                 PUBLIC_ENDPOINTS.stream()
