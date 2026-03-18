@@ -26,7 +26,9 @@ public class TenantInterceptor implements HandlerInterceptor {
             "/images/",
             "/fonts/",
             "/favicon.ico",
-            "/error"
+            "/error",
+            "/swagger-ui",      // ← 加這行
+            "/v3/api-docs"      // ← 加這行
     );
 
     private static final String TENANT_HEADER = "X-Tenant-Id";

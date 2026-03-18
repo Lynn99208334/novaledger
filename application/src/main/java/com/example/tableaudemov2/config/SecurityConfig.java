@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -26,6 +27,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        System.out.println("==== SecurityConfig loaded ===="); // ← 加這行
 
         http
                 .csrf(csrf -> csrf.disable())
@@ -38,6 +40,9 @@ public class SecurityConfig {
                 // ✅ 關掉 httpBasic
                 // ❌ .httpBasic()
 
+//                .authorizeHttpRequests(auth -> auth
+//                        .anyRequest().permitAll()  // 暫時全開
+//                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/health",
@@ -50,7 +55,12 @@ public class SecurityConfig {
                                 "/error",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
+                                "/images/**",
+                                // Swagger UI
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs"        // ← 加這行，不帶 **
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
