@@ -3,6 +3,7 @@ package com.example.novaledger.auth.jwt;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 
@@ -56,5 +57,11 @@ class JwtTokenProviderTest {
         String token = jwtTokenProvider.generateAccessToken(1L, 10L, List.of("ROLE_USER"));
         String tampered = token + "tampered";
         assertThat(jwtTokenProvider.validateToken(tampered)).isFalse();
+    }
+
+    @Test
+    void generateBCryptPasswordEncoder(){
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        System.out.println(encoder.encode("password123"));
     }
 }

@@ -19,18 +19,17 @@ public class TenantInterceptor implements HandlerInterceptor {
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/index",
             "/login",
+            "/test/",
             "/register",
-            "/api/auth/register",
-            "/api/auth/login",
-            "/auth/login",
+            "/api/auth/",        // ← 改這行
             "/css/",
             "/js/",
             "/images/",
             "/fonts/",
             "/favicon.ico",
             "/error",
-            "/swagger-ui",      // ← 加這行
-            "/v3/api-docs"      // ← 加這行
+            "/swagger-ui",
+            "/v3/api-docs"
     );
 
     private static final String TENANT_HEADER = "X-Tenant-Id";

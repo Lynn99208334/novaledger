@@ -1,8 +1,7 @@
 package com.example.novaledger.config;
 
-import com.example.novaledger.adapter.cache.RedisCacheAdapter;
-import com.example.novaledger.security.JwtAuthenticationFilter;
-import com.example.novaledger.util.JwtUtil;
+import com.example.novaledger.auth.jwt.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,76 +9,41 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(
-            RedisCacheAdapter redisCacheAdapter,
-            JwtUtil jwtUtil
-    ) {
-        return new JwtAuthenticationFilter(redisCacheAdapter, jwtUtil);
-    }
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    private static final String[] PUBLIC_PATHS = {
+            "/health",
+            "/info",
+            "/api/auth/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs",
+            "/v3/api-docs/**"
+    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        System.out.println("==== SecurityConfig loaded ===="); // ← 加這行
-
         http
                 .csrf(csrf -> csrf.disable())
-
-                // ✅ 表單登入要用 SESSION（先不要 JWT）
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                // ✅ 關掉 httpBasic
-                // ❌ .httpBasic()
-
-//                .authorizeHttpRequests(auth -> auth
-//                        .anyRequest().permitAll()  // 暫時全開
-//                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/health",
-                                "/info",
-                                "/login",
-                                "/register",
-                                "/api/auth/verify-email",
-                                "/api/auth/resend-verification",
-                                "/api/debug/**",
-                                "/error",
-                                "/css/**",
-                                "/js/**",
-                                "/images/**",
-                                // Swagger UI
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs",
-                                "/api/auth/register",
-                                "/api/auth/login"
-                        ).permitAll()
+                        .requestMatchers(PUBLIC_PATHS).permitAll()
                         .anyRequest().authenticated()
                 )
-
-                // ✅ 啟用表單登入
-                .formLogin(form -> form
-                        .loginPage("/login")              // GET → login.html
-                        .loginProcessingUrl("/login")    // POST → Spring Security
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error")
-                        .permitAll()
-                )
-
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
-                );
+                .addFilterBefore(jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -88,5 +52,10 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

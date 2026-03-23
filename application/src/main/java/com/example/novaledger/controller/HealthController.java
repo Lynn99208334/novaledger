@@ -10,7 +10,6 @@ public class HealthController {
 
     @GetMapping("/health")
     public Map<String, String> health() {
-        System.out.println(">>> HealthController HIT");
         return Map.of("status", "UP");
     }
 }

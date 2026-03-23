@@ -40,6 +40,7 @@ public enum ErrorCode {
     ACCOUNT_NOT_ACTIVE("AUTH_021", "Account Not Active", 403),
 
     LOGIN_FAILED("AUTH_030", "Login Failed", 401),
+    PASSWORD_INCORRECT("AUTH_032", "Password Incorrect", 401),
     LOGOUT_FAILED("AUTH_031", "Logout Failed", 400);
 
     private final String code;
