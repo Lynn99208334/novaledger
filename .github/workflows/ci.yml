@@ -16,11 +16,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ 取得原始碼
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # 2️⃣ 設定 Java（符合你 Spring Boot 專案）
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -28,8 +26,7 @@ jobs:
           java-version: 17
           cache: maven
 
-      # 3️⃣ 使用 test profile 執行測試
       - name: Run tests with test profile
         env:
           SPRING_PROFILES_ACTIVE: test
-        run: mvn -B clean test
+        run: mvn -B clean test -Dskip.npm=true
