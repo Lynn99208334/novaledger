@@ -6,7 +6,7 @@
 
 SET NAMES utf8mb4;SET FOREIGN_KEY_CHECKS = 0;
 
-CREATE TABLE USERS (
+CREATE TABLE users (
     ID                        BIGINT       AUTO_INCREMENT PRIMARY KEY,
     USERNAME                  VARCHAR(100) NOT NULL,
     EMAIL                     VARCHAR(255) NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE USERS (
     INDEX idx_email_verify_token (EMAIL_VERIFY_TOKEN)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE TENANTS (
+CREATE TABLE tenants (
     ID            BIGINT       AUTO_INCREMENT PRIMARY KEY,
     CODE          VARCHAR(100) NOT NULL,
     NAME          VARCHAR(255) NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE TENANTS (
     INDEX idx_deleted_at (DELETED_AT),
     CONSTRAINT fk_tenant_owner
         FOREIGN KEY (OWNER_USER_ID)
-            REFERENCES USERS(ID)
+            REFERENCES users(ID)
             ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

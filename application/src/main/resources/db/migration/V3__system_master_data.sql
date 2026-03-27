@@ -16,7 +16,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 --   不支援軟刪除，以 IS_ACTIVE 控制
 -- ========================================
 
-CREATE TABLE CURRENCIES (
+CREATE TABLE currencies (
     -- PK
                             CODE           CHAR(3)     NOT NULL,                     -- ISO 4217 幣別代碼，如 TWD / USD
 
@@ -39,7 +39,7 @@ CREATE TABLE CURRENCIES (
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO CURRENCIES (CODE, NAME, SYMBOL, DECIMAL_PLACES, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
+INSERT INTO currencies (CODE, NAME, SYMBOL, DECIMAL_PLACES, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
                                                                                                    ('TWD', '新台幣', 'NT$', 0, TRUE, NOW(), NOW()),
                                                                                                    ('USD', '美元',   '$',   2, TRUE, NOW(), NOW()),
                                                                                                    ('JPY', '日圓',   '¥',   0, TRUE, NOW(), NOW()),
@@ -56,7 +56,7 @@ INSERT INTO CURRENCIES (CODE, NAME, SYMBOL, DECIMAL_PLACES, IS_ACTIVE, CREATED_A
 --   IS_ACTIVE 控制是否可使用
 -- ========================================
 
-CREATE TABLE INVESTMENT_TYPES (
+CREATE TABLE investment_types (
     -- PK
                                   ID          BIGINT       AUTO_INCREMENT PRIMARY KEY,     -- 主鍵
 
@@ -81,7 +81,7 @@ CREATE TABLE INVESTMENT_TYPES (
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO INVESTMENT_TYPES (CODE, NAME, DESCRIPTION, IS_SYSTEM, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
+INSERT INTO investment_types (CODE, NAME, DESCRIPTION, IS_SYSTEM, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
                                                                                                          ('BANK_ACCOUNT', '銀行帳戶', '一般銀行存款帳戶', TRUE, TRUE, NOW(), NOW()),
                                                                                                          ('CASH',         '現金',     '現金資產',         TRUE, TRUE, NOW(), NOW()),
                                                                                                          ('STOCK',        '股票',     '上市股票投資',     TRUE, TRUE, NOW(), NOW()),
@@ -101,7 +101,7 @@ INSERT INTO INVESTMENT_TYPES (CODE, NAME, DESCRIPTION, IS_SYSTEM, IS_ACTIVE, CRE
 --   IS_TRANSFER / IS_ACTIVE 為常見查詢條件，各自加 INDEX
 -- ========================================
 
-CREATE TABLE TRANSACTION_TYPES (
+CREATE TABLE transaction_types (
     -- PK
                                    CODE         VARCHAR(30)  NOT NULL,                      -- 交易類型代碼，如 EXPENSE
 
@@ -130,7 +130,7 @@ CREATE TABLE TRANSACTION_TYPES (
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO TRANSACTION_TYPES (CODE, NAME, AMOUNT_SIGN, IS_TRANSFER, AFFECT_ASSET, DESCRIPTION, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
+INSERT INTO transaction_types (CODE, NAME, AMOUNT_SIGN, IS_TRANSFER, AFFECT_ASSET, DESCRIPTION, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
                                                                                                                                        ('INCOME',       '收入', 1,  FALSE, TRUE,  '一般收入，如薪資、獎金',   TRUE, NOW(), NOW()),
                                                                                                                                        ('EXPENSE',      '支出', -1, FALSE, TRUE,  '一般支出，如消費、帳單',   TRUE, NOW(), NOW()),
                                                                                                                                        ('TRANSFER_OUT', '轉出', -1, TRUE,  FALSE, '帳戶轉出',                 TRUE, NOW(), NOW()),
@@ -146,7 +146,7 @@ INSERT INTO TRANSACTION_TYPES (CODE, NAME, AMOUNT_SIGN, IS_TRANSFER, AFFECT_ASSE
 --   BANK_BRANCHES 透過 BANK_CODE 做 FK，JOIN 直覺
 -- ========================================
 
-CREATE TABLE BANKS (
+CREATE TABLE banks (
     -- PK
                        BANK_CODE  VARCHAR(10)  NOT NULL,                        -- 銀行識別碼，如 004
 
@@ -170,7 +170,7 @@ CREATE TABLE BANKS (
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO BANKS (BANK_CODE, NAME, SHORT_NAME, COUNTRY, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
+INSERT INTO banks (BANK_CODE, NAME, SHORT_NAME, COUNTRY, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
                                                                                                 ('004', '臺灣銀行',             '台銀',     'TW', TRUE, NOW(), NOW()),
                                                                                                 ('005', '土地銀行',             '土銀',     'TW', TRUE, NOW(), NOW()),
                                                                                                 ('006', '合作金庫商業銀行',     '合庫',     'TW', TRUE, NOW(), NOW()),
@@ -205,7 +205,7 @@ INSERT INTO BANKS (BANK_CODE, NAME, SHORT_NAME, COUNTRY, IS_ACTIVE, CREATED_AT, 
 --   分行不可獨立存在，銀行刪除時分行一併刪除
 -- ========================================
 
-CREATE TABLE BANK_BRANCHES (
+CREATE TABLE bank_branches (
     -- PK
                                ID          BIGINT       AUTO_INCREMENT PRIMARY KEY,     -- 主鍵
 
@@ -235,7 +235,7 @@ CREATE TABLE BANK_BRANCHES (
     -- FK
                                CONSTRAINT fk_branch_bank
                                    FOREIGN KEY (BANK_CODE)
-                                       REFERENCES BANKS(BANK_CODE)
+                                       REFERENCES banks(BANK_CODE)
                                        ON DELETE CASCADE                                -- 銀行刪除時分行一併刪除
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

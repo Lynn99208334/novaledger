@@ -18,7 +18,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 --   複合 FK (TENANT_ID, CATEGORY_ID) MySQL 不支援，拆成獨立 FK
 -- ========================================
 
-CREATE TABLE USER_BUDGETS (
+CREATE TABLE user_budgets (
     -- PK
                               ID            BIGINT         AUTO_INCREMENT PRIMARY KEY,   -- 主鍵
 
@@ -54,17 +54,17 @@ CREATE TABLE USER_BUDGETS (
     -- FK
                               CONSTRAINT fk_bud_tenant
                                   FOREIGN KEY (TENANT_ID)
-                                      REFERENCES TENANTS(ID)
+                                      REFERENCES tenants(ID)
                                       ON DELETE CASCADE,
 
                               CONSTRAINT fk_bud_user
                                   FOREIGN KEY (USER_ID)
-                                      REFERENCES USERS(ID)
+                                      REFERENCES users(ID)
                                       ON DELETE CASCADE,
 
                               CONSTRAINT fk_bud_category
                                   FOREIGN KEY (CATEGORY_ID)
-                                      REFERENCES CATEGORIES(ID)
+                                      REFERENCES categories(ID)
                                       ON DELETE SET NULL            -- 分類刪除時預算保留，分類欄位設 NULL
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -82,7 +82,7 @@ CREATE TABLE USER_BUDGETS (
 --   複合 FK (TENANT_ID, CATEGORY_ID) MySQL 不支援，拆成獨立 FK
 -- ========================================
 
-CREATE TABLE RECURRING_TRANSACTIONS (
+CREATE TABLE recurring_transactions (
     -- PK
                                         ID             BIGINT         AUTO_INCREMENT PRIMARY KEY,  -- 主鍵
 
@@ -132,27 +132,27 @@ CREATE TABLE RECURRING_TRANSACTIONS (
     -- FK
                                         CONSTRAINT fk_rec_tenant
                                             FOREIGN KEY (TENANT_ID)
-                                                REFERENCES TENANTS(ID)
+                                                REFERENCES tenants(ID)
                                                 ON DELETE CASCADE,
 
                                         CONSTRAINT fk_rec_user
                                             FOREIGN KEY (USER_ID)
-                                                REFERENCES USERS(ID)
+                                                REFERENCES users(ID)
                                                 ON DELETE RESTRICT,           -- 使用者刪除時不可連帶刪除模板
 
                                         CONSTRAINT fk_rec_account
                                             FOREIGN KEY (ACCOUNT_ID)
-                                                REFERENCES USER_ACCOUNTS(ID)
+                                                REFERENCES user_accounts(ID)
                                                 ON DELETE CASCADE,            -- 帳戶刪除時週期模板一併刪除
 
                                         CONSTRAINT fk_rec_credit_card
                                             FOREIGN KEY (CREDIT_CARD_ID)
-                                                REFERENCES USER_CREDIT_CARDS(ID)
+                                                REFERENCES user_credit_cards(ID)
                                                 ON DELETE CASCADE,            -- 信用卡刪除時週期模板一併刪除
 
                                         CONSTRAINT fk_rec_category
                                             FOREIGN KEY (CATEGORY_ID)
-                                                REFERENCES CATEGORIES(ID)
+                                                REFERENCES categories(ID)
                                                 ON DELETE SET NULL            -- 分類刪除時模板保留，分類欄位設 NULL
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -19,7 +19,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 --   DELETED_AT 保險用，不作主要查詢條件，單獨 INDEX
 -- ========================================
 
-CREATE TABLE REPORT_DEFINITIONS (
+CREATE TABLE report_definitions (
     -- PK
                                     ID          BIGINT       AUTO_INCREMENT PRIMARY KEY,       -- 主鍵
 
@@ -53,13 +53,13 @@ CREATE TABLE REPORT_DEFINITIONS (
     -- FK
                                     CONSTRAINT fk_rd_tenant
                                         FOREIGN KEY (TENANT_ID)
-                                            REFERENCES TENANTS(ID)
+                                            REFERENCES tenants(ID)
                                             ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Seed：系統預設報表
-INSERT INTO REPORT_DEFINITIONS
+INSERT INTO report_definitions
 (TENANT_ID, REPORT_CODE, REPORT_NAME, REPORT_TYPE, TIME_GRAIN, IS_ACTIVE, CREATED_AT, UPDATED_AT)
 VALUES
     (NULL, 'MONTHLY_CASHFLOW',    '月度收支報表',   'CASHFLOW', 'MONTH', TRUE, NOW(), NOW()),
@@ -80,7 +80,7 @@ VALUES
 --   idx_rr_latest   → 快速取得最新一次結果
 -- ========================================
 
-CREATE TABLE REPORT_RESULTS (
+CREATE TABLE report_results (
     -- PK
                                 ID           BIGINT         AUTO_INCREMENT PRIMARY KEY,    -- 主鍵
 
@@ -106,12 +106,12 @@ CREATE TABLE REPORT_RESULTS (
     -- FK
                                 CONSTRAINT fk_rr_tenant
                                     FOREIGN KEY (TENANT_ID)
-                                        REFERENCES TENANTS(ID)
+                                        REFERENCES tenants(ID)
                                         ON DELETE CASCADE,
 
                                 CONSTRAINT fk_rr_report
                                     FOREIGN KEY (REPORT_ID)
-                                        REFERENCES REPORT_DEFINITIONS(ID)
+                                        REFERENCES report_definitions(ID)
                                         ON DELETE CASCADE             -- 報表定義刪除時，結果一併刪除
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -127,7 +127,7 @@ CREATE TABLE REPORT_RESULTS (
 --   idx_st_last_run → 排程監控查詢（檢查長時間未執行的任務）
 -- ========================================
 
-CREATE TABLE SCHEDULED_TASKS (
+CREATE TABLE scheduled_tasks (
     -- PK
                                  ID          BIGINT       AUTO_INCREMENT PRIMARY KEY,       -- 主鍵
 
@@ -153,7 +153,7 @@ CREATE TABLE SCHEDULED_TASKS (
     -- FK
                                  CONSTRAINT fk_st_tenant
                                      FOREIGN KEY (TENANT_ID)
-                                         REFERENCES TENANTS(ID)
+                                         REFERENCES tenants(ID)
                                          ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,0 +1,36 @@
+name: novaledger
+services:
+  db:
+    image: mysql:8.0
+    container_name: novaledger-db
+    command: --lower_case_table_names=1
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: fin_core
+    ports:
+      - "3307:3306"
+    volumes:
+      - novaledger-db-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: novaledger-app
+    ports:
+      - "8111:8111"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/fin_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Taipei&characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${DB_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      DB_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  novaledger-db-data:

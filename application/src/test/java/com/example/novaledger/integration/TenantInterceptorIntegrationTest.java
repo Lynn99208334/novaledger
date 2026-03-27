@@ -1,5 +1,6 @@
 package com.example.novaledger.integration;
 
+import com.example.novaledger.auth.jwt.JwtTokenProvider;
 import com.example.novaledger.common.tenant.TenantContext;
 import com.example.novaledger.common.tenant.TenantInterceptor;
 import com.example.novaledger.config.WebMvcConfig;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -37,6 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TenantInterceptorIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    JwtTokenProvider jwtTokenProvider;
 
     /**
      * 這一段是整個測試的「封印」

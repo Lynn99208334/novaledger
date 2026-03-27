@@ -7,7 +7,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-CREATE TABLE PERMISSIONS (
+CREATE TABLE permissions (
      ID          BIGINT       AUTO_INCREMENT PRIMARY KEY,
      CODE        VARCHAR(150) NOT NULL,
      NAME        VARCHAR(150) NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE PERMISSIONS (
      INDEX idx_permission_resource  (RESOURCE)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE ROLES (
+CREATE TABLE roles (
     ID             BIGINT       AUTO_INCREMENT PRIMARY KEY,
     CODE           VARCHAR(100) NOT NULL,
     NAME           VARCHAR(100) NOT NULL,
@@ -37,17 +37,17 @@ CREATE TABLE ROLES (
     INDEX idx_role_system           (IS_SYSTEM_ROLE),
     CONSTRAINT fk_role_tenant
         FOREIGN KEY (TENANT_ID)
-            REFERENCES TENANTS(ID)
+            REFERENCES tenants(ID)
             ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO ROLES (CODE, NAME, DESCRIPTION, TENANT_ID, IS_SYSTEM_ROLE, CREATED_AT, UPDATED_AT)
+INSERT INTO roles (CODE, NAME, DESCRIPTION, TENANT_ID, IS_SYSTEM_ROLE, CREATED_AT, UPDATED_AT)
 VALUES
     ('OWNER',  '擁有者', '租戶擁有者，具所有操作權限',   NULL, TRUE, NOW(), NOW()),
     ('ADMIN',  '管理員', '租戶管理員，可管理成員與設定', NULL, TRUE, NOW(), NOW()),
     ('MEMBER', '成員',   '一般成員，可記帳與查看',       NULL, TRUE, NOW(), NOW());
 
-CREATE TABLE ROLE_PERMISSIONS (
+CREATE TABLE role_permissions (
     ROLE_ID       BIGINT   NOT NULL,
     PERMISSION_ID BIGINT   NOT NULL,
     CREATED_AT    DATETIME NOT NULL,
@@ -55,15 +55,15 @@ CREATE TABLE ROLE_PERMISSIONS (
     INDEX idx_permission_role  (PERMISSION_ID),
     CONSTRAINT fk_role_permissions_role
         FOREIGN KEY (ROLE_ID)
-            REFERENCES ROLES(ID)
+            REFERENCES roles(ID)
             ON DELETE CASCADE,
     CONSTRAINT fk_role_permissions_permission
         FOREIGN KEY (PERMISSION_ID)
-            REFERENCES PERMISSIONS(ID)
+            REFERENCES permissions(ID)
             ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE USER_TENANTS (
+CREATE TABLE user_tenants (
     ID                 BIGINT      AUTO_INCREMENT PRIMARY KEY,
     USER_ID            BIGINT      NOT NULL,
     TENANT_ID          BIGINT      NOT NULL,
@@ -81,15 +81,15 @@ CREATE TABLE USER_TENANTS (
     INDEX idx_tenant_role             (TENANT_ID, ROLE_ID),
     CONSTRAINT fk_user_tenants_user
         FOREIGN KEY (USER_ID)
-            REFERENCES USERS(ID)
+            REFERENCES users(ID)
             ON DELETE CASCADE,
     CONSTRAINT fk_user_tenants_tenant
         FOREIGN KEY (TENANT_ID)
-            REFERENCES TENANTS(ID)
+            REFERENCES tenants(ID)
             ON DELETE CASCADE,
     CONSTRAINT fk_user_tenants_role
         FOREIGN KEY (ROLE_ID)
-            REFERENCES ROLES(ID)
+            REFERENCES roles(ID)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

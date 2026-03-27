@@ -18,7 +18,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 --   idx_tenant_active_tag → 查詢啟用中標籤主路徑
 -- ========================================
 
-CREATE TABLE USER_TAGS (
+CREATE TABLE user_tags (
     -- PK
                            ID         BIGINT      AUTO_INCREMENT PRIMARY KEY,       -- 主鍵
 
@@ -49,12 +49,12 @@ CREATE TABLE USER_TAGS (
     -- FK
                            CONSTRAINT fk_tags_tenant
                                FOREIGN KEY (TENANT_ID)
-                                   REFERENCES TENANTS(ID)
+                                   REFERENCES tenants(ID)
                                    ON DELETE CASCADE,
 
                            CONSTRAINT fk_tags_user
                                FOREIGN KEY (USER_ID)
-                                   REFERENCES USERS(ID)
+                                   REFERENCES users(ID)
                                    ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -72,7 +72,7 @@ CREATE TABLE USER_TAGS (
 --   idx_tx_cc_date        → 信用卡交易 + 日期範圍查詢
 -- ========================================
 
-CREATE TABLE TRANSACTIONS (
+CREATE TABLE transactions (
     -- PK
                               ID               BIGINT         AUTO_INCREMENT PRIMARY KEY,  -- 主鍵
 
@@ -113,32 +113,32 @@ CREATE TABLE TRANSACTIONS (
     -- FK
                               CONSTRAINT fk_tx_tenant
                                   FOREIGN KEY (TENANT_ID)
-                                      REFERENCES TENANTS(ID)
+                                      REFERENCES tenants(ID)
                                       ON DELETE CASCADE,
 
                               CONSTRAINT fk_tx_user
                                   FOREIGN KEY (USER_ID)
-                                      REFERENCES USERS(ID)
+                                      REFERENCES users(ID)
                                       ON DELETE RESTRICT,           -- 使用者刪除時不可連帶刪除交易記錄
 
                               CONSTRAINT fk_tx_account
                                   FOREIGN KEY (ACCOUNT_ID)
-                                      REFERENCES USER_ACCOUNTS(ID)
+                                      REFERENCES user_accounts(ID)
                                       ON DELETE RESTRICT,           -- 帳戶有交易時不可刪除
 
                               CONSTRAINT fk_tx_credit_card
                                   FOREIGN KEY (CREDIT_CARD_ID)
-                                      REFERENCES USER_CREDIT_CARDS(ID)
+                                      REFERENCES user_credit_cards(ID)
                                       ON DELETE RESTRICT,           -- 信用卡有交易時不可刪除
 
                               CONSTRAINT fk_tx_type
                                   FOREIGN KEY (TX_TYPE_CODE)
-                                      REFERENCES TRANSACTION_TYPES(CODE)
+                                      REFERENCES transaction_types(CODE)
                                       ON DELETE RESTRICT,
 
                               CONSTRAINT fk_tx_currency
                                   FOREIGN KEY (CURRENCY_CODE)
-                                      REFERENCES CURRENCIES(CODE)
+                                      REFERENCES currencies(CODE)
                                       ON DELETE RESTRICT
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -155,7 +155,7 @@ CREATE TABLE TRANSACTIONS (
 --   idx_category    → 查詢分類下所有明細（報表用）
 -- ========================================
 
-CREATE TABLE TRANSACTION_ITEMS (
+CREATE TABLE transaction_items (
     -- PK
                                    ID             BIGINT         AUTO_INCREMENT PRIMARY KEY,  -- 主鍵
 
@@ -182,17 +182,17 @@ CREATE TABLE TRANSACTION_ITEMS (
     -- FK
                                    CONSTRAINT fk_ti_tenant
                                        FOREIGN KEY (TENANT_ID)
-                                           REFERENCES TENANTS(ID)
+                                           REFERENCES tenants(ID)
                                            ON DELETE CASCADE,
 
                                    CONSTRAINT fk_ti_transaction
                                        FOREIGN KEY (TRANSACTION_ID)
-                                           REFERENCES TRANSACTIONS(ID)
+                                           REFERENCES transactions(ID)
                                            ON DELETE CASCADE,            -- 交易刪除時明細一併刪除
 
                                    CONSTRAINT fk_ti_category
                                        FOREIGN KEY (CATEGORY_ID)
-                                           REFERENCES CATEGORIES(ID)
+                                           REFERENCES categories(ID)
                                            ON DELETE SET NULL            -- 分類刪除時明細保留，分類欄位設 NULL
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -210,7 +210,7 @@ CREATE TABLE TRANSACTION_ITEMS (
 --   idx_tag_lookup → 支援標籤反查交易
 -- ========================================
 
-CREATE TABLE TRANSACTION_TAGS (
+CREATE TABLE transaction_tags (
     -- PK
                                   ID             BIGINT   AUTO_INCREMENT PRIMARY KEY,        -- 主鍵
 
@@ -228,17 +228,17 @@ CREATE TABLE TRANSACTION_TAGS (
     -- FK
                                   CONSTRAINT fk_ttag_tenant
                                       FOREIGN KEY (TENANT_ID)
-                                          REFERENCES TENANTS(ID)
+                                          REFERENCES tenants(ID)
                                           ON DELETE CASCADE,
 
                                   CONSTRAINT fk_ttag_transaction
                                       FOREIGN KEY (TRANSACTION_ID)
-                                          REFERENCES TRANSACTIONS(ID)
+                                          REFERENCES transactions(ID)
                                           ON DELETE CASCADE,            -- 交易刪除時標籤關聯一併刪除
 
                                   CONSTRAINT fk_ttag_tag
                                       FOREIGN KEY (TAG_ID)
-                                          REFERENCES USER_TAGS(ID)
+                                          REFERENCES user_tags(ID)
                                           ON DELETE CASCADE             -- 標籤刪除時關聯一併刪除
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

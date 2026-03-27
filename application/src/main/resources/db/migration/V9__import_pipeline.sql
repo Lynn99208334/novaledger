@@ -19,7 +19,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 --   idx_upload_jobs_status → 查詢租戶任務狀態主路徑
 -- ========================================
 
-CREATE TABLE UPLOAD_JOBS (
+CREATE TABLE upload_jobs (
     -- PK
                              ID            BIGINT      AUTO_INCREMENT PRIMARY KEY,      -- 任務主鍵
 
@@ -47,12 +47,12 @@ CREATE TABLE UPLOAD_JOBS (
     -- FK
                              CONSTRAINT fk_uj_tenant
                                  FOREIGN KEY (TENANT_ID)
-                                     REFERENCES TENANTS(ID)
+                                     REFERENCES tenants(ID)
                                      ON DELETE CASCADE,
 
                              CONSTRAINT fk_uj_created_by
                                  FOREIGN KEY (CREATED_BY)
-                                     REFERENCES USERS(ID)
+                                     REFERENCES users(ID)
                                      ON DELETE RESTRICT            -- 使用者刪除時不可連帶刪除任務記錄
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -70,7 +70,7 @@ CREATE TABLE UPLOAD_JOBS (
 --   idx_upload_files_job → 查詢任務下所有檔案
 -- ========================================
 
-CREATE TABLE UPLOAD_FILES (
+CREATE TABLE upload_files (
     -- PK
                               ID                BIGINT       AUTO_INCREMENT PRIMARY KEY, -- 檔案主鍵
 
@@ -96,12 +96,12 @@ CREATE TABLE UPLOAD_FILES (
     -- FK
                               CONSTRAINT fk_uf_tenant
                                   FOREIGN KEY (TENANT_ID)
-                                      REFERENCES TENANTS(ID)
+                                      REFERENCES tenants(ID)
                                       ON DELETE CASCADE,
 
                               CONSTRAINT fk_uf_job
                                   FOREIGN KEY (UPLOAD_JOB_ID)
-                                      REFERENCES UPLOAD_JOBS(ID)
+                                      REFERENCES upload_jobs(ID)
                                       ON DELETE CASCADE             -- 任務刪除時檔案記錄一併刪除
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -117,7 +117,7 @@ CREATE TABLE UPLOAD_FILES (
 --   idx_parsed_records_job_status → 查詢任務解析結果主路徑
 -- ========================================
 
-CREATE TABLE PARSED_RECORDS (
+CREATE TABLE parsed_records (
     -- PK
                                 ID             BIGINT      AUTO_INCREMENT PRIMARY KEY,     -- 主鍵
 
@@ -142,17 +142,17 @@ CREATE TABLE PARSED_RECORDS (
     -- FK
                                 CONSTRAINT fk_pr_tenant
                                     FOREIGN KEY (TENANT_ID)
-                                        REFERENCES TENANTS(ID)
+                                        REFERENCES tenants(ID)
                                         ON DELETE CASCADE,
 
                                 CONSTRAINT fk_pr_job
                                     FOREIGN KEY (UPLOAD_JOB_ID)
-                                        REFERENCES UPLOAD_JOBS(ID)
+                                        REFERENCES upload_jobs(ID)
                                         ON DELETE CASCADE,
 
                                 CONSTRAINT fk_pr_file
                                     FOREIGN KEY (UPLOAD_FILE_ID)
-                                        REFERENCES UPLOAD_FILES(ID)
+                                        REFERENCES upload_files(ID)
                                         ON DELETE CASCADE             -- 檔案刪除時解析記錄一併刪除
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -169,7 +169,7 @@ CREATE TABLE PARSED_RECORDS (
 --   idx_import_logs_level_time → 按日誌等級 + 時間查詢（後台監控用）
 -- ========================================
 
-CREATE TABLE IMPORT_LOGS (
+CREATE TABLE import_logs (
     -- PK
                              ID            BIGINT      AUTO_INCREMENT PRIMARY KEY,      -- 日誌主鍵
 
@@ -192,17 +192,17 @@ CREATE TABLE IMPORT_LOGS (
     -- FK
                              CONSTRAINT fk_il_tenant
                                  FOREIGN KEY (TENANT_ID)
-                                     REFERENCES TENANTS(ID)
+                                     REFERENCES tenants(ID)
                                      ON DELETE CASCADE,
 
                              CONSTRAINT fk_il_job
                                  FOREIGN KEY (UPLOAD_JOB_ID)
-                                     REFERENCES UPLOAD_JOBS(ID)
+                                     REFERENCES upload_jobs(ID)
                                      ON DELETE CASCADE,
 
                              CONSTRAINT fk_il_record
                                  FOREIGN KEY (RECORD_ID)
-                                     REFERENCES PARSED_RECORDS(ID)
+                                     REFERENCES parsed_records(ID)
                                      ON DELETE SET NULL            -- 解析記錄刪除時，日誌保留但 RECORD_ID 設 NULL
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

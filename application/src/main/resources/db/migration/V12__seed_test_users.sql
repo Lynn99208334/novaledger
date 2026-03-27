@@ -15,7 +15,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- 測試使用者
 -- ========================================
 
-INSERT INTO USERS (
+INSERT INTO users (
     USERNAME, EMAIL, PASSWORD,
     ENABLED, STATUS, EMAIL_VERIFIED, VERIFIED_AT,
     EMAIL_VERIFY_TOKEN, EMAIL_VERIFY_EXPIRED_AT, EMAIL_VERIFY_LAST_SENT_AT,
@@ -57,7 +57,7 @@ INSERT INTO USERS (
 -- 測試租戶（個人帳本）
 -- ========================================
 
-INSERT INTO TENANTS (
+INSERT INTO tenants (
     CODE, NAME, TYPE, PLAN,
     OWNER_USER_ID, STATUS,
     CREATED_AT, UPDATED_AT, DELETED_AT
@@ -67,7 +67,7 @@ INSERT INTO TENANTS (
     'alice-personal',
     'Alice 的個人帳本',
     'PERSONAL', 'FREE',
-    (SELECT ID FROM USERS WHERE USERNAME = 'alice'),
+    (SELECT ID FROM users WHERE USERNAME = 'alice'),
     'ACTIVE',
     NOW(), NOW(), NULL
 ),
@@ -76,7 +76,7 @@ INSERT INTO TENANTS (
     'bob-personal',
     'Bob 的個人帳本',
     'PERSONAL', 'FREE',
-    (SELECT ID FROM USERS WHERE USERNAME = 'bob'),
+    (SELECT ID FROM users WHERE USERNAME = 'bob'),
     'ACTIVE',
     NOW(), NOW(), NULL
 );

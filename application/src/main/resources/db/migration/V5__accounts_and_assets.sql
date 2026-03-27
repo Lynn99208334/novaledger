@@ -20,7 +20,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 --   idx_tenant_type_active → 查詢租戶有效收入/支出類別主路徑
 -- ========================================
 
-CREATE TABLE CATEGORIES (
+CREATE TABLE categories (
     -- PK
                             ID                 BIGINT      AUTO_INCREMENT PRIMARY KEY,   -- 類別主鍵
 
@@ -61,12 +61,12 @@ CREATE TABLE CATEGORIES (
     -- FK
                             CONSTRAINT fk_categories_tenant
                                 FOREIGN KEY (TENANT_ID)
-                                    REFERENCES TENANTS(ID)
+                                    REFERENCES tenants(ID)
                                     ON DELETE CASCADE,
 
                             CONSTRAINT fk_categories_parent
                                 FOREIGN KEY (PARENT_ID)
-                                    REFERENCES CATEGORIES(ID)
+                                    REFERENCES categories(ID)
                                     ON DELETE SET NULL            -- 父類別刪除時，子類別提升為頂層
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -81,7 +81,7 @@ CREATE TABLE CATEGORIES (
 --   idx_ip_tenant_active → 查詢可用投資產品主路徑
 -- ========================================
 
-CREATE TABLE INVESTMENT_PRODUCTS (
+CREATE TABLE investment_products (
     -- PK
                                      ID         BIGINT       AUTO_INCREMENT PRIMARY KEY,      -- 產品主鍵
 
@@ -111,12 +111,12 @@ CREATE TABLE INVESTMENT_PRODUCTS (
     -- FK
                                      CONSTRAINT fk_ip_tenant
                                          FOREIGN KEY (TENANT_ID)
-                                             REFERENCES TENANTS(ID)
+                                             REFERENCES tenants(ID)
                                              ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO INVESTMENT_PRODUCTS (TENANT_ID, CODE, NAME, TYPE, DESCRIPTION, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
+INSERT INTO investment_products (TENANT_ID, CODE, NAME, TYPE, DESCRIPTION, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
                                                                                                                   (NULL, 'STOCK_TW',   '台股',     '股票',     '台灣上市上櫃股票',     TRUE, NOW(), NOW()),
                                                                                                                   (NULL, 'STOCK_US',   '美股',     '股票',     '美國上市股票',         TRUE, NOW(), NOW()),
                                                                                                                   (NULL, 'ETF_TW',     '台灣 ETF', 'ETF',      '台灣指數股票型基金',   TRUE, NOW(), NOW()),
@@ -139,7 +139,7 @@ INSERT INTO INVESTMENT_PRODUCTS (TENANT_ID, CODE, NAME, TYPE, DESCRIPTION, IS_AC
 --   idx_tenant_user_active → 查詢使用者有效帳戶主路徑
 -- ========================================
 
-CREATE TABLE USER_ACCOUNTS (
+CREATE TABLE user_accounts (
     -- PK
                                ID              BIGINT         AUTO_INCREMENT PRIMARY KEY,  -- 主鍵
 
@@ -180,27 +180,27 @@ CREATE TABLE USER_ACCOUNTS (
     -- FK
                                CONSTRAINT fk_accounts_tenant
                                    FOREIGN KEY (TENANT_ID)
-                                       REFERENCES TENANTS(ID)
+                                       REFERENCES tenants(ID)
                                        ON DELETE CASCADE,
 
                                CONSTRAINT fk_accounts_user
                                    FOREIGN KEY (USER_ID)
-                                       REFERENCES USERS(ID)
+                                       REFERENCES users(ID)
                                        ON DELETE CASCADE,
 
                                CONSTRAINT fk_accounts_bank
                                    FOREIGN KEY (BANK_CODE)
-                                       REFERENCES BANKS(BANK_CODE)
+                                       REFERENCES banks(BANK_CODE)
                                        ON DELETE RESTRICT,           -- 銀行有帳戶時不可刪除
 
                                CONSTRAINT fk_accounts_branch
                                    FOREIGN KEY (BRANCH_ID)
-                                       REFERENCES BANK_BRANCHES(ID)
+                                       REFERENCES bank_branches(ID)
                                        ON DELETE SET NULL,           -- 分行關閉時帳戶保留，分行資訊清空
 
                                CONSTRAINT fk_accounts_currency
                                    FOREIGN KEY (CURRENCY_CODE)
-                                       REFERENCES CURRENCIES(CODE)
+                                       REFERENCES currencies(CODE)
                                        ON DELETE RESTRICT
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -216,7 +216,7 @@ CREATE TABLE USER_ACCOUNTS (
 --   idx_tenant_user_active → 查詢使用者有效信用卡主路徑
 -- ========================================
 
-CREATE TABLE USER_CREDIT_CARDS (
+CREATE TABLE user_credit_cards (
     -- PK
                                    ID                BIGINT         AUTO_INCREMENT PRIMARY KEY,  -- 主鍵
 
@@ -261,22 +261,22 @@ CREATE TABLE USER_CREDIT_CARDS (
     -- FK
                                    CONSTRAINT fk_cc_tenant
                                        FOREIGN KEY (TENANT_ID)
-                                           REFERENCES TENANTS(ID)
+                                           REFERENCES tenants(ID)
                                            ON DELETE CASCADE,
 
                                    CONSTRAINT fk_cc_user
                                        FOREIGN KEY (USER_ID)
-                                           REFERENCES USERS(ID)
+                                           REFERENCES users(ID)
                                            ON DELETE CASCADE,
 
                                    CONSTRAINT fk_cc_bank
                                        FOREIGN KEY (BANK_CODE)
-                                           REFERENCES BANKS(BANK_CODE)
+                                           REFERENCES banks(BANK_CODE)
                                            ON DELETE RESTRICT,           -- 銀行有信用卡時不可刪除
 
                                    CONSTRAINT fk_cc_currency
                                        FOREIGN KEY (CURRENCY_CODE)
-                                           REFERENCES CURRENCIES(CODE)
+                                           REFERENCES currencies(CODE)
                                            ON DELETE RESTRICT
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

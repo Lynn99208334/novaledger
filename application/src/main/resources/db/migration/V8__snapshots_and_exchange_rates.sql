@@ -17,7 +17,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 --   idx_ab_account_history → 查詢帳戶歷史餘額趨勢
 -- ========================================
 
-CREATE TABLE ACCOUNT_BALANCES (
+CREATE TABLE account_balances (
     -- PK
                                   ID            BIGINT         AUTO_INCREMENT PRIMARY KEY,   -- 主鍵
 
@@ -43,17 +43,17 @@ CREATE TABLE ACCOUNT_BALANCES (
     -- FK
                                   CONSTRAINT fk_ab_tenant
                                       FOREIGN KEY (TENANT_ID)
-                                          REFERENCES TENANTS(ID)
+                                          REFERENCES tenants(ID)
                                           ON DELETE CASCADE,
 
                                   CONSTRAINT fk_ab_account
                                       FOREIGN KEY (ACCOUNT_ID)
-                                          REFERENCES USER_ACCOUNTS(ID)
+                                          REFERENCES user_accounts(ID)
                                           ON DELETE CASCADE,            -- 帳戶刪除時快照一併刪除
 
                                   CONSTRAINT fk_ab_currency
                                       FOREIGN KEY (CURRENCY_CODE)
-                                          REFERENCES CURRENCIES(CODE)
+                                          REFERENCES currencies(CODE)
                                           ON DELETE RESTRICT
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -70,7 +70,7 @@ CREATE TABLE ACCOUNT_BALANCES (
 --   idx_as_trend → 資產趨勢查詢主路徑
 -- ========================================
 
-CREATE TABLE ASSET_SNAPSHOTS (
+CREATE TABLE asset_snapshots (
     -- PK
                                  ID              BIGINT         AUTO_INCREMENT PRIMARY KEY,  -- 主鍵
 
@@ -101,7 +101,7 @@ CREATE TABLE ASSET_SNAPSHOTS (
     -- FK
                                  CONSTRAINT fk_as_tenant
                                      FOREIGN KEY (TENANT_ID)
-                                         REFERENCES TENANTS(ID)
+                                         REFERENCES tenants(ID)
                                          ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -119,7 +119,7 @@ CREATE TABLE ASSET_SNAPSHOTS (
 --   fk_er_base_currency / fk_er_quote_currency → 確保幣別存在於系統
 -- ========================================
 
-CREATE TABLE EXCHANGE_RATES (
+CREATE TABLE exchange_rates (
     -- PK
                                 ID             BIGINT         AUTO_INCREMENT PRIMARY KEY,  -- 主鍵
 
@@ -144,12 +144,12 @@ CREATE TABLE EXCHANGE_RATES (
     -- FK
                                 CONSTRAINT fk_er_base_currency
                                     FOREIGN KEY (BASE_CURRENCY)
-                                        REFERENCES CURRENCIES(CODE)
+                                        REFERENCES currencies(CODE)
                                         ON DELETE RESTRICT,           -- 幣別仍有匯率記錄時不可刪除
 
                                 CONSTRAINT fk_er_quote_currency
                                     FOREIGN KEY (QUOTE_CURRENCY)
-                                        REFERENCES CURRENCIES(CODE)
+                                        REFERENCES currencies(CODE)
                                         ON DELETE RESTRICT            -- 幣別仍有匯率記錄時不可刪除
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

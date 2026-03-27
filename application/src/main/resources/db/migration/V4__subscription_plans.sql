@@ -16,7 +16,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 --   idx_tenant_active → 查詢租戶可用方案主路徑
 -- ========================================
 
-CREATE TABLE SUBSCRIPTION_PLANS (
+CREATE TABLE subscription_plans (
     -- PK
                                     ID                   BIGINT         AUTO_INCREMENT PRIMARY KEY,  -- 方案主鍵
 
@@ -56,13 +56,13 @@ CREATE TABLE SUBSCRIPTION_PLANS (
     -- FK
                                     CONSTRAINT fk_sp_tenant
                                         FOREIGN KEY (TENANT_ID)
-                                            REFERENCES TENANTS(ID)
+                                            REFERENCES tenants(ID)
                                             ON DELETE CASCADE             -- 租戶刪除時，自訂方案一併刪除；系統方案不受影響
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Seed：系統預設方案
-INSERT INTO SUBSCRIPTION_PLANS
+INSERT INTO subscription_plans
 (TENANT_ID, PLAN_CODE, NAME, MONTHLY_PRICE,
  MAX_ACCOUNTS, MAX_CREDIT_CARDS, MAX_MEMBERS,
  ALLOW_FAMILY_SHARING, ENABLE_INVESTMENT, ENABLE_ADV_REPORT,
@@ -83,7 +83,7 @@ VALUES
 --   idx_ts_tenant_status → 查詢租戶目前方案主路徑
 -- ========================================
 
-CREATE TABLE TENANT_SUBSCRIPTIONS (
+CREATE TABLE tenant_subscriptions (
     -- PK
                                       ID         BIGINT      AUTO_INCREMENT PRIMARY KEY,       -- 主鍵
 
@@ -120,12 +120,12 @@ CREATE TABLE TENANT_SUBSCRIPTIONS (
     -- FK
                                       CONSTRAINT fk_ts_tenant
                                           FOREIGN KEY (TENANT_ID)
-                                              REFERENCES TENANTS(ID)
+                                              REFERENCES tenants(ID)
                                               ON DELETE CASCADE,
 
                                       CONSTRAINT fk_ts_plan
                                           FOREIGN KEY (PLAN_ID)
-                                              REFERENCES SUBSCRIPTION_PLANS(ID)
+                                              REFERENCES subscription_plans(ID)
                                               ON DELETE RESTRICT            -- 方案仍有租戶使用時不可刪除
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -140,7 +140,7 @@ CREATE TABLE TENANT_SUBSCRIPTIONS (
 --   補 CREATED_AT：追蹤資源開始被計算的時間點，便於 debug 與審計
 -- ========================================
 
-CREATE TABLE USER_LIMITS (
+CREATE TABLE user_limits (
     -- PK
                              ID            BIGINT      AUTO_INCREMENT PRIMARY KEY,    -- 主鍵
 
@@ -164,7 +164,7 @@ CREATE TABLE USER_LIMITS (
     -- FK
                              CONSTRAINT fk_ul_tenant
                                  FOREIGN KEY (TENANT_ID)
-                                     REFERENCES TENANTS(ID)
+                                     REFERENCES tenants(ID)
                                      ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

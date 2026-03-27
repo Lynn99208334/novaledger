@@ -17,6 +17,8 @@ public class TenantInterceptor implements HandlerInterceptor {
     );
 
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
+            "/login",
+            "/logout",
             "/page/",
             "/api/auth/",
             "/css/",
