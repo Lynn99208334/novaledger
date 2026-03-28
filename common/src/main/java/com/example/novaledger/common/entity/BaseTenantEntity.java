@@ -7,8 +7,8 @@ import jakarta.persistence.MappedSuperclass;
 public abstract class BaseTenantEntity extends BaseEntity {
 
     @Column(name = "tenant_id", nullable = false, updatable = false)
-    private String tenantId;
+    private Long tenantId;
 
-    public String getTenantId() { return tenantId; }
-    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
 }
