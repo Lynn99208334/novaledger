@@ -28,6 +28,7 @@ public class TenantInterceptor implements HandlerInterceptor {
             "/favicon.ico",
             "/error",
             "/swagger-ui",
+            "/api/banks",
             "/v3/api-docs"
     );
 

@@ -5,6 +5,7 @@ import com.example.novaledger.finance.account.enums.AccountType;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_accounts")
@@ -41,6 +42,9 @@ public class UserAccount extends BaseTenantEntity {
     @Column(length = 500)
     private String notes;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
@@ -70,4 +74,7 @@ public class UserAccount extends BaseTenantEntity {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }
