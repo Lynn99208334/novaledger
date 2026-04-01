@@ -54,19 +54,22 @@ public class TenantInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // API 路徑：從 header 取 tenantId
         if (path.startsWith("/api/")) {
-            String tenantId = request.getHeader(TENANT_HEADER);
-            System.out.println(">>> TenantInterceptor HIT (API)");
-            System.out.println(">>> URI = " + path);
-            System.out.println(">>> X-Tenant-Id = " + tenantId);
-
-            if (tenantId == null || tenantId.isBlank()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return false;
+            String tenantIdHeader = request.getHeader(TENANT_HEADER);
+            if (tenantIdHeader != null && !tenantIdHeader.isBlank()) {
+                TenantContext.setTenantId(Long.valueOf(tenantIdHeader));
+                return true;
             }
-            TenantContext.setTenantId(Long.valueOf(tenantId));
-            return true;
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                Long tenantId = (Long) session.getAttribute("tenantId");
+                if (tenantId != null) {
+                    TenantContext.setTenantId(tenantId);
+                    return true;
+                }
+            }
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
         }
 
         // 頁面路徑：從 session 取 tenantId
