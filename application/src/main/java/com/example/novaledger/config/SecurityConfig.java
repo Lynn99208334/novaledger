@@ -2,6 +2,7 @@ package com.example.novaledger.config;
 
 import com.example.novaledger.auth.jwt.JwtAuthenticationFilter;
 import com.example.novaledger.security.LoginSuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,6 +63,18 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutSuccessUrl("/page/login?logout")
                         .permitAll()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            String path = request.getRequestURI();
+                            if (path.startsWith("/api/")) {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");
+                            } else {
+                                response.sendRedirect("/page/login");
+                            }
+                        })
                 )
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class);

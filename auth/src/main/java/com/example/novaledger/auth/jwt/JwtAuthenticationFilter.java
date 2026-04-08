@@ -45,11 +45,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        } finally {
-            TenantContext.clear();
-        }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);  // ← 移進來
+        } finally {
+            TenantContext.clear();  // ← request 結束後才清
+        }
     }
 
     private String resolveToken(HttpServletRequest request) {

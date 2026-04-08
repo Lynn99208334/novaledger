@@ -55,11 +55,6 @@ public class TenantInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/api/")) {
-            String tenantIdHeader = request.getHeader(TENANT_HEADER);
-            if (tenantIdHeader != null && !tenantIdHeader.isBlank()) {
-                TenantContext.setTenantId(Long.valueOf(tenantIdHeader));
-                return true;
-            }
             HttpSession session = request.getSession(false);
             if (session != null) {
                 Long tenantId = (Long) session.getAttribute("tenantId");
