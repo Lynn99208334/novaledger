@@ -29,7 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(
         controllers = TenantTestController.class,
-        excludeAutoConfiguration = SecurityAutoConfiguration.class  // ← 關鍵只針對這個測試關閉 Spring Security
+        excludeAutoConfiguration = {
+                SecurityAutoConfiguration.class,
+                org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class
+        }
 )
 @Import({
         TenantInterceptor.class,
@@ -66,10 +69,9 @@ class TenantInterceptorIntegrationTest {
     void request_with_tenantId_should_pass_and_clear_context_after_request() throws Exception {
         mockMvc.perform(
                         get(uriTemplate)
-                                .header("X-Tenant-Id", "100")
+                                .sessionAttr("tenantId", 100L)
                 )
                 .andExpect(status().isOk())
                 .andExpect(content().string("100"));
-        // ⚠️ ThreadLocal clear 的驗證在 @AfterEach
     }
 }
