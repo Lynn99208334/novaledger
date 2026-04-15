@@ -60,6 +60,7 @@ public class TenantInterceptor implements HandlerInterceptor {
                 Long tenantId = (Long) session.getAttribute("tenantId");
                 if (tenantId != null) {
                     TenantContext.setTenantId(tenantId);
+                    request.setAttribute("tenantId", tenantId);
                     return true;
                 }
             }

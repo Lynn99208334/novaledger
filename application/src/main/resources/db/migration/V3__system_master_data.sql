@@ -155,6 +155,9 @@ CREATE TABLE banks (
                        SHORT_NAME VARCHAR(50),                                  -- 顯示簡稱（Optional）
                        COUNTRY    VARCHAR(50)  NOT NULL,                        -- 所屬國家，如 TW
 
+    -- 識別前綴
+                       ACCOUNT_PREFIX VARCHAR(10),                               -- 帳號識別前綴，如永豐為 169（Optional）
+
     -- 狀態
                        IS_ACTIVE  BOOLEAN      NOT NULL,                        -- 是否可使用
 
@@ -170,29 +173,71 @@ CREATE TABLE banks (
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO banks (BANK_CODE, NAME, SHORT_NAME, COUNTRY, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
-                                                                                                ('004', '臺灣銀行',             '台銀',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('005', '土地銀行',             '土銀',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('006', '合作金庫商業銀行',     '合庫',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('007', '第一商業銀行',         '一銀',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('008', '華南商業銀行',         '華南',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('009', '彰化商業銀行',         '彰銀',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('011', '上海商業儲蓄銀行',     '上海商銀', 'TW', TRUE, NOW(), NOW()),
-                                                                                                ('012', '台北富邦商業銀行',     '北富銀',   'TW', TRUE, NOW(), NOW()),
-                                                                                                ('013', '國泰世華商業銀行',     '國泰世華', 'TW', TRUE, NOW(), NOW()),
-                                                                                                ('017', '兆豐國際商業銀行',     '兆豐',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('050', '臺灣企銀',             '台企銀',   'TW', TRUE, NOW(), NOW()),
-                                                                                                ('052', '渣打國際商業銀行',     '渣打',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('700', '中華郵政',             '郵局',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('803', '聯邦商業銀行',         '聯邦',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('806', '元大商業銀行',         '元大',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('807', '永豐商業銀行',         '永豐',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('808', '玉山商業銀行',         '玉山',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('809', '凱基商業銀行',         '凱基',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('812', '台新國際商業銀行',     '台新',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('816', '安泰商業銀行',         '安泰',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('822', '中國信託商業銀行',     '中信',     'TW', TRUE, NOW(), NOW()),
-                                                                                                ('826', '樂天國際商業銀行',     '樂天',     'TW', TRUE, NOW(), NOW());
+INSERT INTO banks (BANK_CODE, NAME, SHORT_NAME, COUNTRY, ACCOUNT_PREFIX, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
+                                                                                                                ('004', '臺灣銀行',         '台銀',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('005', '土地銀行',         '土銀',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('006', '合作金庫商業銀行', '合庫',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('007', '第一商業銀行',     '一銀',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('008', '華南商業銀行',     '華南',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('009', '彰化商業銀行',     '彰銀',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('011', '上海商業儲蓄銀行', '上海商銀', 'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('012', '台北富邦商業銀行', '北富銀',   'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('013', '國泰世華商業銀行', '國泰世華', 'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('017', '兆豐國際商業銀行', '兆豐',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('050', '臺灣企銀',         '台企銀',   'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('052', '渣打國際商業銀行', '渣打',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('700', '中華郵政',         '郵局',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('803', '聯邦商業銀行',     '聯邦',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('806', '元大商業銀行',     '元大',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('807', '永豐商業銀行',     '永豐',     'TW', '169', TRUE, NOW(), NOW()),
+                                                                                                                ('808', '玉山商業銀行',     '玉山',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('809', '凱基商業銀行',     '凱基',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('812', '台新國際商業銀行', '台新',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('816', '安泰商業銀行',     '安泰',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('822', '中國信託商業銀行', '中信',     'TW', NULL,  TRUE, NOW(), NOW()),
+                                                                                                                ('826', '樂天國際商業銀行', '樂天',     'TW', NULL,  TRUE, NOW(), NOW());
+
+-- ========================================
+-- BANK_FILE_FORMATS
+-- 設計重點：
+--   系統主檔（非 tenant-aware）
+--   每間銀行、每種檔案類型、每個版本一筆記錄
+--   同一 bank_code + file_type 取 released_date <= 上傳日期的最新一筆
+--   parser_key 同銀行同 file_type 所有版本共用
+-- ========================================
+
+CREATE TABLE bank_file_formats (
+    -- PK
+                                   ID            BIGINT       NOT NULL AUTO_INCREMENT,
+
+    -- 銀行關聯
+                                   BANK_CODE     VARCHAR(10)  NOT NULL,                    -- 所屬銀行
+
+    -- 格式資訊
+                                   FILE_TYPE     VARCHAR(10)  NOT NULL,                    -- EXCEL / CSV
+                                   RELEASED_DATE DATE         NOT NULL,                    -- 銀行格式釋出日期
+                                   PARSER_KEY    VARCHAR(50)  NOT NULL,                    -- 對應 parser 實作，如 SINOPAC_EXCEL
+
+    -- 狀態
+                                   IS_ACTIVE     TINYINT      NOT NULL DEFAULT 1,          -- 是否啟用
+
+    -- 稽核欄位
+                                   CREATED_AT    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                   UPDATED_AT    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+                                   PRIMARY KEY (ID),
+                                   INDEX idx_bank_file_formats_lookup (BANK_CODE, FILE_TYPE, RELEASED_DATE),
+
+                                   CONSTRAINT fk_bff_bank
+                                       FOREIGN KEY (BANK_CODE)
+                                           REFERENCES banks(BANK_CODE)
+                                           ON DELETE RESTRICT
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO bank_file_formats (BANK_CODE, FILE_TYPE, RELEASED_DATE, PARSER_KEY, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
+    ('807', 'CSV', '2024-01-01', 'SINOPAC_CSV', 1, NOW(), NOW());
+
 
 
 -- ========================================

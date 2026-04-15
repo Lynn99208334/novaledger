@@ -10,4 +10,8 @@ public class AuthContext {
     public Long getCurrentUserId(HttpServletRequest request) {
         return (Long) request.getSession().getAttribute("userId");
     }
+
+    public Long getCurrentTenantId(HttpServletRequest request) {
+        return (Long) request.getSession().getAttribute("tenantId");
+    }
 }

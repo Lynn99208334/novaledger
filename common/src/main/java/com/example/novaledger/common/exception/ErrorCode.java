@@ -51,11 +51,24 @@ public enum ErrorCode {
     // ========================
     // Credit Card
     // ========================
-    CARD_001("CARD_001", "Credit Card Not Found", 404);
+    CARD_001("CARD_001", "Credit Card Not Found", 404),
+
+    // ========================
+    // Import
+    // ========================
+    FILE_EMPTY("IMPORT_001", "File is empty", 400),
+    FILE_TOO_LARGE("IMPORT_002", "File size exceeds 10MB limit", 400),
+    FILE_INVALID("IMPORT_003", "Invalid file name", 400),
+    FILE_TYPE_NOT_SUPPORTED("IMPORT_004", "Only .xlsx, .xls or .csv files are supported", 400),
+    IMPORT_PARSER_NOT_FOUND("IMPORT_005", "Parser not found for the given format", 400),
+    IMPORT_FILE_READ_FAILED("IMPORT_006", "Failed to read uploaded file", 500),
+    IMPORT_JOB_NOT_FOUND("IMPORT_007", "Import job not found", 404),
+    IMPORT_HTML_PARSE_FAILED("IMPORT_008", "Failed to parse HTML-based XLS file", 500);
 
     private final String code;
     private final String message;
     private final int httpStatus;
+
 
     ErrorCode(String code, String message, int httpStatus) {
         this.code = code;
