@@ -63,7 +63,14 @@ public enum ErrorCode {
     IMPORT_PARSER_NOT_FOUND("IMPORT_005", "Parser not found for the given format", 400),
     IMPORT_FILE_READ_FAILED("IMPORT_006", "Failed to read uploaded file", 500),
     IMPORT_JOB_NOT_FOUND("IMPORT_007", "Import job not found", 404),
-    IMPORT_HTML_PARSE_FAILED("IMPORT_008", "Failed to parse HTML-based XLS file", 500);
+    IMPORT_HTML_PARSE_FAILED("IMPORT_008", "Failed to parse HTML-based XLS file", 500),
+
+    // ========================
+    // Transaction
+    // ========================
+    TRANSACTION_NOT_FOUND("TX_001", "Transaction Not Found", 404),
+    TRANSACTION_SOURCE_INVALID("TX_002", "Transaction must have either accountId or creditCardId", 400),
+    ;
 
     private final String code;
     private final String message;
