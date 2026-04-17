@@ -18,6 +18,9 @@ import com.example.novaledger.finance.importrecord.entity.ImportLog;
 import com.example.novaledger.finance.importrecord.entity.ParsedRecord;
 import com.example.novaledger.finance.importrecord.repository.ImportLogRepository;
 import com.example.novaledger.finance.importrecord.repository.ParsedRecordRepository;
+import com.example.novaledger.finance.transaction.entity.Transaction;
+import com.example.novaledger.finance.transaction.entity.TransactionItem;
+import com.example.novaledger.finance.transaction.service.TransactionService;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -42,6 +46,7 @@ public class ImportService {
     private final ParserRegistry parserRegistry;
     private final ImportJobStatusService importJobStatusService;
     private final TransactionTemplate transactionTemplate;
+    private final TransactionService transactionService;
 
     public ImportService(UploadJobRepository uploadJobRepository,
                          UploadFileRepository uploadFileRepository,
@@ -50,7 +55,8 @@ public class ImportService {
                          ImportLogRepository importLogRepository,
                          ParserRegistry parserRegistry,
                          ImportJobStatusService importJobStatusService,
-                         TransactionTemplate transactionTemplate) {
+                         TransactionTemplate transactionTemplate,
+                         TransactionService transactionService) {
         this.uploadJobRepository = uploadJobRepository;
         this.uploadFileRepository = uploadFileRepository;
         this.fileParserService = fileParserService;
@@ -59,11 +65,13 @@ public class ImportService {
         this.parserRegistry = parserRegistry;
         this.importJobStatusService = importJobStatusService;
         this.transactionTemplate = transactionTemplate;
+        this.transactionService = transactionService;
     }
 
     @Transactional
     public UploadJobResponse createUploadJob(MultipartFile file, String jobType,
-                                             String bankCode, Long tenantId, Long userId) {
+                                             String bankCode, Long accountId,
+                                             Long tenantId, Long userId) {
         validateFile(file);
 
         byte[] fileBytes;
@@ -81,6 +89,7 @@ public class ImportService {
         job.setCreatedBy(userId);
         job.setJobType(jobType);
         job.setParserKey(parserKey);
+        job.setAccountId(accountId);
         uploadJobRepository.save(job);
 
         UploadJobResponse response = new UploadJobResponse();
@@ -94,6 +103,44 @@ public class ImportService {
                 file.getOriginalFilename(), file.getContentType(), file.getSize());
 
         return response;
+    }
+
+    @Transactional
+    public void confirmImport(Long jobId, Long tenantId, Long userId) {
+        UploadJob job = uploadJobRepository.findByIdAndTenantId(jobId, tenantId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.IMPORT_JOB_NOT_FOUND));
+
+        List<ParsedRecord> pendingRecords = parsedRecordRepository
+                .findByUploadJobIdAndTenantIdAndImportStatus(jobId, tenantId, ImportStatus.PENDING);
+
+        if (pendingRecords.isEmpty()) {
+            return; // 冪等性保護：沒有 PENDING 的 record 就直接回傳
+        }
+
+        for (ParsedRecord record : pendingRecords) {
+            String txTypeCode = record.getAmount().compareTo(BigDecimal.ZERO) < 0
+                    ? "EXPENSE" : "INCOME";
+            BigDecimal totalAmount = record.getAmount().abs();
+
+            Transaction tx = new Transaction();
+            tx.setTenantId(tenantId);
+            tx.setUserId(userId);
+            tx.setAccountId(job.getAccountId());
+            tx.setTxTypeCode(txTypeCode);
+            tx.setTransactionDate(record.getTransactionDate());
+            tx.setTotalAmount(totalAmount);
+            tx.setCurrencyCode(record.getCurrencyCode());
+            tx.setMemo(record.getDescription());
+
+            TransactionItem item = new TransactionItem();
+            item.setAmount(totalAmount);
+            item.setMemo(record.getDescription());
+
+            transactionService.createTransaction(tx, List.of(item));
+
+            record.setImportStatus(ImportStatus.IMPORTED);
+            parsedRecordRepository.save(record);
+        }
     }
 
     private void validateFile(MultipartFile file) {

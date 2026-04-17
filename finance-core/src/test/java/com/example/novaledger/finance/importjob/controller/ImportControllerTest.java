@@ -50,13 +50,14 @@ class ImportControllerTest {
 
         when(authContext.getCurrentTenantId(any())).thenReturn(1L);
         when(authContext.getCurrentUserId(any())).thenReturn(1L);
-        when(importService.createUploadJob(any(), anyString(), anyString(), anyLong(), anyLong()))
+        when(importService.createUploadJob(any(), anyString(), anyString(), anyLong(), anyLong(), anyLong()))
                 .thenReturn(mockResponse);
 
         mockMvc.perform(multipart("/api/import/upload")
                         .file(file)
                         .param("jobType", "ACCOUNT")
-                        .param("bankCode", "822"))
+                        .param("bankCode", "822")
+                        .param("accountId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.jobId").value(1))
