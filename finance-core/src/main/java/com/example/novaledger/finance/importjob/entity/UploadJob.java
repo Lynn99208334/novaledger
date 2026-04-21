@@ -1,4 +1,5 @@
 package com.example.novaledger.finance.importjob.entity;
+
 import com.example.novaledger.common.entity.BaseTenantEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,6 +41,9 @@ public class UploadJob extends BaseTenantEntity {
     @Column(name = "parser_key", length = 100)
     private String parserKey;
 
+    @Column(name = "account_id")
+    private Long accountId;
+
     public UploadJob() {}
 
     public Long getCreatedBy() { return createdBy; }
@@ -69,11 +73,9 @@ public class UploadJob extends BaseTenantEntity {
     public Long getDetectedFormatId() { return detectedFormatId; }
     public void setDetectedFormatId(Long detectedFormatId) { this.detectedFormatId = detectedFormatId; }
 
-    public String getParserKey() {
-        return parserKey;
-    }
+    public String getParserKey() { return parserKey; }
+    public void setParserKey(String parserKey) { this.parserKey = parserKey; }
 
-    public void setParserKey(String parserKey) {
-        this.parserKey = parserKey;
-    }
+    public Long getAccountId() { return accountId; }
+    public void setAccountId(Long accountId) { this.accountId = accountId; }
 }

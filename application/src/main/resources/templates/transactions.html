@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>交易記錄 - NovaLedger</title>
+    <link th:href="@{/css/styles.css}" rel="stylesheet" />
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/vendor/sweetalert2.v11.10.6.min.css"/>
+</head>
+<body class="sb-nav-fixed">
+
+<div th:replace="fragments/navbar :: topnav"></div>
+
+<div id="layoutSidenav">
+    <div id="layoutSidenav_nav">
+        <div th:replace="fragments/navbar :: sidenav"></div>
+    </div>
+
+    <div id="layoutSidenav_content">
+        <main>
+            <div class="container-fluid px-4">
+
+                <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+                    <h1 class="h3 mb-0">交易記錄</h1>
+                    <a th:href="@{/page/transactions/new}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i> 新增交易
+                    </a>
+                </div>
+                <ol class="breadcrumb mb-4">
+                    <li class="breadcrumb-item"><a th:href="@{/page/dashboard}">首頁</a></li>
+                    <li class="breadcrumb-item active">交易記錄</li>
+                </ol>
+
+                <!-- 篩選列 -->
+                <div class="card mb-4">
+                    <div class="card-body py-3">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label small mb-1">帳戶</label>
+                                <select class="form-select form-select-sm" id="filterAccount">
+                                    <option value="">全部帳戶</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small mb-1">開始日期</label>
+                                <input type="date" class="form-control form-control-sm" id="filterFrom" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small mb-1">結束日期</label>
+                                <input type="date" class="form-control form-control-sm" id="filterTo" />
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-secondary btn-sm w-100" onclick="applyFilter()">
+                                    <i class="fas fa-search me-1"></i> 查詢
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 交易列表 -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-list me-1"></i> 交易列表</span>
+                        <span class="text-muted small" id="totalLabel"></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>交易日期</th>
+                                    <th>類型</th>
+                                    <th class="text-end">金額</th>
+                                    <th>幣別</th>
+                                    <th>備註</th>
+                                    <th class="text-center">操作</th>
+                                </tr>
+                                </thead>
+                                <tbody id="txTableBody">
+                                <tr id="emptyRow">
+                                    <td colspan="6" class="text-center text-muted py-4">暫無資料</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- 分頁 -->
+                    <div class="card-footer d-flex justify-content-center" id="paginationWrapper">
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <footer class="py-4 bg-light mt-auto">
+            <div class="container-fluid px-4">
+                <div class="d-flex align-items-center justify-content-between small">
+                    <div class="text-muted">Copyright &copy; NovaLedger 2026</div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">編輯交易</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editTxId" />
+                <div class="mb-3">
+                    <label class="form-label">交易類型 <span class="text-danger">*</span></label>
+                    <select class="form-select" id="editTxType">
+                        <option value="INCOME">收入</option>
+                        <option value="EXPENSE">支出</option>
+                        <option value="TRANSFER_IN">轉入</option>
+                        <option value="TRANSFER_OUT">轉出</option>
+                        <option value="ADJUSTMENT">調整</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">交易日期 <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="editDate" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">金額 <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="editAmount" min="0" step="0.01" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">幣別</label>
+                    <input type="text" class="form-control" id="editCurrency" maxlength="3" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">備註</label>
+                    <input type="text" class="form-control" id="editMemo" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="submitEdit()">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="/js/scripts.js"></script>
+<script src="/js/vendor/sweetalert2.all.v11.10.6.min.js"></script>
+
+<script>
+    let currentPage = 0;
+    const pageSize = 20;
+    let editModal = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        loadAccounts();
+        loadTransactions(0);
+    });
+
+    // ── 帳戶下拉 ──────────────────────────────────────────────
+    function loadAccounts() {
+        fetch('/api/accounts')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) return;
+                const select = document.getElementById('filterAccount');
+                (data.data || []).forEach(acc => {
+                    const opt = document.createElement('option');
+                    opt.value = acc.id;
+                    opt.textContent = `${acc.name}（${acc.currencyCode}）`;
+                    select.appendChild(opt);
+                });
+            });
+    }
+
+    // ── 查詢 ──────────────────────────────────────────────────
+    function applyFilter() {
+        loadTransactions(0);
+    }
+
+    function buildUrl(page) {
+        const accountId = document.getElementById('filterAccount').value;
+        const from = document.getElementById('filterFrom').value;
+        const to = document.getElementById('filterTo').value;
+
+        const params = new URLSearchParams({ page, size: pageSize });
+        if (accountId) params.append('accountId', accountId);
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+
+        return `/api/transactions?${params.toString()}`;
+    }
+
+    function loadTransactions(page) {
+        currentPage = page;
+        fetch(buildUrl(page))
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) return;
+                const pageData = data.data;
+                renderTable(pageData.content || []);
+                renderPagination(pageData.number, pageData.totalPages, pageData.totalElements);
+            })
+            .catch(() => {
+                Swal.fire({ icon: 'error', title: '載入失敗', text: '請稍後再試' });
+            });
+    }
+
+    // ── 渲染表格 ──────────────────────────────────────────────
+    function renderTable(transactions) {
+        const tbody = document.getElementById('txTableBody');
+        tbody.innerHTML = '';
+
+        if (transactions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">暫無資料</td></tr>';
+            return;
+        }
+
+        transactions.forEach(tx => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${tx.transactionDate ?? ''}</td>
+                <td>${formatTxType(tx.txTypeCode)}</td>
+                <td class="text-end ${amountClass(tx.txTypeCode)}">${formatAmount(tx.totalAmount)}</td>
+                <td>${tx.currencyCode ?? ''}</td>
+                <td class="text-muted small">${tx.memo ?? ''}</td>
+                <td class="text-center">
+                    <button class="btn btn-outline-primary btn-sm me-1" onclick="openEdit(${JSON.stringify(tx).replace(/"/g, '&quot;')})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="confirmDelete(${tx.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ── 分頁 ──────────────────────────────────────────────────
+    function renderPagination(currentPageNum, totalPages, totalElements) {
+        document.getElementById('totalLabel').textContent = `共 ${totalElements} 筆`;
+
+        const ul = document.getElementById('pagination');
+        ul.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPageNum === 0 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadTransactions(${currentPageNum - 1}); return false;">&laquo;</a>`;
+        ul.appendChild(prevLi);
+
+        const start = Math.max(0, currentPageNum - 2);
+        const end = Math.min(totalPages - 1, currentPageNum + 2);
+        for (let i = start; i <= end; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentPageNum ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" onclick="loadTransactions(${i}); return false;">${i + 1}</a>`;
+            ul.appendChild(li);
+        }
+
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPageNum >= totalPages - 1 ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadTransactions(${currentPageNum + 1}); return false;">&raquo;</a>`;
+        ul.appendChild(nextLi);
+    }
+
+    // ── 編輯 ──────────────────────────────────────────────────
+    function openEdit(tx) {
+        document.getElementById('editTxId').value = tx.id;
+        document.getElementById('editTxType').value = tx.txTypeCode;
+        document.getElementById('editDate').value = tx.transactionDate;
+        document.getElementById('editAmount').value = tx.totalAmount;
+        document.getElementById('editCurrency').value = tx.currencyCode;
+        document.getElementById('editMemo').value = tx.memo || '';
+        editModal.show();
+    }
+
+    function submitEdit() {
+        const id = document.getElementById('editTxId').value;
+        const payload = {
+            txTypeCode: document.getElementById('editTxType').value,
+            transactionDate: document.getElementById('editDate').value,
+            totalAmount: parseFloat(document.getElementById('editAmount').value),
+            currencyCode: document.getElementById('editCurrency').value,
+            memo: document.getElementById('editMemo').value,
+            items: []
+        };
+
+        fetch(`/api/transactions/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    editModal.hide();
+                    loadTransactions(currentPage);
+                } else {
+                    Swal.fire({ icon: 'error', title: '更新失敗', text: data.error?.message || '請稍後再試' });
+                }
+            })
+            .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤' }));
+    }
+
+    // ── 刪除 ──────────────────────────────────────────────────
+    function confirmDelete(txId) {
+        Swal.fire({
+            icon: 'warning',
+            title: '確認刪除？',
+            text: '此操作無法復原。',
+            showCancelButton: true,
+            confirmButtonText: '刪除',
+            cancelButtonText: '取消',
+            confirmButtonColor: '#d33'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            fetch(`/api/transactions/${txId}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        loadTransactions(currentPage);
+                    } else {
+                        Swal.fire({ icon: 'error', title: '刪除失敗', text: data.error?.message || '請稍後再試' });
+                    }
+                })
+                .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤' }));
+        });
+    }
+
+    // ── helpers ───────────────────────────────────────────────
+    function formatAmount(val) {
+        if (val == null) return '';
+        return Number(val).toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    function formatTxType(code) {
+        const map = {
+            INCOME: '收入', EXPENSE: '支出',
+            TRANSFER_IN: '轉入', TRANSFER_OUT: '轉出', ADJUSTMENT: '調整'
+        };
+        return map[code] || code;
+    }
+
+    function amountClass(code) {
+        if (code === 'INCOME' || code === 'TRANSFER_IN') return 'text-success';
+        if (code === 'EXPENSE' || code === 'TRANSFER_OUT') return 'text-danger';
+        return '';
+    }
+</script>
+
+</body>
+</html>

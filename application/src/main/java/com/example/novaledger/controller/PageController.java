@@ -36,4 +36,14 @@ public class PageController {
         authService.register(request);
         return "redirect:/page/login?registered";
     }
+
+    @GetMapping("/transactions")
+    public String transactionsPage() {
+        return "transactions";
+    }
+
+    @GetMapping("/transactions/new")
+    public String transactionNewPage() {
+        return "transaction-new";
+    }
 }

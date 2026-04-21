@@ -36,20 +36,33 @@ public class ImportController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("jobType") String jobType,
             @RequestParam("bankCode") String bankCode,
+            @RequestParam("accountId") Long accountId,
             HttpServletRequest request) {
 
         Long tenantId = authContext.getCurrentTenantId(request);
         Long userId = authContext.getCurrentUserId(request);
         UploadJobResponse response = importService.createUploadJob(
-                file, jobType, bankCode, tenantId, userId);
+                file, jobType, bankCode, accountId, tenantId, userId);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @Operation(summary = "確認匯入", description = "將 PENDING 的解析記錄寫入交易")
+    @PostMapping("/jobs/{jobId}/confirm")
+    public ResponseEntity<ApiResponse<Void>> confirmImport(
+            @PathVariable Long jobId,
+            HttpServletRequest request) {
+
+        Long tenantId = authContext.getCurrentTenantId(request);
+        Long userId = authContext.getCurrentUserId(request);
+        importService.confirmImport(jobId, tenantId, userId);
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
     @GetMapping("/jobs/{jobId}/status")
     public ResponseEntity<ApiResponse<JobStatusResponse>> getJobStatus(
             @PathVariable Long jobId,
             HttpServletRequest request) {
-        Long tenantId = (Long) request.getAttribute("tenantId");
+        Long tenantId = authContext.getCurrentTenantId(request);
         return ResponseEntity.ok(ApiResponse.ok(importService.getJobStatus(jobId, tenantId)));
     }
 
@@ -57,7 +70,7 @@ public class ImportController {
     public ResponseEntity<ApiResponse<List<ParsedRecordPreviewResponse>>> getJobPreview(
             @PathVariable Long jobId,
             HttpServletRequest request) {
-        Long tenantId = (Long) request.getAttribute("tenantId");
+        Long tenantId = authContext.getCurrentTenantId(request);
         return ResponseEntity.ok(ApiResponse.ok(importService.getJobPreview(jobId, tenantId)));
     }
 
@@ -65,7 +78,7 @@ public class ImportController {
     public ResponseEntity<ApiResponse<List<ParsedRecordErrorResponse>>> getJobErrors(
             @PathVariable Long jobId,
             HttpServletRequest request) {
-        Long tenantId = (Long) request.getAttribute("tenantId");
+        Long tenantId = authContext.getCurrentTenantId(request);
         return ResponseEntity.ok(ApiResponse.ok(importService.getJobErrors(jobId, tenantId)));
     }
 }

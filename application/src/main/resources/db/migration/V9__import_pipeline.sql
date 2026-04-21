@@ -10,6 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 CREATE TABLE upload_jobs (
                              ID            BIGINT      AUTO_INCREMENT PRIMARY KEY,
+                             ACCOUNT_ID BIGINT NULL,
 
                              TENANT_ID     BIGINT      NOT NULL,
                              CREATED_BY    BIGINT      NOT NULL,
