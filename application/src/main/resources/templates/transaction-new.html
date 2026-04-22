@@ -1,215 +1,137 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <title>新增交易 - NovaLedger</title>
-  <link th:href="@{/css/styles.css}" rel="stylesheet" />
-  <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="/css/vendor/sweetalert2.v11.10.6.min.css"/>
-</head>
-<body class="sb-nav-fixed">
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('新增交易', ~{::content}, ~{::pagejs})}">
 
-<div th:replace="fragments/navbar :: topnav"></div>
-
-<div id="layoutSidenav">
-  <div id="layoutSidenav_nav">
-    <div th:replace="fragments/navbar :: sidenav"></div>
-  </div>
-
-  <div id="layoutSidenav_content">
-    <main>
-      <div class="container-fluid px-4">
-
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
         <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
-          <h1 class="h3 mb-0">新增交易</h1>
+            <h1 class="h3 mb-0">新增交易</h1>
         </div>
         <ol class="breadcrumb mb-4">
-          <li class="breadcrumb-item"><a th:href="@{/page/dashboard}">首頁</a></li>
-          <li class="breadcrumb-item"><a th:href="@{/page/transactions}">交易記錄</a></li>
-          <li class="breadcrumb-item active">新增交易</li>
+            <li class="breadcrumb-item"><a th:href="@{/page/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/page/transactions}">交易記錄</a></li>
+            <li class="breadcrumb-item active">新增交易</li>
         </ol>
-
         <div class="card mb-4" style="max-width: 600px;">
-          <div class="card-header">
-            <i class="fas fa-plus me-1"></i> 交易資訊
-          </div>
-          <div class="card-body">
-
-            <!-- 收入/支出切換 -->
-            <div class="mb-3">
-              <label class="form-label">交易類型 <span class="text-danger">*</span></label>
-              <div class="btn-group w-100" role="group">
-                <input type="radio" class="btn-check" name="txTypeGroup" id="typeExpense" value="EXPENSE" checked />
-                <label class="btn btn-outline-danger" for="typeExpense">
-                  <i class="fas fa-arrow-down me-1"></i> 支出
-                </label>
-
-                <input type="radio" class="btn-check" name="txTypeGroup" id="typeIncome" value="INCOME" />
-                <label class="btn btn-outline-success" for="typeIncome">
-                  <i class="fas fa-arrow-up me-1"></i> 收入
-                </label>
-
-                <input type="radio" class="btn-check" name="txTypeGroup" id="typeTransferOut" value="TRANSFER_OUT" />
-                <label class="btn btn-outline-secondary" for="typeTransferOut">
-                  <i class="fas fa-exchange-alt me-1"></i> 轉出
-                </label>
-
-                <input type="radio" class="btn-check" name="txTypeGroup" id="typeTransferIn" value="TRANSFER_IN" />
-                <label class="btn btn-outline-secondary" for="typeTransferIn">
-                  <i class="fas fa-exchange-alt me-1"></i> 轉入
-                </label>
-              </div>
+            <div class="card-header">
+                <i class="fas fa-plus me-1"></i> 交易資訊
             </div>
-
-            <div class="mb-3">
-              <label class="form-label">帳戶 <span class="text-danger">*</span></label>
-              <select class="form-select" id="newAccount">
-                <option value="">請選擇帳戶...</option>
-              </select>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">交易類型 <span class="text-danger">*</span></label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="txTypeGroup" id="typeExpense" value="EXPENSE" checked />
+                        <label class="btn btn-outline-danger" for="typeExpense"><i class="fas fa-arrow-down me-1"></i> 支出</label>
+                        <input type="radio" class="btn-check" name="txTypeGroup" id="typeIncome" value="INCOME" />
+                        <label class="btn btn-outline-success" for="typeIncome"><i class="fas fa-arrow-up me-1"></i> 收入</label>
+                        <input type="radio" class="btn-check" name="txTypeGroup" id="typeTransferOut" value="TRANSFER_OUT" />
+                        <label class="btn btn-outline-secondary" for="typeTransferOut"><i class="fas fa-exchange-alt me-1"></i> 轉出</label>
+                        <input type="radio" class="btn-check" name="txTypeGroup" id="typeTransferIn" value="TRANSFER_IN" />
+                        <label class="btn btn-outline-secondary" for="typeTransferIn"><i class="fas fa-exchange-alt me-1"></i> 轉入</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">帳戶 <span class="text-danger">*</span></label>
+                    <select class="form-select" id="newAccount">
+                        <option value="">請選擇帳戶...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">交易日期 <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="newDate" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">金額 <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text" id="currencyPrefix">TWD</span>
+                        <input type="number" class="form-control" id="newAmount" min="0" step="0.01" placeholder="0" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">幣別</label>
+                    <input type="text" class="form-control" id="newCurrency" value="TWD" maxlength="3" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">備註</label>
+                    <input type="text" class="form-control" id="newMemo" placeholder="選填" />
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/page/transactions}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> 取消
+                    </a>
+                    <button type="button" class="btn btn-primary" onclick="submitNew()">
+                        <i class="fas fa-save me-1"></i> 儲存
+                    </button>
+                </div>
             </div>
-
-            <div class="mb-3">
-              <label class="form-label">交易日期 <span class="text-danger">*</span></label>
-              <input type="date" class="form-control" id="newDate" />
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">金額 <span class="text-danger">*</span></label>
-              <div class="input-group">
-                <span class="input-group-text" id="currencyPrefix">TWD</span>
-                <input type="number" class="form-control" id="newAmount" min="0" step="0.01" placeholder="0" />
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">幣別</label>
-              <input type="text" class="form-control" id="newCurrency" value="TWD" maxlength="3" />
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label">備註</label>
-              <input type="text" class="form-control" id="newMemo" placeholder="選填" />
-            </div>
-
-            <div class="d-flex gap-2">
-              <a th:href="@{/page/transactions}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i> 取消
-              </a>
-              <button type="button" class="btn btn-primary" onclick="submitNew()">
-                <i class="fas fa-save me-1"></i> 儲存
-              </button>
-            </div>
-
-          </div>
         </div>
+    </div>
+</th:block>
 
-      </div>
-    </main>
-
-    <footer class="py-4 bg-light mt-auto">
-      <div class="container-fluid px-4">
-        <div class="d-flex align-items-center justify-content-between small">
-          <div class="text-muted">Copyright &copy; NovaLedger 2026</div>
-        </div>
-      </div>
-    </footer>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="/js/scripts.js"></script>
-<script src="/js/vendor/sweetalert2.all.v11.10.6.min.js"></script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // 預設今天日期
-    document.getElementById('newDate').value = new Date().toISOString().split('T')[0];
-
-    // 載入帳戶
-    fetch('/api/accounts')
-            .then(res => res.json())
-            .then(data => {
-              if (!data.success) return;
-              const select = document.getElementById('newAccount');
-              (data.data || []).forEach(acc => {
-                const opt = document.createElement('option');
-                opt.value = acc.id;
-                opt.textContent = `${acc.name}（${acc.currencyCode}）`;
-                opt.dataset.currency = acc.currencyCode;
-                select.appendChild(opt);
-              });
-            });
-
-    // 帳戶切換時更新幣別顯示
-    document.getElementById('newAccount').addEventListener('change', function () {
-      const selected = this.options[this.selectedIndex];
-      const currency = selected.dataset.currency || 'TWD';
-      document.getElementById('newCurrency').value = currency;
-      document.getElementById('currencyPrefix').textContent = currency;
-    });
-
-    // 幣別手動修改時同步 prefix
-    document.getElementById('newCurrency').addEventListener('input', function () {
-      document.getElementById('currencyPrefix').textContent = this.value || 'TWD';
-    });
-  });
-
-  function submitNew() {
-    const txTypeCode = document.querySelector('input[name="txTypeGroup"]:checked').value;
-    const accountId = document.getElementById('newAccount').value;
-    const transactionDate = document.getElementById('newDate').value;
-    const totalAmount = document.getElementById('newAmount').value;
-    const currencyCode = document.getElementById('newCurrency').value;
-    const memo = document.getElementById('newMemo').value;
-
-    if (!accountId) {
-      Swal.fire({ icon: 'warning', title: '請選擇帳戶' });
-      return;
-    }
-    if (!transactionDate) {
-      Swal.fire({ icon: 'warning', title: '請選擇交易日期' });
-      return;
-    }
-    if (!totalAmount || parseFloat(totalAmount) <= 0) {
-      Swal.fire({ icon: 'warning', title: '請輸入有效金額' });
-      return;
-    }
-
-    const payload = {
-      txTypeCode,
-      accountId: parseInt(accountId),
-      transactionDate,
-      totalAmount: parseFloat(totalAmount),
-      currencyCode: currencyCode || 'TWD',
-      memo,
-      items: []
-    };
-
-    fetch('/api/transactions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire({
-                  icon: 'success',
-                  title: '新增成功',
-                  showConfirmButton: false,
-                  timer: 1200
-                }).then(() => {
-                  window.location.href = '/page/transactions';
+<th:block th:fragment="pagejs">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('newDate').value = new Date().toISOString().split('T')[0];
+            fetch('/api/accounts')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) return;
+                    const select = document.getElementById('newAccount');
+                    (data.data || []).forEach(acc => {
+                        const opt = document.createElement('option');
+                        opt.value = acc.id;
+                        opt.textContent = `${acc.name}（${acc.currencyCode}）`;
+                        opt.dataset.currency = acc.currencyCode;
+                        select.appendChild(opt);
+                    });
                 });
-              } else {
-                Swal.fire({ icon: 'error', title: '新增失敗', text: data.error?.message || '請稍後再試' });
-              }
+            document.getElementById('newAccount').addEventListener('change', function () {
+                const currency = this.options[this.selectedIndex].dataset.currency || 'TWD';
+                document.getElementById('newCurrency').value = currency;
+                document.getElementById('currencyPrefix').textContent = currency;
+            });
+            document.getElementById('newCurrency').addEventListener('input', function () {
+                document.getElementById('currencyPrefix').textContent = this.value || 'TWD';
+            });
+        });
+
+        function submitNew() {
+            const txTypeCode      = document.querySelector('input[name="txTypeGroup"]:checked').value;
+            const accountId       = document.getElementById('newAccount').value;
+            const transactionDate = document.getElementById('newDate').value;
+            const totalAmount     = document.getElementById('newAmount').value;
+            const currencyCode    = document.getElementById('newCurrency').value;
+            const memo            = document.getElementById('newMemo').value;
+
+            if (!accountId) { Swal.fire({ icon: 'warning', title: '請選擇帳戶' }); return; }
+            if (!transactionDate) { Swal.fire({ icon: 'warning', title: '請選擇交易日期' }); return; }
+            if (!totalAmount || parseFloat(totalAmount) <= 0) { Swal.fire({ icon: 'warning', title: '請輸入有效金額' }); return; }
+
+            fetch('/api/transactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    txTypeCode,
+                    accountId: parseInt(accountId),
+                    transactionDate,
+                    totalAmount: parseFloat(totalAmount),
+                    currencyCode: currencyCode || 'TWD',
+                    memo,
+                    items: []
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: '新增成功', showConfirmButton: false, timer: 1200 })
+                        .then(() => { window.location.href = '/page/transactions'; });
+                } else {
+                    Swal.fire({ icon: 'error', title: '新增失敗', text: data.error?.message || '請稍後再試' });
+                }
             })
             .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤' }));
-  }
-</script>
+        }
+    </script>
+</th:block>
 
-</body>
 </html>

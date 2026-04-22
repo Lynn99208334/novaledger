@@ -1,241 +1,193 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>信用卡管理 - NovaLedger</title>
-    <link th:href="@{/css/styles.css}" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="/css/vendor/sweetalert2.v11.10.6.min.css"/>
-</head>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('信用卡管理', ~{::content}, ~{::pagejs})}">
 
-<body class="sb-nav-fixed">
-
-<div th:replace="fragments/navbar :: topnav"></div>
-
-<div id="layoutSidenav">
-    <div id="layoutSidenav_nav">
-        <div th:replace="fragments/navbar :: sidenav"></div>
-    </div>
-
-    <div id="layoutSidenav_content">
-        <main>
-            <div class="container-fluid px-4">
-
-                <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
-                    <h1 class="h3 mb-0">信用卡管理</h1>
-                    <a th:href="@{/cards/new}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus me-1"></i> 新增信用卡
-                    </a>
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">信用卡管理</h1>
+            <a th:href="@{/cards/new}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i> 新增信用卡
+            </a>
+        </div>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item active">信用卡管理</li>
+        </ol>
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-credit-card me-1"></i> 我的信用卡
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(cards)}" class="text-center text-muted py-5">
+                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <p class="mb-0">尚未建立任何信用卡，<a th:href="@{/cards/new}">立即新增</a>。</p>
                 </div>
-                <ol class="breadcrumb mb-4">
-                    <li class="breadcrumb-item"><a th:href="@{/dashboard}">首頁</a></li>
-                    <li class="breadcrumb-item active">信用卡管理</li>
-                </ol>
+                <div th:unless="${#lists.isEmpty(cards)}" class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>卡片名稱</th>
+                            <th>銀行代碼</th>
+                            <th>卡片類型</th>
+                            <th>末四碼</th>
+                            <th class="text-end">目前餘額</th>
+                            <th class="text-end">信用額度</th>
+                            <th class="text-center">幣別</th>
+                            <th class="text-center">帳單日</th>
+                            <th class="text-center">繳款日</th>
+                            <th class="text-center">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="card : ${cards}">
+                            <td th:text="${card.name}"></td>
+                            <td th:text="${card.bankCode}"></td>
+                            <td th:text="${card.cardType}"></td>
+                            <td th:text="${card.cardNumberLast4}"></td>
+                            <td class="text-end" th:text="${#numbers.formatDecimal(card.currentBalance, 1, 'COMMA', 0, 'POINT')}"></td>
+                            <td class="text-end" th:text="${card.creditLimit != null ? #numbers.formatDecimal(card.creditLimit, 1, 'COMMA', 0, 'POINT') : '-'}"></td>
+                            <td class="text-center" th:text="${card.currencyCode}"></td>
+                            <td class="text-center" th:text="${card.billingDate != null ? card.billingDate + ' 日' : '-'}"></td>
+                            <td class="text-center" th:text="${card.paymentDate != null ? card.paymentDate + ' 日' : '-'}"></td>
+                            <td class="text-center text-nowrap">
+                                <button type="button" class="btn btn-outline-primary btn-sm me-1"
+                                        th:data-card-id="${card.id}"
+                                        th:data-card-name="${card.name}"
+                                        th:data-bank-code="${card.bankCode}"
+                                        th:data-card-type="${card.cardType}"
+                                        th:data-card-number-last4="${card.cardNumberLast4}"
+                                        th:data-currency-code="${card.currencyCode}"
+                                        th:data-billing-date="${card.billingDate}"
+                                        th:data-payment-date="${card.paymentDate}"
+                                        th:data-credit-limit="${card.creditLimit}"
+                                        th:data-notes="${card.notes}"
+                                        onclick="openEditModal(this)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                        th:data-card-id="${card.id}"
+                                        th:data-card-name="${card.name}"
+                                        onclick="confirmDelete(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="fas fa-credit-card me-1"></i> 我的信用卡
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editCardModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">編輯信用卡</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="card-body">
-
-                        <div th:if="${#lists.isEmpty(cards)}" class="text-center text-muted py-5">
-                            <i class="fas fa-inbox fa-2x mb-2"></i>
-                            <p class="mb-0">尚未建立任何信用卡，<a th:href="@{/cards/new}">立即新增</a>。</p>
+                    <div class="modal-body">
+                        <input type="hidden" id="editCardId"/>
+                        <div class="mb-3">
+                            <label class="form-label">卡片名稱 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editName" maxlength="100"/>
                         </div>
-
-                        <div th:unless="${#lists.isEmpty(cards)}" class="table-responsive">
-                            <table class="table table-bordered table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                <tr>
-                                    <th>卡片名稱</th>
-                                    <th>銀行代碼</th>
-                                    <th>卡片類型</th>
-                                    <th>末四碼</th>
-                                    <th class="text-end">目前餘額</th>
-                                    <th class="text-end">信用額度</th>
-                                    <th class="text-center">幣別</th>
-                                    <th class="text-center">帳單日</th>
-                                    <th class="text-center">繳款日</th>
-                                    <th class="text-center">操作</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr th:each="card : ${cards}">
-                                    <td th:text="${card.name}"></td>
-                                    <td th:text="${card.bankCode}"></td>
-                                    <td th:text="${card.cardType}"></td>
-                                    <td th:text="${card.cardNumberLast4}"></td>
-                                    <td class="text-end"
-                                        th:text="${#numbers.formatDecimal(card.currentBalance, 1, 'COMMA', 0, 'POINT')}"></td>
-                                    <td class="text-end"
-                                        th:text="${card.creditLimit != null ? #numbers.formatDecimal(card.creditLimit, 1, 'COMMA', 0, 'POINT') : '-'}"></td>
-                                    <td class="text-center" th:text="${card.currencyCode}"></td>
-                                    <td class="text-center" th:text="${card.billingDate != null ? card.billingDate + ' 日' : '-'}"></td>
-                                    <td class="text-center" th:text="${card.paymentDate != null ? card.paymentDate + ' 日' : '-'}"></td>
-                                    <td class="text-center text-nowrap">
-                                        <button type="button"
-                                                class="btn btn-outline-primary btn-sm me-1"
-                                                title="編輯"
-                                                th:data-card-id="${card.id}"
-                                                th:data-card-name="${card.name}"
-                                                th:data-bank-code="${card.bankCode}"
-                                                th:data-card-type="${card.cardType}"
-                                                th:data-card-number-last4="${card.cardNumberLast4}"
-                                                th:data-currency-code="${card.currencyCode}"
-                                                th:data-billing-date="${card.billingDate}"
-                                                th:data-payment-date="${card.paymentDate}"
-                                                th:data-credit-limit="${card.creditLimit}"
-                                                th:data-notes="${card.notes}"
-                                                onclick="openEditModal(this)">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button type="button"
-                                                class="btn btn-outline-danger btn-sm"
-                                                title="刪除"
-                                                th:data-card-id="${card.id}"
-                                                th:data-card-name="${card.name}"
-                                                onclick="confirmDelete(this)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
+                        <div class="mb-3">
+                            <label class="form-label">銀行代碼</label>
+                            <input type="text" class="form-control" id="editBankCode" maxlength="10"/>
                         </div>
-
+                        <div class="mb-3">
+                            <label class="form-label">卡片類型</label>
+                            <input type="text" class="form-control" id="editCardType" maxlength="50" placeholder="例：VISA、Mastercard"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">末四碼</label>
+                            <input type="text" class="form-control" id="editCardNumberLast4" maxlength="4"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">幣別 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editCurrencyCode">
+                                <option value="TWD">TWD 新台幣</option>
+                                <option value="USD">USD 美元</option>
+                                <option value="JPY">JPY 日圓</option>
+                                <option value="EUR">EUR 歐元</option>
+                                <option value="CNY">CNY 人民幣</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">帳單日</label>
+                                <input type="number" class="form-control" id="editBillingDate" min="1" max="31" placeholder="例：25"/>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">繳款日</label>
+                                <input type="number" class="form-control" id="editPaymentDate" min="1" max="31" placeholder="例：15"/>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">信用額度</label>
+                            <input type="number" class="form-control" id="editCreditLimit" min="0" step="1" placeholder="選填"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">備註</label>
+                            <textarea class="form-control" id="editNotes" rows="2" maxlength="500"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="submitEdit()">儲存</button>
                     </div>
                 </div>
-
-            </div>
-        </main>
-
-        <footer class="py-4 bg-light mt-auto">
-            <div class="container-fluid px-4">
-                <div class="d-flex align-items-center justify-content-between small">
-                    <div class="text-muted">Copyright &copy; NovaLedger 2026</div>
-                </div>
-            </div>
-        </footer>
-    </div>
-</div>
-
-<!-- Edit Modal -->
-<div class="modal fade" id="editCardModal" tabindex="-1" aria-labelledby="editCardModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editCardModalLabel">編輯信用卡</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="editCardId"/>
-                <div class="mb-3">
-                    <label class="form-label">卡片名稱 <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="editName" maxlength="100"/>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">銀行代碼</label>
-                    <input type="text" class="form-control" id="editBankCode" maxlength="10"/>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">卡片類型</label>
-                    <input type="text" class="form-control" id="editCardType" maxlength="50" placeholder="例：VISA、Mastercard"/>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">末四碼</label>
-                    <input type="text" class="form-control" id="editCardNumberLast4" maxlength="4" placeholder="例：1234"/>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">幣別 <span class="text-danger">*</span></label>
-                    <select class="form-select" id="editCurrencyCode">
-                        <option value="TWD">TWD 新台幣</option>
-                        <option value="USD">USD 美元</option>
-                        <option value="JPY">JPY 日圓</option>
-                        <option value="EUR">EUR 歐元</option>
-                        <option value="CNY">CNY 人民幣</option>
-                    </select>
-                </div>
-                <div class="row">
-                    <div class="col-6 mb-3">
-                        <label class="form-label">帳單日</label>
-                        <input type="number" class="form-control" id="editBillingDate" min="1" max="31" placeholder="例：25"/>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <label class="form-label">繳款日</label>
-                        <input type="number" class="form-control" id="editPaymentDate" min="1" max="31" placeholder="例：15"/>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">信用額度</label>
-                    <input type="number" class="form-control" id="editCreditLimit" min="0" step="1" placeholder="選填"/>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">備註</label>
-                    <textarea class="form-control" id="editNotes" rows="2" maxlength="500"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="submitEdit()">儲存</button>
             </div>
         </div>
     </div>
-</div>
+</th:block>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="/js/scripts.js"></script>
-<script src="/js/vendor/sweetalert2.all.v11.10.6.min.js"></script>
-
-<script>
-    function openEditModal(btn) {
-        document.getElementById('editCardId').value             = btn.dataset.cardId;
-        document.getElementById('editName').value               = btn.dataset.cardName;
-        document.getElementById('editBankCode').value           = btn.dataset.bankCode || '';
-        document.getElementById('editCardType').value           = btn.dataset.cardType || '';
-        document.getElementById('editCardNumberLast4').value    = btn.dataset.cardNumberLast4 || '';
-        document.getElementById('editCurrencyCode').value       = btn.dataset.currencyCode;
-        document.getElementById('editBillingDate').value        = btn.dataset.billingDate || '';
-        document.getElementById('editPaymentDate').value        = btn.dataset.paymentDate || '';
-        document.getElementById('editCreditLimit').value        = btn.dataset.creditLimit || '';
-        document.getElementById('editNotes').value              = btn.dataset.notes || '';
-
-        new bootstrap.Modal(document.getElementById('editCardModal')).show();
-    }
-
-    function submitEdit() {
-        const cardId            = document.getElementById('editCardId').value;
-        const name              = document.getElementById('editName').value.trim();
-        const bankCode          = document.getElementById('editBankCode').value.trim();
-        const cardType          = document.getElementById('editCardType').value.trim();
-        const cardNumberLast4   = document.getElementById('editCardNumberLast4').value.trim();
-        const currencyCode      = document.getElementById('editCurrencyCode').value;
-        const billingDate       = document.getElementById('editBillingDate').value;
-        const paymentDate       = document.getElementById('editPaymentDate').value;
-        const creditLimit       = document.getElementById('editCreditLimit').value;
-        const notes             = document.getElementById('editNotes').value.trim();
-
-        if (!name) {
-            Swal.fire({ icon: 'warning', title: '請填寫卡片名稱' });
-            return;
+<th:block th:fragment="pagejs">
+    <script>
+        function openEditModal(btn) {
+            document.getElementById('editCardId').value          = btn.dataset.cardId;
+            document.getElementById('editName').value            = btn.dataset.cardName;
+            document.getElementById('editBankCode').value        = btn.dataset.bankCode || '';
+            document.getElementById('editCardType').value        = btn.dataset.cardType || '';
+            document.getElementById('editCardNumberLast4').value = btn.dataset.cardNumberLast4 || '';
+            document.getElementById('editCurrencyCode').value    = btn.dataset.currencyCode;
+            document.getElementById('editBillingDate').value     = btn.dataset.billingDate || '';
+            document.getElementById('editPaymentDate').value     = btn.dataset.paymentDate || '';
+            document.getElementById('editCreditLimit').value     = btn.dataset.creditLimit || '';
+            document.getElementById('editNotes').value           = btn.dataset.notes || '';
+            new bootstrap.Modal(document.getElementById('editCardModal')).show();
         }
 
-        fetch(`/api/cards/${cardId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name:             name,
-                bankCode:         bankCode || null,
-                cardType:         cardType || null,
-                cardNumberLast4:  cardNumberLast4 || null,
-                currencyCode:     currencyCode,
-                billingDate:      billingDate ? parseInt(billingDate) : null,
-                paymentDate:      paymentDate ? parseInt(paymentDate) : null,
-                creditLimit:      creditLimit ? parseFloat(creditLimit) : null,
-                notes:            notes || null
+        function submitEdit() {
+            const cardId          = document.getElementById('editCardId').value;
+            const name            = document.getElementById('editName').value.trim();
+            const bankCode        = document.getElementById('editBankCode').value.trim();
+            const cardType        = document.getElementById('editCardType').value.trim();
+            const cardNumberLast4 = document.getElementById('editCardNumberLast4').value.trim();
+            const currencyCode    = document.getElementById('editCurrencyCode').value;
+            const billingDate     = document.getElementById('editBillingDate').value;
+            const paymentDate     = document.getElementById('editPaymentDate').value;
+            const creditLimit     = document.getElementById('editCreditLimit').value;
+            const notes           = document.getElementById('editNotes').value.trim();
+
+            if (!name) { Swal.fire({ icon: 'warning', title: '請填寫卡片名稱' }); return; }
+
+            fetch(`/api/cards/${cardId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name, currencyCode,
+                    bankCode: bankCode || null,
+                    cardType: cardType || null,
+                    cardNumberLast4: cardNumberLast4 || null,
+                    billingDate: billingDate ? parseInt(billingDate) : null,
+                    paymentDate: paymentDate ? parseInt(paymentDate) : null,
+                    creditLimit: creditLimit ? parseFloat(creditLimit) : null,
+                    notes: notes || null
+                })
             })
-        })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -246,26 +198,23 @@
                 }
             })
             .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤', text: '請稍後再試' }));
-    }
+        }
 
-    function confirmDelete(btn) {
-        const cardId   = btn.dataset.cardId;
-        const cardName = btn.dataset.cardName;
-
-        Swal.fire({
-            title: '確定要刪除？',
-            html: `信用卡「<strong>${cardName}</strong>」刪除後無法復原。`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '確定刪除',
-            cancelButtonText: '取消'
-        }).then(result => {
-            if (result.isConfirmed) {
-                fetch(`/api/cards/${cardId}`, {
-                    method: 'DELETE'
-                })
+        function confirmDelete(btn) {
+            const cardId   = btn.dataset.cardId;
+            const cardName = btn.dataset.cardName;
+            Swal.fire({
+                title: '確定要刪除？',
+                html: `信用卡「<strong>${cardName}</strong>」刪除後無法復原。`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    fetch(`/api/cards/${cardId}`, { method: 'DELETE' })
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
@@ -276,10 +225,10 @@
                         }
                     })
                     .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤', text: '請稍後再試' }));
-            }
-        });
-    }
-</script>
+                }
+            });
+        }
+    </script>
+</th:block>
 
-</body>
 </html>
