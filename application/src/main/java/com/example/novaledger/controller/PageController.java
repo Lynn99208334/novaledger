@@ -46,4 +46,9 @@ public class PageController {
     public String transactionNewPage() {
         return "transaction-new";
     }
+
+    @GetMapping("/exchange-rates")
+    public String exchangeRatesPage() {
+        return "exchangeRates";
+    }
 }

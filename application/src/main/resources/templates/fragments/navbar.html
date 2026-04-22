@@ -174,6 +174,13 @@
                 交易記錄
             </a>
 
+            <!-- 系統管理（TODO LYN-29：加入 sec:authorize="hasRole('ADMIN')" 後只有 ADMIN 可見） -->
+            <div class="sb-sidenav-menu-heading">系統管理</div>
+            <a class="nav-link" th:href="@{/page/exchange-rates}">
+                <div class="sb-nav-link-icon"><i class="fas fa-coins"></i></div>
+                匯率管理
+            </a>
+
             <a class="nav-link" th:href="@{/ccAnalysis}">
                 <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>
                 信用卡分析

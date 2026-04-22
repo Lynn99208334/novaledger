@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>匯率管理 - NovaLedger</title>
+  <link th:href="@{/css/styles.css}" rel="stylesheet" />
+  <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="/css/vendor/sweetalert2.v11.10.6.min.css"/>
+</head>
+
+<body class="sb-nav-fixed">
+
+<div th:replace="fragments/navbar :: topnav"></div>
+
+<div id="layoutSidenav">
+  <div id="layoutSidenav_nav">
+    <div th:replace="fragments/navbar :: sidenav"></div>
+  </div>
+
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4">
+
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+          <h1 class="h3 mb-0">匯率管理</h1>
+        </div>
+        <ol class="breadcrumb mb-4">
+          <li class="breadcrumb-item"><a th:href="@{/dashboard}">首頁</a></li>
+          <li class="breadcrumb-item active">匯率管理</li>
+        </ol>
+
+        <!-- 匯率清單 -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-exchange-alt me-1"></i> 目前匯率（對台幣）
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle mb-0" id="ratesTable">
+                <thead class="table-light">
+                <tr>
+                  <th>幣別</th>
+                  <th class="text-end">匯率（1 外幣 = ? TWD）</th>
+                  <th>更新日期</th>
+                  <th>資料來源</th>
+                  <th class="text-center">操作</th>
+                </tr>
+                </thead>
+                <tbody id="ratesBody">
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-3">載入中...</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 更新匯率表單 -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-edit me-1"></i> 手動更新匯率
+          </div>
+          <div class="card-body">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label">基準幣別 <span class="text-danger">*</span></label>
+                <select class="form-select" id="baseCurrency">
+                  <option value="USD">USD 美元</option>
+                  <option value="EUR">EUR 歐元</option>
+                  <option value="JPY">JPY 日圓</option>
+                  <option value="CNY">CNY 人民幣</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">目標幣別</label>
+                <input type="text" class="form-control" value="TWD" disabled />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">匯率 <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="rateValue"
+                       placeholder="例：31.5" step="0.000001" min="0.000001" />
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="submitUpdateRate()">
+                  <i class="fas fa-save me-1"></i> 更新
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="py-4 bg-light mt-auto">
+      <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between small">
+          <div class="text-muted">Copyright &copy; NovaLedger 2026</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="/js/scripts.js"></script>
+<script src="/js/vendor/sweetalert2.all.v11.10.6.min.js"></script>
+
+<script>
+  // 頁面載入時取得匯率清單
+  document.addEventListener('DOMContentLoaded', loadRates);
+
+  function loadRates() {
+    fetch('/api/exchange-rates')
+            .then(res => res.json())
+            .then(data => {
+              if (!data.success) {
+                document.getElementById('ratesBody').innerHTML =
+                        '<tr><td colspan="5" class="text-center text-danger">載入失敗</td></tr>';
+                return;
+              }
+              const rates = data.data;
+              if (!rates || rates.length === 0) {
+                document.getElementById('ratesBody').innerHTML =
+                        '<tr><td colspan="5" class="text-center text-muted">尚無匯率資料</td></tr>';
+                return;
+              }
+              const rows = rates.map(r => `
+                    <tr>
+                        <td><strong>${r.baseCurrency}</strong></td>
+                        <td class="text-end">${r.rate}</td>
+                        <td>${r.rateDate}</td>
+                        <td>${r.source || '-'}</td>
+                        <td class="text-center">
+                            <button class="btn btn-outline-primary btn-sm"
+                                    onclick="prefillForm('${r.baseCurrency}', ${r.rate})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+              document.getElementById('ratesBody').innerHTML = rows;
+            })
+            .catch(() => {
+              document.getElementById('ratesBody').innerHTML =
+                      '<tr><td colspan="5" class="text-center text-danger">網路錯誤</td></tr>';
+            });
+  }
+
+  function prefillForm(baseCurrency, rate) {
+    document.getElementById('baseCurrency').value = baseCurrency;
+    document.getElementById('rateValue').value = rate;
+    document.getElementById('rateValue').focus();
+  }
+
+  function submitUpdateRate() {
+    const baseCurrency = document.getElementById('baseCurrency').value;
+    const rate = parseFloat(document.getElementById('rateValue').value);
+
+    if (!rate || rate <= 0) {
+      Swal.fire({ icon: 'warning', title: '請輸入有效匯率' });
+      return;
+    }
+
+    fetch('/api/exchange-rates', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        baseCurrency: baseCurrency,
+        quoteCurrency: 'TWD',
+        rate: rate
+      })
+    })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire({
+                  icon: 'success',
+                  title: '更新成功',
+                  timer: 1200,
+                  showConfirmButton: false
+                }).then(() => loadRates());
+              } else {
+                Swal.fire({ icon: 'error', title: '更新失敗', text: data.error || '請稍後再試' });
+              }
+            })
+            .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤', text: '請稍後再試' }));
+  }
+</script>
+
+</body>
+</html>

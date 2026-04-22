@@ -70,6 +70,12 @@ public enum ErrorCode {
     // ========================
     TRANSACTION_NOT_FOUND("TX_001", "Transaction Not Found", 404),
     TRANSACTION_SOURCE_INVALID("TX_002", "Transaction must have either accountId or creditCardId", 400),
+
+    // ========================
+    // Exchange Rate
+    // ========================
+    EXCHANGE_RATE_NOT_FOUND("EXCHANGE_001", "Exchange Rate Not Found", 404),
+
     ;
 
     private final String code;
