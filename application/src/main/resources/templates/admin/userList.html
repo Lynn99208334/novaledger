@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('使用者管理', ~{::content}, ~{::pagejs})}">
+
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">使用者管理</h1>
+        </div>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/page/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item active">使用者管理</li>
+        </ol>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-users me-1"></i> 使用者清單
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>帳號</th>
+                            <th>Email</th>
+                            <th class="text-center">Email 驗證</th>
+                            <th class="text-center">狀態</th>
+                            <th class="text-center">系統管理員</th>
+                            <th>建立時間</th>
+                        </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                        <tr><td colspan="7" class="text-center text-muted py-4">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="pagejs">
+    <script>
+        document.addEventListener('DOMContentLoaded', loadUsers);
+
+        function loadUsers() {
+            fetch('/api/admin/users')
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        document.getElementById('userTableBody').innerHTML =
+                            '<tr><td colspan="7" class="text-center text-danger">載入失敗</td></tr>';
+                        return;
+                    }
+                    const users = data.data || [];
+                    if (users.length === 0) {
+                        document.getElementById('userTableBody').innerHTML =
+                            '<tr><td colspan="7" class="text-center text-muted py-4">尚無使用者資料</td></tr>';
+                        return;
+                    }
+                    document.getElementById('userTableBody').innerHTML = users.map(u => `
+                        <tr>
+                            <td>${u.id}</td>
+                            <td>${u.username}</td>
+                            <td>${u.email}</td>
+                            <td class="text-center">
+                                <span class="badge ${u.emailVerified ? 'bg-success' : 'bg-warning text-dark'}">
+                                    ${u.emailVerified ? '已驗證' : '未驗證'}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge ${u.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">
+                                    ${u.status}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                ${u.systemAdmin ? '<span class="badge bg-danger">ADMIN</span>' : '-'}
+                            </td>
+                            <td class="small text-muted">${u.createdAt ? u.createdAt.substring(0, 10) : '-'}</td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(() => {
+                    document.getElementById('userTableBody').innerHTML =
+                        '<tr><td colspan="7" class="text-center text-danger">網路錯誤</td></tr>';
+                });
+        }
+    </script>
+</th:block>
+
+</html>

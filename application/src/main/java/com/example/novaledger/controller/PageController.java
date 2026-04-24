@@ -51,4 +51,19 @@ public class PageController {
     public String exchangeRatesPage() {
         return "exchangeRates";
     }
+
+    @GetMapping("/import")
+    public String importPage() {
+        return "import";
+    }
+
+    @GetMapping("/admin/banks")
+    public String adminBanksPage() {
+        return "admin/bankList";
+    }
+
+    @GetMapping("/admin/users")
+    public String adminUsersPage() {
+        return "admin/userList";
+    }
 }

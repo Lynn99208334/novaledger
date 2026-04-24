@@ -52,11 +52,13 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/page/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/page/login")
-                        .loginProcessingUrl("/login")   // ← 加這行
+                        .loginProcessingUrl("/login")
                         .successHandler(loginSuccessHandler)
                         .permitAll()
                 )
@@ -73,6 +75,16 @@ public class SecurityConfig {
                                 response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");
                             } else {
                                 response.sendRedirect("/page/login");
+                            }
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            String path = request.getRequestURI();
+                            if (path.startsWith("/api/")) {
+                                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"success\":false,\"error\":\"Access Denied\"}");
+                            } else {
+                                response.sendRedirect("/error/403");
                             }
                         })
                 )

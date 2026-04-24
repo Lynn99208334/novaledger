@@ -1,180 +1,90 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>新增帳戶 - NovaLedger</title>
-    <link th:href="@{/css/styles.css}" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-</head>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('新增帳戶', ~{::content}, ~{::pagejs})}">
 
-<body class="sb-nav-fixed">
-
-<div th:replace="fragments/navbar :: topnav"></div>
-
-<div id="layoutSidenav">
-    <div id="layoutSidenav_nav">
-        <div th:replace="fragments/navbar :: sidenav"></div>
-    </div>
-
-    <div id="layoutSidenav_content">
-        <main>
-            <div class="container-fluid px-4">
-
-                <h1 class="h3 mt-4 mb-2">新增帳戶</h1>
-                <ol class="breadcrumb mb-4">
-                    <li class="breadcrumb-item"><a th:href="@{/dashboard}">首頁</a></li>
-                    <li class="breadcrumb-item"><a th:href="@{/accounts}">帳戶管理</a></li>
-                    <li class="breadcrumb-item active">新增帳戶</li>
-                </ol>
-
-                <div class="row justify-content-center">
-                    <div class="col-lg-7 col-md-9">
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <i class="fas fa-plus-circle me-1"></i> 帳戶資料
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <h1 class="h3 mt-4 mb-2">新增帳戶</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/accounts}">帳戶管理</a></li>
+            <li class="breadcrumb-item active">新增帳戶</li>
+        </ol>
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-md-9">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-plus-circle me-1"></i> 帳戶資料
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/accounts}" th:object="${accountForm}" method="post" novalidate>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">帳戶名稱 <span class="text-danger">*</span></label>
+                                <input type="text" id="name" th:field="*{name}"
+                                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"
+                                       class="form-control" placeholder="例：台新薪轉帳戶" maxlength="100"/>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
                             </div>
-                            <div class="card-body">
-
-                                <form th:action="@{/accounts}"
-                                      th:object="${accountForm}"
-                                      method="post"
-                                      novalidate>
-
-                                    <!-- 帳戶名稱 -->
-                                    <div class="mb-3">
-                                        <label for="name" class="form-label">
-                                            帳戶名稱 <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text"
-                                               id="name"
-                                               th:field="*{name}"
-                                               th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"
-                                               class="form-control"
-                                               placeholder="例：台新薪轉帳戶"
-                                               maxlength="100"/>
-                                        <div class="invalid-feedback"
-                                             th:if="${#fields.hasErrors('name')}"
-                                             th:errors="*{name}"></div>
-                                    </div>
-
-                                    <!-- 銀行代碼 -->
-                                    <div class="mb-3">
-                                        <label for="bankCode" class="form-label">銀行代碼</label>
-                                        <input type="text"
-                                               id="bankCode"
-                                               th:field="*{bankCode}"
-                                               class="form-control"
-                                               placeholder="例：812"
-                                               maxlength="10"/>
-                                    </div>
-
-                                    <!-- 帳戶類型 -->
-                                    <div class="mb-3">
-                                        <label for="accountType" class="form-label">
-                                            帳戶類型 <span class="text-danger">*</span>
-                                        </label>
-                                        <select id="accountType"
-                                                th:field="*{accountType}"
-                                                th:classappend="${#fields.hasErrors('accountType')} ? 'is-invalid'"
-                                                class="form-select">
-                                            <option value="">-- 請選擇帳戶類型 --</option>
-                                            <option th:each="type : ${accountTypes}"
-                                                    th:value="${type.name()}"
-                                                    th:text="${type.name()}">
-                                            </option>
-                                        </select>
-                                        <div class="invalid-feedback"
-                                             th:if="${#fields.hasErrors('accountType')}"
-                                             th:errors="*{accountType}"></div>
-                                    </div>
-
-                                    <!-- 幣別 -->
-                                    <div class="mb-3">
-                                        <label for="currencyCode" class="form-label">
-                                            幣別 <span class="text-danger">*</span>
-                                        </label>
-                                        <select id="currencyCode"
-                                                th:field="*{currencyCode}"
-                                                th:classappend="${#fields.hasErrors('currencyCode')} ? 'is-invalid'"
-                                                class="form-select">
-                                            <option value="">-- 請選擇幣別 --</option>
-                                            <option value="TWD">TWD 新台幣</option>
-                                            <option value="USD">USD 美元</option>
-                                            <option value="JPY">JPY 日圓</option>
-                                            <option value="EUR">EUR 歐元</option>
-                                            <option value="CNY">CNY 人民幣</option>
-                                        </select>
-                                        <div class="invalid-feedback"
-                                             th:if="${#fields.hasErrors('currencyCode')}"
-                                             th:errors="*{currencyCode}"></div>
-                                    </div>
-
-                                    <!-- 初始餘額 -->
-                                    <div class="mb-3">
-                                        <label for="initialBalance" class="form-label">
-                                            初始餘額 <span class="text-danger">*</span>
-                                        </label>
-                                        <div class="input-group">
-                                            <input type="number"
-                                                   id="initialBalance"
-                                                   th:field="*{initialBalance}"
-                                                   th:classappend="${#fields.hasErrors('initialBalance')} ? 'is-invalid'"
-                                                   class="form-control"
-                                                   placeholder="0"
-                                                   min="0"
-                                                   step="1"/>
-                                            <span class="input-group-text">元</span>
-                                            <div class="invalid-feedback"
-                                                 th:if="${#fields.hasErrors('initialBalance')}"
-                                                 th:errors="*{initialBalance}"></div>
-                                        </div>
-                                        <div class="form-text">若為新開戶，請填 0。</div>
-                                    </div>
-
-                                    <!-- 備註 -->
-                                    <div class="mb-4">
-                                        <label for="notes" class="form-label">備註</label>
-                                        <textarea id="notes"
-                                                  th:field="*{notes}"
-                                                  class="form-control"
-                                                  rows="3"
-                                                  maxlength="500"
-                                                  placeholder="選填，最多 500 字"></textarea>
-                                    </div>
-
-                                    <!-- 按鈕區 -->
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <a th:href="@{/accounts}" class="btn btn-outline-secondary">
-                                            <i class="fas fa-arrow-left me-1"></i> 取消
-                                        </a>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save me-1"></i> 儲存帳戶
-                                        </button>
-                                    </div>
-
-                                </form>
+                            <div class="mb-3">
+                                <label for="bankCode" class="form-label">銀行代碼</label>
+                                <input type="text" id="bankCode" th:field="*{bankCode}"
+                                       class="form-control" placeholder="例：812" maxlength="10"/>
                             </div>
-                        </div>
+                            <div class="mb-3">
+                                <label for="accountType" class="form-label">帳戶類型 <span class="text-danger">*</span></label>
+                                <select id="accountType" th:field="*{accountType}"
+                                        th:classappend="${#fields.hasErrors('accountType')} ? 'is-invalid'"
+                                        class="form-select">
+                                    <option value="">-- 請選擇帳戶類型 --</option>
+                                    <option th:each="type : ${accountTypes}" th:value="${type.name()}" th:text="${type.name()}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('accountType')}" th:errors="*{accountType}"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="currencyCode" class="form-label">幣別 <span class="text-danger">*</span></label>
+                                <select id="currencyCode" th:field="*{currencyCode}"
+                                        th:classappend="${#fields.hasErrors('currencyCode')} ? 'is-invalid'"
+                                        class="form-select">
+                                    <option value="">-- 請選擇幣別 --</option>
+                                    <option value="TWD">TWD 新台幣</option>
+                                    <option value="USD">USD 美元</option>
+                                    <option value="JPY">JPY 日圓</option>
+                                    <option value="EUR">EUR 歐元</option>
+                                    <option value="CNY">CNY 人民幣</option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('currencyCode')}" th:errors="*{currencyCode}"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="initialBalance" class="form-label">初始餘額 <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="number" id="initialBalance" th:field="*{initialBalance}"
+                                           th:classappend="${#fields.hasErrors('initialBalance')} ? 'is-invalid'"
+                                           class="form-control" placeholder="0" min="0" step="1"/>
+                                    <span class="input-group-text">元</span>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('initialBalance')}" th:errors="*{initialBalance}"></div>
+                                </div>
+                                <div class="form-text">若為新開戶，請填 0。</div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="notes" class="form-label">備註</label>
+                                <textarea id="notes" th:field="*{notes}" class="form-control" rows="3" maxlength="500" placeholder="選填，最多 500 字"></textarea>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a th:href="@{/accounts}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i> 取消
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> 儲存帳戶
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-
             </div>
-        </main>
-
-        <footer class="py-4 bg-light mt-auto">
-            <div class="container-fluid px-4">
-                <div class="d-flex align-items-center justify-content-between small">
-                    <div class="text-muted">Copyright &copy; NovaLedger 2026</div>
-                </div>
-            </div>
-        </footer>
+        </div>
     </div>
-</div>
+</th:block>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="js/scripts.js"></script>
+<th:block th:fragment="pagejs"></th:block>
 
-</body>
 </html>

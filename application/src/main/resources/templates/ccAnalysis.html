@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout(~{::content}, ~{::page-js})}">
+      th:replace="~{layout/base :: layout('信用卡分析', ~{::content}, ~{::pagejs})}">
 
-<head>
-    <title>信用卡分析</title>
-</head>
-
-<!-- ★★★ 第3層：頁面內容插槽 ★★★ -->
 <th:block th:fragment="content">
     <div class="container-fluid px-4">
         <h1 class="mt-4">信用卡分析</h1>
         <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a th:href="@{/static}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/dashboard}">首頁</a></li>
             <li class="breadcrumb-item active">信用卡分析</li>
         </ol>
 
-        <!-- 本頁樣式（僅此頁需要） -->
         <style>
             .is-hidden { display: none !important; }
             .cc-drop-wrapper { border: 2px dashed #f5b7b1; border-radius: 16px; padding: 24px; }
@@ -31,7 +25,6 @@
         </style>
 
         <section class="cc-wrap my-5">
-            <!-- 流程步驟列 -->
             <div class="cc-steps">
                 <div class="cc-step cc-step--active">
                     <div class="cc-step-icon">1</div>
@@ -54,28 +47,22 @@
                 </div>
             </div>
 
-            <!-- 拖曳上傳區（步驟一，可見） -->
             <div class="cc-drop-wrapper" id="dropWrap">
                 <div class="cc-drop-inner">
                     <h2 class="cc-drop-title">信用卡帳單上傳</h2>
                     <p class="cc-drop-subtitle">幾秒內匯入帳單並開始分析。</p>
-
                     <button class="cc-drop-button" type="button">
-                        <span class="cc-drop-icon">📤</span>
-                        選擇檔案
+                        <span class="cc-drop-icon">📤</span> 選擇檔案
                     </button>
-
                     <p class="cc-drop-hint">或將檔案拖曳至此 · 支援 PDF / CSV / XLSX</p>
                 </div>
             </div>
 
-            <!-- 資料預覽（步驟二，預設隱藏） -->
             <section class="my-4 is-hidden" id="previewSection">
                 <h3 class="mb-2">資料預覽</h3>
                 <div id="preview" class="border rounded p-3 bg-light" style="white-space:pre-wrap;"></div>
             </section>
 
-            <!-- 下一步（按下才會上傳與解析） -->
             <div class="cc-next-wrap">
                 <button class="cc-next-btn" id="nextBtn" type="button">下一步</button>
             </div>
@@ -83,24 +70,17 @@
     </div>
 </th:block>
 
-<!-- ★★★（可選）本頁 JS 插槽：會被 base.html 插在 </body> 前 ★★★ -->
-<th:block th:fragment="page-js">
-    <!-- 若需 DataTables、ChartJS 等本頁專用第三方，也可在這裡額外載入 -->
-    <!-- <script defer src="/js/vendor/some-lib.min.js"></script> -->
-
+<th:block th:fragment="pagejs">
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const area = document.querySelector('.cc-drop-inner');
-            const btnChoose  = document.querySelector('.cc-drop-button');
+            const btnChoose = document.querySelector('.cc-drop-button');
             const preview = document.getElementById('preview');
             const btnNext = document.getElementById('nextBtn');
             const dropWrap = document.getElementById('dropWrap');
             const previewSection = document.getElementById('previewSection');
 
-            if (!area || !btnChoose || !preview) {
-                console.error('[ccUpload] 必要元素找不到', { area, btnChoose, preview });
-                return;
-            }
+            if (!area || !btnChoose || !preview) return;
 
             let pickedFile = null;
 
@@ -121,7 +101,7 @@
             );
             area.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
 
-            function handleFiles(files){
+            function handleFiles(files) {
                 if (!files || !files.length) return;
                 const f = files[0];
                 if (!/\.pdf$/i.test(f.name)) { alert('請上傳 PDF'); return; }
@@ -137,31 +117,23 @@
                     if (!pickedFile) { alert('請先選擇檔案'); return; }
                     preview.textContent = '解析中…';
                     btnNext.disabled = true;
-
                     try {
                         const fd = new FormData();
                         fd.append('file', pickedFile);
-
                         const csrf = document.querySelector('meta[name="_csrf"]')?.content;
                         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
                         const headers = csrf && csrfHeader ? { [csrfHeader]: csrf } : {};
-
                         const res = await fetch('/api/cc/upload', { method: 'POST', body: fd, headers });
                         if (!res.ok) {
-                            const errText = await res.text().catch(()=> '');
-                            preview.textContent = `上傳或解析失敗（${res.status}）：${errText || '無回應內容'}`;
+                            preview.textContent = `上傳或解析失敗（${res.status}）`;
                             return;
                         }
-
                         const data = await res.json();
                         renderPreview(data, pickedFile.name);
-
-                        // 切到步驟 2 並顯示預覽
                         document.querySelectorAll('.cc-step').forEach(el => el.classList.remove('cc-step--active'));
                         document.querySelectorAll('.cc-step')[1]?.classList.add('cc-step--active');
                         dropWrap?.classList.add('is-hidden');
                         previewSection?.classList.remove('is-hidden');
-
                     } catch (err) {
                         preview.textContent = '上傳或解析發生例外：' + err.message;
                     } finally {
@@ -170,30 +142,18 @@
                 });
             }
 
-            function renderPreview(data, filename){
+            function renderPreview(data, filename) {
                 const hdr = `${data.bank || ''} ${data.statementMonth || ''}`.trim();
-
-                if (Array.isArray(data.items) && data.items.length){
+                if (Array.isArray(data.items) && data.items.length) {
                     const table = document.createElement('table');
                     table.className = 'table table-sm table-striped';
-                    table.innerHTML = `
-            <thead><tr>
-              <th>交易日期</th><th>入帳日期</th><th>交易項目</th>
-              <th>幣別</th><th class="text-end">金額</th><th class="text-end">新臺幣</th>
-            </tr></thead><tbody></tbody>`;
+                    table.innerHTML = `<thead><tr><th>交易日期</th><th>入帳日期</th><th>交易項目</th><th>幣別</th><th class="text-end">金額</th><th class="text-end">新臺幣</th></tr></thead><tbody></tbody>`;
                     const tbody = table.querySelector('tbody');
                     data.items.forEach(it => {
                         const tr = document.createElement('tr');
-                        tr.innerHTML = `
-              <td>${it.txnDate ?? ''}</td>
-              <td>${it.postDate ?? ''}</td>
-              <td>${escapeHtml(it.description ?? '')}</td>
-              <td>${it.currency ?? ''}</td>
-              <td class="text-end">${it.amount ?? ''}</td>
-              <td class="text-end">${it.twd ?? ''}</td>`;
+                        tr.innerHTML = `<td>${it.txnDate ?? ''}</td><td>${it.postDate ?? ''}</td><td>${escapeHtml(it.description ?? '')}</td><td>${it.currency ?? ''}</td><td class="text-end">${it.amount ?? ''}</td><td class="text-end">${it.twd ?? ''}</td>`;
                         tbody.appendChild(tr);
                     });
-
                     preview.innerHTML = `<div class="mb-2">檔案：${filename} ${hdr ? `| ${hdr}` : ''}</div>`;
                     preview.appendChild(table);
                 } else {
@@ -202,10 +162,8 @@
                 }
             }
 
-            function escapeHtml(s){
-                return s.replace(/[&<>"']/g, ch =>
-                    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])
-                );
+            function escapeHtml(s) {
+                return s.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
             }
         });
     </script>

@@ -22,6 +22,7 @@ public class TenantInterceptor implements HandlerInterceptor {
             "/logout",
             "/page/",
             "/api/auth/",
+            "/api/admin/",
             "/css/",
             "/js/",
             "/images/",

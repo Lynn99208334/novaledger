@@ -1,68 +1,51 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(pageTitle, content, pagejs)">
+<html lang="zh-Hant"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(pageTitle, content, pagejs)">
 <head>
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <title th:text="${pageTitle} + ' - NovaLedger'">NovaLedger</title>
 
-    <!-- 支援動態標題；未提供時顯示預設字樣 -->
-    <title th:text="${pageTitle} ?: 'My App'">My App</title>
-
-    <!-- 全站樣式 -->
-    <link th:href="@{/css/styles.css}" rel="stylesheet"/>
-
-    <!-- 例：Font Awesome（如不需可移除） -->
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-
-    <!-- CSRF（如有啟用 Spring Security，Thymeleaf 會注入） -->
     <meta name="_csrf" th:content="${_csrf?.token}"/>
     <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
 
-    <!-- 共用 Vendor CSS（第二層） -->
-    <th:block th:replace="fragments/vendor :: vendor-css"></th:block>
+    <th:block th:replace="~{fragments/navbar :: vendor-css}"></th:block>
+    <link th:href="@{/css/styles.css}" rel="stylesheet"/>
+    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
 </head>
 
 <body class="sb-nav-fixed">
 
-<!-- 第一層：Top Navbar -->
-<nav th:replace="fragments/navbar :: topnav"></nav>
+<nav th:replace="~{fragments/navbar :: topnav}"></nav>
 
 <div id="layoutSidenav">
-    <!-- 第一層：Side Navbar -->
     <div id="layoutSidenav_nav">
-        <nav th:replace="fragments/navbar :: sidenav"></nav>
+        <nav th:replace="~{fragments/navbar :: sidenav}"></nav>
     </div>
 
-    <!-- 第三層：頁面內容插槽 -->
     <div id="layoutSidenav_content">
         <main>
             <th:block th:insert="${content}"></th:block>
         </main>
 
-        <!-- 共用頁尾（可依需要調整或抽成片段） -->
         <footer class="py-4 bg-light mt-auto">
             <div class="container-fluid px-4">
                 <div class="d-flex align-items-center justify-content-between small">
-                    <div class="text-muted">&copy; My App</div>
-                    <div>
-                        <a href="#">Privacy Policy</a>
-                        &middot;
-                        <a href="#">Terms &amp; Conditions</a>
-                    </div>
+                    <div class="text-muted">Copyright &copy; NovaLedger 2026</div>
                 </div>
             </div>
         </footer>
     </div>
 </div>
 
-<!-- 共用第三方 JS（站內常用，可依需要精簡或改由 Vendor 管） -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script th:src="@{/js/scripts.js}"></script>
+<th:block th:replace="~{fragments/navbar :: vendor-js}"></th:block>
 
-<!-- 共用 Vendor JS（第二層） -->
-<th:block th:replace="fragments/vendor :: vendor-js"></th:block>
-
-<!-- 頁面專屬 JS 插槽（第三層可選） -->
 <th:block th:insert="${pagejs}"></th:block>
+
 </body>
 </html>

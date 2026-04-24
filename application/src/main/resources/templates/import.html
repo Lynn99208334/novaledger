@@ -1,484 +1,348 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>匯入對帳單 - NovaLedger</title>
-    <link th:href="@{/css/styles.css}" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="/css/vendor/sweetalert2.v11.10.6.min.css"/>
-</head>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('匯入對帳單', ~{::content}, ~{::pagejs})}">
 
-<body class="sb-nav-fixed">
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">匯入對帳單</h1>
+        </div>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item active">匯入對帳單</li>
+        </ol>
 
-<div th:replace="fragments/navbar :: topnav"></div>
-
-<div id="layoutSidenav">
-    <div id="layoutSidenav_nav">
-        <div th:replace="fragments/navbar :: sidenav"></div>
-    </div>
-
-    <div id="layoutSidenav_content">
-        <main>
-            <div class="container-fluid px-4">
-
-                <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
-                    <h1 class="h3 mb-0">匯入對帳單</h1>
-                </div>
-                <ol class="breadcrumb mb-4">
-                    <li class="breadcrumb-item"><a th:href="@{/dashboard}">首頁</a></li>
-                    <li class="breadcrumb-item active">匯入對帳單</li>
-                </ol>
-
-                <!-- Step 1：上傳區 -->
-                <div class="card mb-4" id="uploadCard">
-                    <div class="card-header">
-                        <i class="fas fa-upload me-1"></i> 上傳對帳單檔案
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">類型 <span class="text-danger">*</span></label>
-                            <div class="d-flex gap-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="jobType"
-                                           id="jobTypeAccount" value="ACCOUNT" checked />
-                                    <label class="form-check-label" for="jobTypeAccount">帳戶存摺</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="jobType"
-                                           id="jobTypeCard" value="CREDIT_CARD" />
-                                    <label class="form-check-label" for="jobTypeCard">信用卡對帳單</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">銀行 <span class="text-danger">*</span></label>
-                            <select class="form-select" id="bankCodeSelect">
-                                <option value="">請選擇銀行...</option>
-                            </select>
-                            <div class="form-text text-muted" id="bankHint"></div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">帳戶 <span class="text-danger">*</span></label>
-                            <select class="form-select" id="accountSelect">
-                                <option value="">請選擇帳戶...</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">選擇檔案 <span class="text-danger">*</span></label>
-                            <input type="file" class="form-control" id="fileInput" accept=".csv,.xlsx,.xls" />
-                            <div class="form-text text-muted">支援 CSV 格式，檔案大小上限 10MB。</div>
-                        </div>
-                        <button type="button" class="btn btn-primary" id="uploadBtn" onclick="startUpload()">
-                            <i class="fas fa-cloud-upload-alt me-1"></i> 開始上傳解析
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 2：解析進度（上傳後才顯示） -->
-                <div class="card mb-4 d-none" id="progressCard">
-                    <div class="card-header">
-                        <i class="fas fa-spinner fa-spin me-1"></i> 解析進度
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="progress flex-grow-1" style="height: 20px;">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                     id="progressBar"
-                                     role="progressbar"
-                                     style="width: 0%">0%</div>
-                            </div>
-                            <span id="progressStatus" class="text-muted small">處理中...</span>
-                        </div>
-                        <div class="mt-2 small text-muted" id="progressDetail"></div>
-                    </div>
-                </div>
-
-                <!-- Step 3：解析結果（COMPLETED 才顯示） -->
-                <div class="d-none" id="resultSection">
-
-                    <!-- 統計摘要 -->
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="card text-center border-secondary">
-                                <div class="card-body py-2">
-                                    <div class="h4 mb-0" id="statTotal">0</div>
-                                    <div class="small text-muted">總筆數</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card text-center border-success">
-                                <div class="card-body py-2">
-                                    <div class="h4 mb-0 text-success" id="statSuccess">0</div>
-                                    <div class="small text-muted">解析成功</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card text-center border-danger">
-                                <div class="card-body py-2">
-                                    <div class="h4 mb-0 text-danger" id="statFail">0</div>
-                                    <div class="small text-muted">解析失敗</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 成功列預覽 -->
-                    <div class="card mb-4" id="previewCard">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span><i class="fas fa-check-circle text-success me-1"></i> 解析成功 — 預覽</span>
-                            <span class="badge bg-success" id="previewCount">0 筆</span>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-hover table-sm align-middle mb-0">
-                                    <thead class="table-light">
-                                    <tr>
-                                        <th>行號</th>
-                                        <th>交易日期</th>
-                                        <th>摘要</th>
-                                        <th class="text-end">金額</th>
-                                        <th class="text-end">餘額</th>
-                                        <th>幣別</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="previewTableBody">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 錯誤列 -->
-                    <div class="card mb-4 d-none" id="errorCard">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span><i class="fas fa-exclamation-triangle text-danger me-1"></i> 解析失敗 — 錯誤明細</span>
-                            <span class="badge bg-danger" id="errorCount">0 筆</span>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-hover table-sm align-middle mb-0">
-                                    <thead class="table-light">
-                                    <tr>
-                                        <th>行號</th>
-                                        <th>原始資料</th>
-                                        <th>錯誤原因</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="errorTableBody">
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 確認匯入按鈕（功能待 C 系列串接） -->
-                    <div class="d-flex justify-content-end gap-2 mb-4">
-                        <button type="button" class="btn btn-secondary" onclick="resetPage()">
-                            <i class="fas fa-redo me-1"></i> 重新上傳
-                        </button>
-                        <button type="button" class="btn btn-success" id="confirmImportBtn" disabled
-                                onclick="confirmImport()">
-                            <i class="fas fa-check me-1"></i> 確認匯入
-                        </button>
-                    </div>
-
-                </div>
-
+        <!-- Step 1：上傳區 -->
+        <div class="card mb-4" id="uploadCard">
+            <div class="card-header">
+                <i class="fas fa-upload me-1"></i> 上傳對帳單檔案
             </div>
-        </main>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">類型 <span class="text-danger">*</span></label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="jobType" id="jobTypeAccount" value="ACCOUNT" checked />
+                            <label class="form-check-label" for="jobTypeAccount">帳戶存摺</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="jobType" id="jobTypeCard" value="CREDIT_CARD" />
+                            <label class="form-check-label" for="jobTypeCard">信用卡對帳單</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">銀行 <span class="text-danger">*</span></label>
+                    <select class="form-select" id="bankCodeSelect">
+                        <option value="">請選擇銀行...</option>
+                    </select>
+                    <div class="form-text text-muted" id="bankHint"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">帳戶 <span class="text-danger">*</span></label>
+                    <select class="form-select" id="accountSelect">
+                        <option value="">請選擇帳戶...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">選擇檔案 <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control" id="fileInput" accept=".csv,.xlsx,.xls" />
+                    <div class="form-text text-muted">支援 CSV 格式，檔案大小上限 10MB。</div>
+                </div>
+                <button type="button" class="btn btn-primary" id="uploadBtn" onclick="startUpload()">
+                    <i class="fas fa-cloud-upload-alt me-1"></i> 開始上傳解析
+                </button>
+            </div>
+        </div>
 
-        <footer class="py-4 bg-light mt-auto">
-            <div class="container-fluid px-4">
-                <div class="d-flex align-items-center justify-content-between small">
-                    <div class="text-muted">Copyright &copy; NovaLedger 2026</div>
+        <!-- Step 2：解析進度 -->
+        <div class="card mb-4 d-none" id="progressCard">
+            <div class="card-header">
+                <i class="fas fa-spinner fa-spin me-1"></i> 解析進度
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="progress flex-grow-1" style="height: 20px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             id="progressBar" role="progressbar" style="width: 0%">0%</div>
+                    </div>
+                    <span id="progressStatus" class="text-muted small">處理中...</span>
+                </div>
+                <div class="mt-2 small text-muted" id="progressDetail"></div>
+            </div>
+        </div>
+
+        <!-- Step 3：解析結果 -->
+        <div class="d-none" id="resultSection">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="card text-center border-secondary">
+                        <div class="card-body py-2">
+                            <div class="h4 mb-0" id="statTotal">0</div>
+                            <div class="small text-muted">總筆數</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center border-success">
+                        <div class="card-body py-2">
+                            <div class="h4 mb-0 text-success" id="statSuccess">0</div>
+                            <div class="small text-muted">解析成功</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center border-danger">
+                        <div class="card-body py-2">
+                            <div class="h4 mb-0 text-danger" id="statFail">0</div>
+                            <div class="small text-muted">解析失敗</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </footer>
+
+            <div class="card mb-4" id="previewCard">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-check-circle text-success me-1"></i> 解析成功 — 預覽</span>
+                    <span class="badge bg-success" id="previewCount">0 筆</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>行號</th><th>交易日期</th><th>摘要</th>
+                                <th class="text-end">金額</th><th class="text-end">餘額</th><th>幣別</th>
+                            </tr>
+                            </thead>
+                            <tbody id="previewTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4 d-none" id="errorCard">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-exclamation-triangle text-danger me-1"></i> 解析失敗 — 錯誤明細</span>
+                    <span class="badge bg-danger" id="errorCount">0 筆</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm align-middle mb-0">
+                            <thead class="table-light">
+                            <tr><th>行號</th><th>原始資料</th><th>錯誤原因</th></tr>
+                            </thead>
+                            <tbody id="errorTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mb-4">
+                <button type="button" class="btn btn-secondary" onclick="resetPage()">
+                    <i class="fas fa-redo me-1"></i> 重新上傳
+                </button>
+                <button type="button" class="btn btn-success" id="confirmImportBtn" disabled onclick="confirmImport()">
+                    <i class="fas fa-check me-1"></i> 確認匯入
+                </button>
+            </div>
+        </div>
     </div>
-</div>
+</th:block>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-<script src="/js/scripts.js"></script>
-<script src="/js/vendor/sweetalert2.all.v11.10.6.min.js"></script>
+<th:block th:fragment="pagejs">
+    <script>
+        let currentJobId = null;
+        let pollTimer = null;
 
-<script>
-    let currentJobId = null;
-    let pollTimer = null;
+        const SUPPORTED_BANKS = [
+            { bankCode: '822', name: '中國信託銀行', hint: '支援 CSV 格式' },
+            { bankCode: '808', name: '玉山銀行',     hint: '支援 CSV 格式（開發中）' },
+            { bankCode: '807', name: '永豐銀行',     hint: '支援 CSV 格式（開發中）' }
+        ];
 
-    // ── 上傳 ──────────────────────────────────────────────────
-    function startUpload() {
-        const fileInput  = document.getElementById('fileInput');
-        const bankCode   = document.getElementById('bankCodeSelect').value;
-        const accountId  = document.getElementById('accountSelect').value;
-        const jobType    = document.querySelector('input[name="jobType"]:checked').value;
-
-        if (!bankCode) {
-            Swal.fire({ icon: 'warning', title: '請選擇銀行' });
-            return;
-        }
-        if (!accountId) {
-            Swal.fire({ icon: 'warning', title: '請選擇帳戶' });
-            return;
-        }
-        if (!fileInput.files || fileInput.files.length === 0) {
-            Swal.fire({ icon: 'warning', title: '請先選擇檔案' });
-            return;
-        }
-
-        const file = fileInput.files[0];
-        if (file.size > 10 * 1024 * 1024) {
-            Swal.fire({ icon: 'warning', title: '檔案過大', text: '檔案大小上限為 10MB' });
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('jobType', jobType);
-        formData.append('bankCode', bankCode);
-        formData.append('accountId', accountId);
-
-        document.getElementById('uploadBtn').disabled = true;
-        showProgress();
-
-        fetch('/api/import/upload', {
-            method: 'POST',
-            body: formData
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.data && data.data.jobId) {
-                    currentJobId = data.data.jobId;
-                    startPolling(currentJobId);
-                } else {
-                    handleUploadError(data.message || '上傳失敗，請稍後再試');
-                }
-            })
-            .catch(() => handleUploadError('網路錯誤，請稍後再試'));
-    }
-
-    function handleUploadError(msg) {
-        document.getElementById('uploadBtn').disabled = false;
-        hideProgress();
-        Swal.fire({ icon: 'error', title: '上傳失敗', text: msg });
-    }
-
-    fetch('/api/accounts')
-        .then(res => res.json())
-        .then(data => {
-            if (!data.success) return;
-            const accountSelect = document.getElementById('accountSelect');
-            (data.data || []).forEach(account => {
+        document.addEventListener('DOMContentLoaded', () => {
+            const select = document.getElementById('bankCodeSelect');
+            SUPPORTED_BANKS.forEach(bank => {
                 const opt = document.createElement('option');
-                opt.value = account.id;
-                opt.textContent = `${account.name}（${account.currencyCode}）`;
-                accountSelect.appendChild(opt);
+                opt.value = bank.bankCode;
+                opt.textContent = `${bank.name}（${bank.bankCode}）`;
+                opt.dataset.hint = bank.hint;
+                select.appendChild(opt);
             });
-        });
-
-    // ── 進度輪詢 ──────────────────────────────────────────────
-    function startPolling(jobId) {
-        pollTimer = setInterval(() => pollStatus(jobId), 1500);
-    }
-
-    function pollStatus(jobId) {
-        fetch(`/api/import/jobs/${jobId}/status`, {
-            headers: { 'X-Tenant-Id': '1' }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (!data.success) return;
-                const job = data.data;
-                updateProgress(job);
-
-                if (job.status === 'COMPLETED' || job.status === 'FAILED') {
-                    clearInterval(pollTimer);
-                    if (job.status === 'COMPLETED') {
-                        loadResults(jobId, job);
-                    } else {
-                        Swal.fire({ icon: 'error', title: '解析失敗', text: '無法完成解析，請確認檔案格式是否正確。' });
-                    }
-                }
-            })
-            .catch(() => clearInterval(pollTimer));
-    }
-
-    function updateProgress(job) {
-        const total   = job.totalCount   || 0;
-        const success = job.successCount || 0;
-        const fail    = job.failCount    || 0;
-        const done    = success + fail;
-        const pct     = total > 0 ? Math.round((done / total) * 100) : 0;
-
-        const bar = document.getElementById('progressBar');
-        bar.style.width = pct + '%';
-        bar.textContent = pct + '%';
-
-        document.getElementById('progressStatus').textContent = job.status;
-        document.getElementById('progressDetail').textContent =
-            `已處理 ${done} / ${total} 筆`;
-    }
-
-    // ── 載入結果 ──────────────────────────────────────────────
-    function loadResults(jobId, job) {
-        Promise.all([
-            fetch(`/api/import/jobs/${jobId}/preview`, { headers: { 'X-Tenant-Id': '1' } }).then(r => r.json()),
-            fetch(`/api/import/jobs/${jobId}/errors`,  { headers: { 'X-Tenant-Id': '1' } }).then(r => r.json())
-        ])
-            .then(([previewRes, errorRes]) => {
-                hideProgress();
-                showResults(job, previewRes.data || [], errorRes.data || []);
-            })
-            .catch(() => {
-                hideProgress();
-                Swal.fire({ icon: 'error', title: '載入結果失敗', text: '請重新整理頁面。' });
+            select.addEventListener('change', () => {
+                const selected = SUPPORTED_BANKS.find(b => b.bankCode === select.value);
+                document.getElementById('bankHint').textContent = selected ? selected.hint : '';
             });
-    }
 
-    function showResults(job, previews, errors) {
-        document.getElementById('statTotal').textContent   = job.totalCount   || 0;
-        document.getElementById('statSuccess').textContent = job.successCount || 0;
-        document.getElementById('statFail').textContent    = job.failCount    || 0;
-
-        const previewBody = document.getElementById('previewTableBody');
-        previewBody.innerHTML = '';
-        previews.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-            <td>${row.rowNumber ?? ''}</td>
-            <td>${row.transactionDate ?? ''}</td>
-            <td>${row.description ?? ''}</td>
-            <td class="text-end">${formatAmount(row.amount)}</td>
-            <td class="text-end">${row.balance != null ? formatAmount(row.balance) : ''}</td>
-            <td>${row.currencyCode ?? ''}</td>
-        `;
-            previewBody.appendChild(tr);
-        });
-        document.getElementById('previewCount').textContent = previews.length + ' 筆';
-
-        const errorBody = document.getElementById('errorTableBody');
-        errorBody.innerHTML = '';
-        if (errors.length > 0) {
-            errors.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                <td>${row.rowNumber ?? ''}</td>
-                <td class="text-muted small">${row.rawData ?? ''}</td>
-                <td class="text-danger">${row.errorMessage ?? ''}</td>
-            `;
-                errorBody.appendChild(tr);
-            });
-            document.getElementById('errorCount').textContent = errors.length + ' 筆';
-            document.getElementById('errorCard').classList.remove('d-none');
-        }
-
-        if ((job.successCount || 0) > 0) {
-            document.getElementById('confirmImportBtn').disabled = false;
-        }
-
-        document.getElementById('resultSection').classList.remove('d-none');
-    }
-
-    // ── 確認匯入（placeholder，C 系列實作） ───────────────────
-    function confirmImport() {
-        if (!currentJobId) return;
-
-        Swal.fire({
-            icon: 'question',
-            title: '確認匯入？',
-            text: '將把解析成功的資料寫入交易記錄，此操作無法復原。',
-            showCancelButton: true,
-            confirmButtonText: '確認匯入',
-            cancelButtonText: '取消'
-        }).then(result => {
-            if (!result.isConfirmed) return;
-
-            document.getElementById('confirmImportBtn').disabled = true;
-
-            fetch(`/api/import/jobs/${currentJobId}/confirm`, {
-                method: 'POST'
-            })
+            fetch('/api/accounts')
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: '匯入成功',
-                            text: '交易資料已寫入，可至交易列表查看。'
-                        });
+                    if (!data.success) return;
+                    const accountSelect = document.getElementById('accountSelect');
+                    (data.data || []).forEach(account => {
+                        const opt = document.createElement('option');
+                        opt.value = account.id;
+                        opt.textContent = `${account.name}（${account.currencyCode}）`;
+                        accountSelect.appendChild(opt);
+                    });
+                });
+        });
+
+        function startUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const bankCode  = document.getElementById('bankCodeSelect').value;
+            const accountId = document.getElementById('accountSelect').value;
+            const jobType   = document.querySelector('input[name="jobType"]:checked').value;
+
+            if (!bankCode)  { Swal.fire({ icon: 'warning', title: '請選擇銀行' }); return; }
+            if (!accountId) { Swal.fire({ icon: 'warning', title: '請選擇帳戶' }); return; }
+            if (!fileInput.files || fileInput.files.length === 0) { Swal.fire({ icon: 'warning', title: '請先選擇檔案' }); return; }
+
+            const file = fileInput.files[0];
+            if (file.size > 10 * 1024 * 1024) { Swal.fire({ icon: 'warning', title: '檔案過大', text: '上限 10MB' }); return; }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('jobType', jobType);
+            formData.append('bankCode', bankCode);
+            formData.append('accountId', accountId);
+
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('progressCard').classList.remove('d-none');
+
+            fetch('/api/import/upload', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.jobId) {
+                        currentJobId = data.data.jobId;
+                        pollTimer = setInterval(() => pollStatus(currentJobId), 1500);
                     } else {
-                        document.getElementById('confirmImportBtn').disabled = false;
-                        Swal.fire({ icon: 'error', title: '匯入失敗', text: data.error?.message || '請稍後再試' });
+                        document.getElementById('uploadBtn').disabled = false;
+                        document.getElementById('progressCard').classList.add('d-none');
+                        Swal.fire({ icon: 'error', title: '上傳失敗', text: data.message || '請稍後再試' });
                     }
                 })
                 .catch(() => {
-                    document.getElementById('confirmImportBtn').disabled = false;
+                    document.getElementById('uploadBtn').disabled = false;
+                    document.getElementById('progressCard').classList.add('d-none');
                     Swal.fire({ icon: 'error', title: '網路錯誤', text: '請稍後再試' });
                 });
-        });
-    }
+        }
 
-    // ── 重置頁面 ──────────────────────────────────────────────
-    function resetPage() {
-        currentJobId = null;
-        if (pollTimer) clearInterval(pollTimer);
+        function pollStatus(jobId) {
+            fetch(`/api/import/jobs/${jobId}/status`, { headers: { 'X-Tenant-Id': '1' } })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) return;
+                    const job = data.data;
+                    const total = job.totalCount || 0;
+                    const done  = (job.successCount || 0) + (job.failCount || 0);
+                    const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+                    const bar   = document.getElementById('progressBar');
+                    bar.style.width = pct + '%';
+                    bar.textContent = pct + '%';
+                    document.getElementById('progressStatus').textContent = job.status;
+                    document.getElementById('progressDetail').textContent = `已處理 ${done} / ${total} 筆`;
 
-        document.getElementById('fileInput').value = '';
-        document.getElementById('uploadBtn').disabled = false;
-        document.getElementById('progressCard').classList.add('d-none');
-        document.getElementById('resultSection').classList.add('d-none');
-        document.getElementById('errorCard').classList.add('d-none');
-        document.getElementById('confirmImportBtn').disabled = true;
-        document.getElementById('previewTableBody').innerHTML = '';
-        document.getElementById('errorTableBody').innerHTML = '';
+                    if (job.status === 'COMPLETED' || job.status === 'FAILED') {
+                        clearInterval(pollTimer);
+                        if (job.status === 'COMPLETED') {
+                            Promise.all([
+                                fetch(`/api/import/jobs/${jobId}/preview`, { headers: { 'X-Tenant-Id': '1' } }).then(r => r.json()),
+                                fetch(`/api/import/jobs/${jobId}/errors`,  { headers: { 'X-Tenant-Id': '1' } }).then(r => r.json())
+                            ]).then(([previewRes, errorRes]) => {
+                                document.getElementById('progressCard').classList.add('d-none');
+                                showResults(job, previewRes.data || [], errorRes.data || []);
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: '解析失敗', text: '請確認檔案格式是否正確。' });
+                        }
+                    }
+                })
+                .catch(() => clearInterval(pollTimer));
+        }
 
-        const bar = document.getElementById('progressBar');
-        bar.style.width = '0%';
-        bar.textContent = '0%';
-    }
+        function showResults(job, previews, errors) {
+            document.getElementById('statTotal').textContent   = job.totalCount   || 0;
+            document.getElementById('statSuccess').textContent = job.successCount || 0;
+            document.getElementById('statFail').textContent    = job.failCount    || 0;
 
-    // ── UI helpers ────────────────────────────────────────────
-    function showProgress() {
-        document.getElementById('progressCard').classList.remove('d-none');
-    }
+            document.getElementById('previewTableBody').innerHTML = previews.map(row => `
+                <tr>
+                    <td>${row.rowNumber ?? ''}</td>
+                    <td>${row.transactionDate ?? ''}</td>
+                    <td>${row.description ?? ''}</td>
+                    <td class="text-end">${formatAmount(row.amount)}</td>
+                    <td class="text-end">${row.balance != null ? formatAmount(row.balance) : ''}</td>
+                    <td>${row.currencyCode ?? ''}</td>
+                </tr>
+            `).join('');
+            document.getElementById('previewCount').textContent = previews.length + ' 筆';
 
-    function hideProgress() {
-        document.getElementById('progressCard').classList.add('d-none');
-    }
+            if (errors.length > 0) {
+                document.getElementById('errorTableBody').innerHTML = errors.map(row => `
+                    <tr>
+                        <td>${row.rowNumber ?? ''}</td>
+                        <td class="text-muted small">${row.rawData ?? ''}</td>
+                        <td class="text-danger">${row.errorMessage ?? ''}</td>
+                    </tr>
+                `).join('');
+                document.getElementById('errorCount').textContent = errors.length + ' 筆';
+                document.getElementById('errorCard').classList.remove('d-none');
+            }
 
-    function formatAmount(val) {
-        if (val == null) return '';
-        return Number(val).toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-    }
+            if ((job.successCount || 0) > 0) document.getElementById('confirmImportBtn').disabled = false;
+            document.getElementById('resultSection').classList.remove('d-none');
+        }
 
-    // 支援的銀行清單（從 API 取得，目前 MVP 先 hardcode）
-    const SUPPORTED_BANKS = [
-        { bankCode: '822', name: '中國信託銀行', hint: '支援 CSV 格式' },
-        { bankCode: '808', name: '玉山銀行',     hint: '支援 CSV 格式（開發中）' },
-        { bankCode: '807', name: '永豐銀行',     hint: '支援 CSV 格式（開發中）' }
-    ];
+        function confirmImport() {
+            if (!currentJobId) return;
+            Swal.fire({
+                icon: 'question', title: '確認匯入？',
+                text: '將把解析成功的資料寫入交易記錄，此操作無法復原。',
+                showCancelButton: true, confirmButtonText: '確認匯入', cancelButtonText: '取消'
+            }).then(result => {
+                if (!result.isConfirmed) return;
+                document.getElementById('confirmImportBtn').disabled = true;
+                fetch(`/api/import/jobs/${currentJobId}/confirm`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({ icon: 'success', title: '匯入成功', text: '交易資料已寫入，可至交易列表查看。' });
+                        } else {
+                            document.getElementById('confirmImportBtn').disabled = false;
+                            Swal.fire({ icon: 'error', title: '匯入失敗', text: data.error?.message || '請稍後再試' });
+                        }
+                    })
+                    .catch(() => {
+                        document.getElementById('confirmImportBtn').disabled = false;
+                        Swal.fire({ icon: 'error', title: '網路錯誤', text: '請稍後再試' });
+                    });
+            });
+        }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const select = document.getElementById('bankCodeSelect');
-        SUPPORTED_BANKS.forEach(bank => {
-            const opt = document.createElement('option');
-            opt.value = bank.bankCode;
-            opt.textContent = `${bank.name}（${bank.bankCode}）`;
-            opt.dataset.hint = bank.hint;
-            select.appendChild(opt);
-        });
+        function resetPage() {
+            currentJobId = null;
+            if (pollTimer) clearInterval(pollTimer);
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('progressCard').classList.add('d-none');
+            document.getElementById('resultSection').classList.add('d-none');
+            document.getElementById('errorCard').classList.add('d-none');
+            document.getElementById('confirmImportBtn').disabled = true;
+            document.getElementById('previewTableBody').innerHTML = '';
+            document.getElementById('errorTableBody').innerHTML = '';
+            const bar = document.getElementById('progressBar');
+            bar.style.width = '0%';
+            bar.textContent = '0%';
+        }
 
-        select.addEventListener('change', () => {
-            const selected = SUPPORTED_BANKS.find(b => b.bankCode === select.value);
-            document.getElementById('bankHint').textContent = selected ? selected.hint : '';
-        });
-    });
-</script>
+        function formatAmount(val) {
+            if (val == null) return '';
+            return Number(val).toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+    </script>
+</th:block>
 
-</body>
 </html>

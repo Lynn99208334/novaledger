@@ -72,6 +72,12 @@ public enum ErrorCode {
     TRANSACTION_SOURCE_INVALID("TX_002", "Transaction must have either accountId or creditCardId", 400),
 
     // ========================
+    // Bank
+    // ========================
+    BANK_NOT_FOUND("BANK_001", "Bank Not Found", 404),
+    BANK_CODE_DUPLICATE("BANK_002", "Bank code already exists", 409),
+
+    // ========================
     // Exchange Rate
     // ========================
     EXCHANGE_RATE_NOT_FOUND("EXCHANGE_001", "Exchange Rate Not Found", 404),
