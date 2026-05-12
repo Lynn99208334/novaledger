@@ -10,7 +10,16 @@
     <div class="container-fluid px-4">
         <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
             <h1 class="h3 mb-0">Dashboard</h1>
+
+            <!-- Tenant Switch 下拉選單 -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">目前帳本：</span>
+                <select id="tenantSwitcher" class="form-select form-select-sm" style="min-width:220px;">
+                    <option value="">載入中...</option>
+                </select>
+            </div>
         </div>
+
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item active">首頁</li>
         </ol>
@@ -41,6 +50,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="col-xl-4 col-md-6">
                     <div class="card h-100" style="border-left:4px solid #1cc88a;">
                         <div class="card-body">
@@ -52,6 +62,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="col-xl-4 col-md-6">
                     <div class="card h-100" style="border-left:4px solid #e74a3b;">
                         <div class="card-body">
@@ -67,7 +78,6 @@
 
             <!-- Row 2：四個圖表一排 -->
             <div class="row g-3 mb-4">
-                <!-- 資產幣別佔比 -->
                 <div class="col-xl-3 col-md-6">
                     <div class="card h-100">
                         <div class="card-header fw-semibold">
@@ -79,20 +89,20 @@
                     </div>
                 </div>
 
-                <!-- 本月支出分類佔比 -->
                 <div class="col-xl-3 col-md-6">
                     <div class="card h-100">
                         <div class="card-header fw-semibold">
                             <i class="fas fa-chart-pie me-1"></i> 支出分類佔比
                         </div>
                         <div class="card-body p-2">
-                            <div id="noBreakdownMsg" class="text-center text-muted py-4" style="display:none;">本月尚無支出記錄</div>
+                            <div id="noBreakdownMsg" class="text-center text-muted py-4" style="display:none;">
+                                本月尚無支出記錄
+                            </div>
                             <canvas id="categoryPieChart"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <!-- 本月收支比較（長條） -->
                 <div class="col-xl-3 col-md-6">
                     <div class="card h-100">
                         <div class="card-header fw-semibold">
@@ -104,7 +114,6 @@
                     </div>
                 </div>
 
-                <!-- 收支淨額（水平長條 or Doughnut） -->
                 <div class="col-xl-3 col-md-6">
                     <div class="card h-100">
                         <div class="card-header fw-semibold">
@@ -126,7 +135,10 @@
                             <i class="fas fa-list me-1"></i> 本月支出分類明細
                         </div>
                         <div class="card-body p-0">
-                            <div id="noBreakdownTable" class="text-center text-muted py-4" style="display:none;">本月尚無支出記錄</div>
+                            <div id="noBreakdownTable" class="text-center text-muted py-4" style="display:none;">
+                                本月尚無支出記錄
+                            </div>
+
                             <table class="table table-hover mb-0" id="breakdownTable" style="display:none;">
                                 <thead class="table-light">
                                 <tr>
@@ -158,32 +170,109 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
     <script>
-        Chart.register(ChartDataLabels);
+        const chartAvailable = typeof Chart !== 'undefined';
 
-        const PIE_COLORS = [
-            '#4e73df','#1cc88a','#36b9cc','#f6c23e','#e74a3b',
-            '#858796','#5a5c69','#fd7e14','#20c997','#6f42c1'
-        ];
-
-        function fmt(num) {
-            if (num == null) return '0';
-            return Number(num).toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        if (chartAvailable && typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
         }
 
-        // 圓餅圖共用 options（labels 直接顯示在圖上）
+        const PIE_COLORS = [
+            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+            '#858796', '#5a5c69', '#fd7e14', '#20c997', '#6f42c1'
+        ];
+
+        let currencyPieChartInstance = null;
+        let categoryPieChartInstance = null;
+        let incomeExpenseBarChartInstance = null;
+        let netBarChartInstance = null;
+
+        function fmt(num) {
+            if (num == null) {
+                return '0';
+            }
+
+            return Number(num).toLocaleString('zh-TW', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+
+        function resetDashboardView() {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = '';
+
+            document.getElementById('totalAssetsInTwd').textContent = '—';
+            document.getElementById('assetsByCurrency').textContent = '';
+            document.getElementById('monthlyIncome').textContent = '—';
+            document.getElementById('monthlyExpense').textContent = '—';
+
+            document.getElementById('noBreakdownMsg').style.display = 'none';
+            document.getElementById('noBreakdownTable').style.display = 'none';
+            document.getElementById('categoryPieChart').style.display = '';
+            document.getElementById('breakdownTable').style.display = 'none';
+            document.getElementById('breakdownTableBody').innerHTML = '';
+            document.getElementById('breakdownTotal').textContent = '—';
+            document.getElementById('netLabel').textContent = '';
+
+            destroyCharts();
+        }
+
+        function destroyCharts() {
+            if (currencyPieChartInstance) {
+                currencyPieChartInstance.destroy();
+                currencyPieChartInstance = null;
+            }
+
+            if (categoryPieChartInstance) {
+                categoryPieChartInstance.destroy();
+                categoryPieChartInstance = null;
+            }
+
+            if (incomeExpenseBarChartInstance) {
+                incomeExpenseBarChartInstance.destroy();
+                incomeExpenseBarChartInstance = null;
+            }
+
+            if (netBarChartInstance) {
+                netBarChartInstance.destroy();
+                netBarChartInstance = null;
+            }
+        }
+
         function pieOptions(amounts) {
             const total = amounts.reduce((a, b) => a + b, 0);
+
             return {
                 responsive: true,
                 plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } },
-                    tooltip: { enabled: false },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { size: 11 },
+                            boxWidth: 12
+                        }
+                    },
+                    tooltip: {
+                        enabled: false
+                    },
                     datalabels: {
                         color: '#fff',
-                        font: { size: 11, weight: 'bold' },
-                        formatter: (value, ctx) => {
-                            const pct = total > 0 ? (value / total * 100).toFixed(1) : '0.0';
-                            if (value / total < 0.05) return ''; // 太小不顯示
+                        font: {
+                            size: 11,
+                            weight: 'bold'
+                        },
+                        formatter: (value) => {
+                            if (total <= 0) {
+                                return '';
+                            }
+
+                            const ratio = value / total;
+                            const pct = (ratio * 100).toFixed(1);
+
+                            if (ratio < 0.05) {
+                                return '';
+                            }
+
                             return `${fmt(value)}\n${pct}%`;
                         }
                     }
@@ -191,14 +280,129 @@
             };
         }
 
-        async function loadDashboard() {
-            try {
-                const res  = await fetch('/api/dashboard/summary');
-                const json = await res.json();
-                if (!json.success) return;
-                const data = json.data;
+        function normalizeApiData(json) {
+            if (Array.isArray(json)) {
+                return json;
+            }
 
-                // Empty State
+            if (json && Object.prototype.hasOwnProperty.call(json, 'data')) {
+                return json.data;
+            }
+
+            return json;
+        }
+
+        // ── Tenant Switcher ──────────────────────────────────────────
+        async function loadTenantSwitcher() {
+            const switcher = document.getElementById('tenantSwitcher');
+
+            try {
+                const res = await fetch('/api/tenants/my');
+                const json = await res.json();
+
+                if (!res.ok) {
+                    console.error('GET /api/tenants/my failed', json);
+                    switcher.innerHTML = '<option value="">帳本載入失敗</option>';
+                    return;
+                }
+
+                const tenants = normalizeApiData(json);
+
+                if (!Array.isArray(tenants)) {
+                    console.error('Invalid tenants response', json);
+                    switcher.innerHTML = '<option value="">帳本資料格式錯誤</option>';
+                    return;
+                }
+
+                switcher.innerHTML = '';
+
+                tenants.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.tenantId;
+                    opt.textContent = `${t.tenantName}（${t.tenantType}）`;
+
+                    if (t.current) {
+                        opt.selected = true;
+                    }
+
+                    switcher.appendChild(opt);
+                });
+
+                switcher.onchange = async () => {
+                    const selectedId = Number(switcher.value);
+
+                    if (!selectedId) {
+                        return;
+                    }
+
+                    await switchTenant(selectedId);
+                };
+
+            } catch (e) {
+                console.error('loadTenantSwitcher error', e);
+                switcher.innerHTML = '<option value="">帳本載入失敗</option>';
+            }
+        }
+
+        async function switchTenant(tenantId) {
+            try {
+                const switchRes = await fetch('/api/tenants/switch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tenantId: tenantId
+                    })
+                });
+
+                let switchJson = null;
+
+                try {
+                    switchJson = await switchRes.json();
+                } catch (e) {
+                    switchJson = null;
+                }
+
+                if (!switchRes.ok) {
+                    console.error('POST /api/tenants/switch failed', switchJson);
+                    alert('切換帳本失敗，請重試');
+                    return;
+                }
+
+                location.reload();
+
+            } catch (e) {
+                console.error('Tenant switch error', e);
+                alert('切換帳本時發生錯誤');
+            }
+        }
+
+        // ── Dashboard ────────────────────────────────────────────────
+        async function loadDashboard() {
+            resetDashboardView();
+
+            try {
+                const res = await fetch('/api/dashboard/summary');
+                const json = await res.json();
+
+                if (!res.ok) {
+                    console.error('GET /api/dashboard/summary failed', json);
+                    return;
+                }
+
+                if (json.success === false) {
+                    console.error('GET /api/dashboard/summary business failed', json);
+                    return;
+                }
+
+                const data = normalizeApiData(json);
+
+                if (!data) {
+                    console.error('Dashboard response data is empty', json);
+                    return;
+                }
+
                 if (!data.hasAccounts) {
                     document.getElementById('emptyState').style.display = 'block';
                     document.getElementById('dashboardContent').style.display = 'none';
@@ -207,29 +411,44 @@
 
                 // ── 摘要卡片 ─────────────────────────────────────────
                 document.getElementById('totalAssetsInTwd').textContent = 'TWD ' + fmt(data.totalAssetsInTwd);
+
                 const byCurrency = data.totalAssetsByCurrency || {};
                 document.getElementById('assetsByCurrency').textContent =
-                    Object.entries(byCurrency).map(([c, a]) => `${c} ${fmt(a)}`).join('　');
-                document.getElementById('monthlyIncome').textContent  = 'TWD ' + fmt(data.monthlyIncome);
+                    Object.entries(byCurrency)
+                        .map(([currency, amount]) => `${currency} ${fmt(amount)}`)
+                        .join('　');
+
+                document.getElementById('monthlyIncome').textContent = 'TWD ' + fmt(data.monthlyIncome);
                 document.getElementById('monthlyExpense').textContent = 'TWD ' + fmt(data.monthlyExpense);
 
+                if (!chartAvailable) {
+                    console.warn('Chart.js not loaded. Summary cards rendered only.');
+                    return;
+                }
+
                 // ── 幣別佔比圓餅 ──────────────────────────────────────
-                const assetsByTwd  = data.assetsByTwd || {};
-                const curLabels    = Object.keys(assetsByTwd);
-                const curAmounts   = Object.values(assetsByTwd).map(Number);
-                new Chart(document.getElementById('currencyPieChart'), {
+                const assetsByTwd = data.assetsByTwd || {};
+                const curLabels = Object.keys(assetsByTwd);
+                const curAmounts = Object.values(assetsByTwd).map(Number);
+
+                currencyPieChartInstance = new Chart(document.getElementById('currencyPieChart'), {
                     type: 'doughnut',
                     data: {
                         labels: curLabels,
-                        datasets: [{ data: curAmounts, backgroundColor: PIE_COLORS.slice(0, curLabels.length), borderWidth: 2 }]
+                        datasets: [{
+                            data: curAmounts,
+                            backgroundColor: PIE_COLORS.slice(0, curLabels.length),
+                            borderWidth: 2
+                        }]
                     },
                     options: pieOptions(curAmounts)
                 });
 
                 // ── 收支長條圖 ────────────────────────────────────────
-                const income  = Number(data.monthlyIncome);
-                const expense = Number(data.monthlyExpense);
-                new Chart(document.getElementById('incomeExpenseBarChart'), {
+                const income = Number(data.monthlyIncome || 0);
+                const expense = Number(data.monthlyExpense || 0);
+
+                incomeExpenseBarChartInstance = new Chart(document.getElementById('incomeExpenseBarChart'), {
                     type: 'bar',
                     data: {
                         labels: ['收入', '支出'],
@@ -242,15 +461,27 @@
                     options: {
                         responsive: true,
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                display: false
+                            },
                             datalabels: {
-                                anchor: 'end', align: 'end',
-                                color: '#444', font: { size: 11, weight: 'bold' },
+                                anchor: 'end',
+                                align: 'end',
+                                color: '#444',
+                                font: {
+                                    size: 11,
+                                    weight: 'bold'
+                                },
                                 formatter: v => 'TWD ' + fmt(v)
                             }
                         },
                         scales: {
-                            y: { beginAtZero: true, ticks: { callback: v => fmt(v) } }
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: v => fmt(v)
+                                }
+                            }
                         }
                     }
                 });
@@ -258,9 +489,12 @@
                 // ── 收支淨額水平長條 ──────────────────────────────────
                 const net = income - expense;
                 const netColor = net >= 0 ? '#1cc88a' : '#e74a3b';
-                document.getElementById('netLabel').textContent = (net >= 0 ? '+' : '') + 'TWD ' + fmt(net);
+
+                document.getElementById('netLabel').textContent =
+                    (net >= 0 ? '+' : '') + 'TWD ' + fmt(net);
                 document.getElementById('netLabel').style.color = netColor;
-                new Chart(document.getElementById('netBarChart'), {
+
+                netBarChartInstance = new Chart(document.getElementById('netBarChart'), {
                     type: 'bar',
                     data: {
                         labels: ['淨額'],
@@ -274,53 +508,75 @@
                         indexAxis: 'y',
                         responsive: true,
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                display: false
+                            },
                             datalabels: {
-                                anchor: 'end', align: 'end',
-                                color: '#444', font: { size: 11, weight: 'bold' },
+                                anchor: 'end',
+                                align: 'end',
+                                color: '#444',
+                                font: {
+                                    size: 11,
+                                    weight: 'bold'
+                                },
                                 formatter: v => 'TWD ' + fmt(v)
                             }
                         },
                         scales: {
-                            x: { beginAtZero: true, ticks: { callback: v => fmt(v) } }
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: v => fmt(v)
+                                }
+                            }
                         }
                     }
                 });
 
-                // ── 支出分類圓餅 ──────────────────────────────────────
+                // ── 支出分類圓餅與明細表 ───────────────────────────────
                 const breakdown = data.categoryBreakdown || [];
+
                 if (breakdown.length === 0) {
-                    document.getElementById('noBreakdownMsg').style.display   = 'block';
+                    document.getElementById('noBreakdownMsg').style.display = 'block';
                     document.getElementById('noBreakdownTable').style.display = 'block';
                     document.getElementById('categoryPieChart').style.display = 'none';
                     return;
                 }
 
-                const catLabels  = breakdown.map(b => b.categoryName);
-                const catAmounts = breakdown.map(b => Number(b.amount));
-                const catTotal   = catAmounts.reduce((a, b) => a + b, 0);
+                const catLabels = breakdown.map(b => b.categoryName);
+                const catAmounts = breakdown.map(b => Number(b.amount || 0));
+                const catTotal = catAmounts.reduce((a, b) => a + b, 0);
 
-                new Chart(document.getElementById('categoryPieChart'), {
+                categoryPieChartInstance = new Chart(document.getElementById('categoryPieChart'), {
                     type: 'pie',
                     data: {
                         labels: catLabels,
-                        datasets: [{ data: catAmounts, backgroundColor: PIE_COLORS.slice(0, catLabels.length), borderWidth: 2 }]
+                        datasets: [{
+                            data: catAmounts,
+                            backgroundColor: PIE_COLORS.slice(0, catLabels.length),
+                            borderWidth: 2
+                        }]
                     },
                     options: pieOptions(catAmounts)
                 });
 
-                // ── 分類明細表 ────────────────────────────────────────
                 document.getElementById('breakdownTable').style.display = '';
                 document.getElementById('breakdownTotal').textContent = 'TWD ' + fmt(catTotal);
+
                 const tbody = document.getElementById('breakdownTableBody');
+                tbody.innerHTML = '';
+
                 breakdown.forEach(b => {
-                    const pct = catTotal > 0 ? (Number(b.amount) / catTotal * 100).toFixed(1) : '0.0';
-                    const tr  = document.createElement('tr');
+                    const amount = Number(b.amount || 0);
+                    const pct = catTotal > 0 ? (amount / catTotal * 100).toFixed(1) : '0.0';
+                    const tr = document.createElement('tr');
+
                     tr.innerHTML = `
                         <td>${b.categoryName}</td>
-                        <td class="text-end">TWD ${fmt(b.amount)}</td>
+                        <td class="text-end">TWD ${fmt(amount)}</td>
                         <td class="text-end">${pct}%</td>
                     `;
+
                     tbody.appendChild(tr);
                 });
 
@@ -329,7 +585,10 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', loadDashboard);
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadTenantSwitcher();
+            await loadDashboard();
+        });
     </script>
 </th:block>
 

@@ -9,6 +9,17 @@ import java.util.Optional;
 
 public interface UserTenantRepository extends JpaRepository<UserTenant, Long> {
 
+    List<UserTenant> findByUserIdAndStatusAndDeletedAtIsNull(
+            Long userId,
+            UserTenantStatus status
+    );
+
+    Optional<UserTenant> findByUserIdAndTenantIdAndStatusAndDeletedAtIsNull(
+            Long userId,
+            Long tenantId,
+            UserTenantStatus status
+    );
+
     List<UserTenant> findByUserId(Long userId);
 
     List<UserTenant> findByTenantId(Long tenantId);

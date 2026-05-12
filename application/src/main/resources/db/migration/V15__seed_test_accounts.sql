@@ -52,4 +52,49 @@ VALUES
     NOW(), NOW(), NULL
 );
 
+-- ========================================
+-- Son 個人帳戶
+-- ========================================
+
+-- Son 零用金帳戶
+INSERT INTO user_accounts (
+    TENANT_ID, USER_ID,
+    ACCOUNT_TYPE, BANK_CODE, BRANCH_ID,
+    ACCOUNT_NUMBER, NAME,
+    CURRENCY_CODE, CURRENT_BALANCE, INITIAL_BALANCE,
+    NOTES, CREATED_AT, UPDATED_AT, DELETED_AT
+)
+VALUES
+    (
+        (SELECT ID FROM tenants WHERE CODE = 'son-personal'),
+        (SELECT ID FROM users   WHERE USERNAME = 'son'),
+        'CASH', NULL, NULL,
+        NULL,
+        'Son 零用金帳戶',
+        'TWD', 5000.00, 5000.00,
+        '測試帳戶 - Son 個人零用金',
+        NOW(), NOW(), NULL
+    );
+
+-- Son 教育存款
+INSERT INTO user_accounts (
+    TENANT_ID, USER_ID,
+    ACCOUNT_TYPE, BANK_CODE, BRANCH_ID,
+    ACCOUNT_NUMBER, NAME,
+    CURRENCY_CODE, CURRENT_BALANCE, INITIAL_BALANCE,
+    NOTES, CREATED_AT, UPDATED_AT, DELETED_AT
+)
+VALUES
+    (
+        (SELECT ID FROM tenants WHERE CODE = 'son-personal'),
+        (SELECT ID FROM users   WHERE USERNAME = 'son'),
+        'BANK', '004',
+        (SELECT ID FROM bank_branches WHERE BRANCH_CODE = '0041001'),
+        '004-000-000003',
+        'Son 教育存款',
+        'TWD', 25000.00, 25000.00,
+        '測試帳戶 - Son 個人教育存款',
+        NOW(), NOW(), NULL
+    );
+
 SET FOREIGN_KEY_CHECKS = 1;

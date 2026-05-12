@@ -8,7 +8,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
         name = "user_tenants",
-        uniqueConstraints = @UniqueConstraint(name = "uk_user_tenant_active", columnNames = {"user_id", "tenant_id", "active_key"})
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_user_tenant_active",
+                columnNames = {"user_id", "tenant_id", "active_key"}
+        )
 )
 public class UserTenant {
 
@@ -38,20 +41,71 @@ public class UserTenant {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    public Long getId() { return id; }
-    public Long getUserId() { return userId; }
-    public Long getTenantId() { return tenantId; }
-    public Long getRoleId() { return roleId; }
-    public UserTenantStatus getStatus() { return status; }
-    public LocalDateTime getJoinedAt() { return joinedAt; }
-    public Long getRemovedByUserId() { return removedByUserId; }
-    public LocalDateTime getDeletedAt() { return deletedAt; }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", referencedColumnName = "id", insertable = false, updatable = false)
+    private Tenant tenant;
 
-    public void setUserId(Long userId) { this.userId = userId; }
-    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
-    public void setRoleId(Long roleId) { this.roleId = roleId; }
-    public void setStatus(UserTenantStatus status) { this.status = status; }
-    public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }
-    public void setRemovedByUserId(Long removedByUserId) { this.removedByUserId = removedByUserId; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public Long getId() {
+        return id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public Long getRoleId() {
+        return roleId;
+    }
+
+    public UserTenantStatus getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getJoinedAt() {
+        return joinedAt;
+    }
+
+    public Long getRemovedByUserId() {
+        return removedByUserId;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public Tenant getTenant() {
+        return tenant;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
+
+    public void setStatus(UserTenantStatus status) {
+        this.status = status;
+    }
+
+    public void setJoinedAt(LocalDateTime joinedAt) {
+        this.joinedAt = joinedAt;
+    }
+
+    public void setRemovedByUserId(Long removedByUserId) {
+        this.removedByUserId = removedByUserId;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 }

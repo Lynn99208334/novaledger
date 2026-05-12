@@ -85,6 +85,15 @@ INSERT INTO tenants (
     (SELECT ID FROM users WHERE USERNAME = 'bob'),
     'ACTIVE',
     NOW(), NOW(), NULL
+),
+-- Son 個人帳
+(
+    'son-personal',
+    'Son 的個人帳本',
+    'PERSONAL', 'FREE',
+    (SELECT ID FROM users WHERE USERNAME = 'son'),
+    'ACTIVE',
+    NOW(), NOW(), NULL
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

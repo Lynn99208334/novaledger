@@ -44,6 +44,14 @@ public enum ErrorCode {
     LOGOUT_FAILED("AUTH_031", "Logout Failed", 400),
 
     // ========================
+    // Tenant
+    // ========================
+    TENANT_NOT_FOUND("TENANT_001", "Tenant Not Found", 404),
+    TENANT_ACCESS_DENIED("TENANT_002", "No Permission To Access Tenant", 403),
+    TENANT_ID_REQUIRED("TENANT_003", "Tenant Id Is Required", 400),
+    TENANT_NOT_ACTIVE("TENANT_004", "Tenant Not Active", 403),
+
+    // ========================
     // Account
     // ========================
     ACCOUNT_001("ACCOUNT_001", "Account Not Found", 404),

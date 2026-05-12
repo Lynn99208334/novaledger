@@ -1,5 +1,7 @@
 package com.example.novaledger.finance.dashboard.controller;
 
+import com.example.novaledger.common.exception.BusinessException;
+import com.example.novaledger.common.exception.ErrorCode;
 import com.example.novaledger.common.response.ApiResponse;
 import com.example.novaledger.common.tenant.AuthContext;
 import com.example.novaledger.finance.dashboard.dto.DashboardSummaryResponse;
@@ -29,8 +31,15 @@ public class DashboardController {
     @Operation(summary = "取得 Dashboard 摘要（總資產、本月收支、分類佔比）")
     public ResponseEntity<ApiResponse<DashboardSummaryResponse>> getSummary(
             HttpServletRequest httpRequest) {
+
         Long tenantId = authContext.getCurrentTenantId(httpRequest);
+
+        if (tenantId == null) {
+            throw new BusinessException(ErrorCode.TENANT_ID_REQUIRED);
+        }
+
         DashboardSummaryResponse summary = dashboardService.getDashboardSummary(tenantId);
+
         return ResponseEntity.ok(ApiResponse.ok(summary));
     }
 }

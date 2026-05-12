@@ -1,6 +1,6 @@
 -- ========================================
 -- NovaLedger Seed Data
--- Flyway Migration V17
+-- Flyway Migration V18
 -- Dashboard Demo Data
 -- 目的：讓 Alice 的 Dashboard 有完整測試資料
 --   - 新增 USD 美金帳戶
@@ -263,5 +263,149 @@ SELECT
      JOIN tenants T ON T.ID = C.TENANT_ID
      WHERE T.CODE = 'alice-personal' AND C.NAME = '醫療健康' AND C.TYPE = 'EXPENSE' AND C.PARENT_ID IS NULL),
     1200.00, '醫療', NOW();
+
+
+-- ========================================
+-- Son Dashboard Demo Data
+-- 目的：讓 Son 的個人帳 Dashboard 有完整測試資料
+-- ========================================
+
+-- ========================================
+-- 1. 更新 Son 帳戶餘額
+-- ========================================
+
+UPDATE user_accounts
+SET CURRENT_BALANCE = 5000.00,
+    INITIAL_BALANCE = 5000.00,
+    UPDATED_AT = NOW()
+WHERE TENANT_ID = (SELECT ID FROM tenants WHERE CODE = 'son-personal')
+  AND NAME = 'Son 零用金帳戶';
+
+UPDATE user_accounts
+SET CURRENT_BALANCE = 25000.00,
+    INITIAL_BALANCE = 25000.00,
+    UPDATED_AT = NOW()
+WHERE TENANT_ID = (SELECT ID FROM tenants WHERE CODE = 'son-personal')
+  AND NAME = 'Son 教育存款';
+
+-- ========================================
+-- 2. Son 本月收入：零用錢
+-- ========================================
+
+INSERT INTO transactions (
+    TENANT_ID, USER_ID, ACCOUNT_ID, CREDIT_CARD_ID,
+    TX_TYPE_CODE, TRANSACTION_DATE, TOTAL_AMOUNT, CURRENCY_CODE, MEMO,
+    CREATED_AT, UPDATED_AT, DELETED_AT
+) VALUES (
+             (SELECT ID FROM tenants WHERE CODE = 'son-personal'),
+             (SELECT ID FROM users   WHERE USERNAME = 'son'),
+             (SELECT ID FROM user_accounts
+              WHERE TENANT_ID = (SELECT ID FROM tenants WHERE CODE = 'son-personal')
+                AND NAME = 'Son 零用金帳戶'),
+             NULL,
+             'INCOME',
+             DATE_FORMAT(NOW(), '%Y-%m-03'),
+             3000.00, 'TWD', '本月零用錢',
+             NOW(), NOW(), NULL
+         );
+
+INSERT INTO transaction_items (
+    TENANT_ID, TRANSACTION_ID, CATEGORY_ID, AMOUNT, MEMO, CREATED_AT
+)
+SELECT
+    (SELECT ID FROM tenants WHERE CODE = 'son-personal'),
+    (SELECT ID FROM transactions
+     WHERE TENANT_ID = (SELECT ID FROM tenants WHERE CODE = 'son-personal')
+       AND MEMO = '本月零用錢'
+       AND TX_TYPE_CODE = 'INCOME'),
+    (SELECT C.ID FROM categories C
+                          JOIN tenants T ON T.ID = C.TENANT_ID
+     WHERE T.CODE = 'son-personal'
+       AND C.NAME = '其他收入'
+       AND C.TYPE = 'INCOME'
+       AND C.PARENT_ID IS NULL),
+    3000.00,
+    '零用錢',
+    NOW();
+
+-- ========================================
+-- 3. Son 本月支出：飲食
+-- ========================================
+
+INSERT INTO transactions (
+    TENANT_ID, USER_ID, ACCOUNT_ID, CREDIT_CARD_ID,
+    TX_TYPE_CODE, TRANSACTION_DATE, TOTAL_AMOUNT, CURRENCY_CODE, MEMO,
+    CREATED_AT, UPDATED_AT, DELETED_AT
+) VALUES (
+             (SELECT ID FROM tenants WHERE CODE = 'son-personal'),
+             (SELECT ID FROM users   WHERE USERNAME = 'son'),
+             (SELECT ID FROM user_accounts
+              WHERE TENANT_ID = (SELECT ID FROM tenants WHERE CODE = 'son-personal')
+                AND NAME = 'Son 零用金帳戶'),
+             NULL,
+             'EXPENSE',
+             DATE_FORMAT(NOW(), '%Y-%m-07'),
+             800.00, 'TWD', 'Son 本月飲食',
+             NOW(), NOW(), NULL
+         );
+
+INSERT INTO transaction_items (
+    TENANT_ID, TRANSACTION_ID, CATEGORY_ID, AMOUNT, MEMO, CREATED_AT
+)
+SELECT
+    (SELECT ID FROM tenants WHERE CODE = 'son-personal'),
+    (SELECT ID FROM transactions
+     WHERE TENANT_ID = (SELECT ID FROM tenants WHERE CODE = 'son-personal')
+       AND MEMO = 'Son 本月飲食'
+       AND TX_TYPE_CODE = 'EXPENSE'),
+    (SELECT C.ID FROM categories C
+                          JOIN tenants T ON T.ID = C.TENANT_ID
+     WHERE T.CODE = 'son-personal'
+       AND C.NAME = '飲食'
+       AND C.TYPE = 'EXPENSE'
+       AND C.PARENT_ID IS NULL),
+    800.00,
+    'Son 飲食支出',
+    NOW();
+
+-- ========================================
+-- 4. Son 本月支出：娛樂
+-- ========================================
+
+INSERT INTO transactions (
+    TENANT_ID, USER_ID, ACCOUNT_ID, CREDIT_CARD_ID,
+    TX_TYPE_CODE, TRANSACTION_DATE, TOTAL_AMOUNT, CURRENCY_CODE, MEMO,
+    CREATED_AT, UPDATED_AT, DELETED_AT
+) VALUES (
+             (SELECT ID FROM tenants WHERE CODE = 'son-personal'),
+             (SELECT ID FROM users   WHERE USERNAME = 'son'),
+             (SELECT ID FROM user_accounts
+              WHERE TENANT_ID = (SELECT ID FROM tenants WHERE CODE = 'son-personal')
+                AND NAME = 'Son 零用金帳戶'),
+             NULL,
+             'EXPENSE',
+             DATE_FORMAT(NOW(), '%Y-%m-11'),
+             1200.00, 'TWD', 'Son 本月娛樂',
+             NOW(), NOW(), NULL
+         );
+
+INSERT INTO transaction_items (
+    TENANT_ID, TRANSACTION_ID, CATEGORY_ID, AMOUNT, MEMO, CREATED_AT
+)
+SELECT
+    (SELECT ID FROM tenants WHERE CODE = 'son-personal'),
+    (SELECT ID FROM transactions
+     WHERE TENANT_ID = (SELECT ID FROM tenants WHERE CODE = 'son-personal')
+       AND MEMO = 'Son 本月娛樂'
+       AND TX_TYPE_CODE = 'EXPENSE'),
+    (SELECT C.ID FROM categories C
+                          JOIN tenants T ON T.ID = C.TENANT_ID
+     WHERE T.CODE = 'son-personal'
+       AND C.NAME = '娛樂'
+       AND C.TYPE = 'EXPENSE'
+       AND C.PARENT_ID IS NULL),
+    1200.00,
+    'Son 娛樂支出',
+    NOW();
 
 SET FOREIGN_KEY_CHECKS = 1;
