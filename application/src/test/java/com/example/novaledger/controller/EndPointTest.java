@@ -1,5 +1,6 @@
 package com.example.novaledger.controller;
 
+import com.example.novaledger.auth.service.RedisBlacklistService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,6 +18,9 @@ public class EndPointTest {
 
     @Autowired
     MockMvc mockMvc;
+
+    @MockitoBean
+    private RedisBlacklistService redisBlacklistService;
 
     @MockitoBean
     com.example.novaledger.auth.jwt.JwtTokenProvider jwtTokenProvider;

@@ -1,6 +1,7 @@
 package com.example.novaledger.integration.tenant;
 
 import com.example.novaledger.auth.jwt.JwtTokenProvider;
+import com.example.novaledger.auth.service.RedisBlacklistService;
 import com.example.novaledger.common.tenant.TenantInterceptor;
 import com.example.novaledger.controller.TenantDebugController;
 import com.example.novaledger.service.TenantDebugService;
@@ -24,6 +25,9 @@ class TenantHeaderMissingTest {
 
     @MockitoBean
     TenantDebugService tenantDebugService;
+
+    @MockitoBean
+    private RedisBlacklistService redisBlacklistService;
 
     @MockitoBean
     JwtTokenProvider jwtTokenProvider;

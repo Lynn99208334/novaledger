@@ -24,7 +24,7 @@ public class CardPageController {
 
     @GetMapping
     public String listCards(Model model, HttpServletRequest request) {
-        Long userId = authContext.getCurrentUserId(request);
+        Long userId = authContext.getCurrentUserId();
         model.addAttribute("cards", cardService.getCards(userId));
         return "cardList";
     }
@@ -42,7 +42,7 @@ public class CardPageController {
         if (bindingResult.hasErrors()) {
             return "cardCreate";
         }
-        Long userId = authContext.getCurrentUserId(request);
+        Long userId = authContext.getCurrentUserId();
         cardService.createCard(userId, form);
         return "redirect:/cards";
     }

@@ -2,7 +2,7 @@ package com.example.novaledger.common.tenant;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -11,7 +11,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Component
+@RequiredArgsConstructor
 public class TenantInterceptor implements HandlerInterceptor {
+
+    private final AuthContext authContext;
+
     private static final List<String> SYSTEM_ENDPOINTS = List.of(
             "/health",
             "/info"
@@ -21,6 +25,7 @@ public class TenantInterceptor implements HandlerInterceptor {
             "/login",
             "/logout",
             "/page/",
+            "/dashboard",
             "/api/auth/",
             "/api/admin/",
             "/css/",
@@ -34,14 +39,13 @@ public class TenantInterceptor implements HandlerInterceptor {
             "/v3/api-docs"
     );
 
-    private static final String TENANT_HEADER = "X-Tenant-Id";
-
     @Override
     public boolean preHandle(
             HttpServletRequest request,
             HttpServletResponse response,
             Object handler
     ) throws IOException {
+
         String path = request.getRequestURI();
 
         if (path.equals("/")) {
@@ -56,27 +60,20 @@ public class TenantInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/api/")) {
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                Long tenantId = (Long) session.getAttribute("tenantId");
-                if (tenantId != null) {
-                    TenantContext.setTenantId(tenantId);
-                    request.setAttribute("tenantId", tenantId);
-                    return true;
-                }
+            Long tenantId = authContext.getCurrentTenantId();
+
+            if (tenantId == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"error\":\"Tenant Id Is Required\"}");
+                return false;
             }
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
+
+            TenantContext.setTenantId(tenantId);
+            request.setAttribute("tenantId", tenantId);
+            return true;
         }
 
-        // 頁面路徑：從 session 取 tenantId
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            Long tenantId = (Long) session.getAttribute("tenantId");
-            if (tenantId != null) {
-                TenantContext.setTenantId(tenantId);
-            }
-        }
         return true;
     }
 

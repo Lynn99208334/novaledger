@@ -1,6 +1,7 @@
 package com.example.novaledger.integration;
 
 import com.example.novaledger.auth.jwt.JwtTokenProvider;
+import com.example.novaledger.auth.service.RedisBlacklistService;
 import com.example.novaledger.common.tenant.TenantContext;
 import com.example.novaledger.common.tenant.TenantInterceptor;
 import com.example.novaledger.config.WebMvcConfig;
@@ -45,6 +46,9 @@ class TenantInterceptorIntegrationTest {
 
     @MockitoBean
     JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private RedisBlacklistService redisBlacklistService;
 
     private final String uriTemplate = "/api/test/tenant";
 

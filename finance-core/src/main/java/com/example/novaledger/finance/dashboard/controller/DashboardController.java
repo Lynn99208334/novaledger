@@ -32,7 +32,7 @@ public class DashboardController {
     public ResponseEntity<ApiResponse<DashboardSummaryResponse>> getSummary(
             HttpServletRequest httpRequest) {
 
-        Long tenantId = authContext.getCurrentTenantId(httpRequest);
+        Long tenantId = authContext.requireCurrentTenantId();
 
         if (tenantId == null) {
             throw new BusinessException(ErrorCode.TENANT_ID_REQUIRED);

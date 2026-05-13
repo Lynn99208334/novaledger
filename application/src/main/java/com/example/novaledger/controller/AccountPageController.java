@@ -25,7 +25,7 @@ public class AccountPageController {
 
     @GetMapping
     public String listAccounts(Model model, HttpServletRequest request) {
-        Long userId = authContext.getCurrentUserId(request);
+        Long userId = authContext.getCurrentUserId();
         model.addAttribute("accounts", accountService.getAccounts(userId));
         return "accountList";
     }
@@ -46,7 +46,7 @@ public class AccountPageController {
             model.addAttribute("accountTypes", AccountType.values());
             return "accountCreate";
         }
-        Long userId = authContext.getCurrentUserId(request);
+        Long userId = authContext.getCurrentUserId();
         accountService.createAccount(userId, form);
         return "redirect:/accounts";
     }

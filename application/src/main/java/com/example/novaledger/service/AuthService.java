@@ -9,8 +9,10 @@ import com.example.novaledger.auth.repository.UserRepository;
 import com.example.novaledger.auth.repository.UserTenantRepository;
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
+import com.example.novaledger.common.tenant.AuthContext;
 import com.example.novaledger.dto.AuthResponse;
 import com.example.novaledger.dto.LoginRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,17 +33,19 @@ public class AuthService {
     private final EmailService emailService;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserTenantRepository userTenantRepository;
+    private final AuthContext authContext;
     @Value("${app.auth.resend-cooldown-seconds:60}")
     private long resendCooldownSeconds;
 
     public AuthService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder, EmailService emailService, JwtTokenProvider jwtTokenProvider, UserTenantRepository userTenantRepository) {
+            PasswordEncoder passwordEncoder, EmailService emailService, JwtTokenProvider jwtTokenProvider, UserTenantRepository userTenantRepository, AuthContext authContext) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userTenantRepository = userTenantRepository;
+        this.authContext = authContext;
     }
 
     // ========================
@@ -83,7 +87,7 @@ public class AuthService {
         emailService.sendVerifyEmail(user.getEmail(), verifyLink);
     }
 
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, HttpSession session) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -106,10 +110,13 @@ public class AuthService {
                 .map(UserTenant::getTenantId)
                 .orElse(null);
 
+        log.info("[LOGIN] userId={}, tenantId={}", user.getId(), tenantId);
+
+        session.setAttribute(authContext.SESSION_CURRENT_TENANT_ID, tenantId);
+
         List<String> roles = List.of("ROLE_USER");
 
-        String accessToken = jwtTokenProvider.generateAccessToken(
-                user.getId(), tenantId, roles);
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), roles);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
         return new AuthResponse(accessToken, refreshToken);

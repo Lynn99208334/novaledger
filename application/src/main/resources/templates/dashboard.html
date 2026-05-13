@@ -186,6 +186,42 @@
         let incomeExpenseBarChartInstance = null;
         let netBarChartInstance = null;
 
+        function getAccessToken() {
+            return localStorage.getItem('accessToken');
+        }
+
+        function redirectToLogin() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/page/login';
+        }
+
+        async function apiFetch(url, options = {}) {
+            const accessToken = getAccessToken();
+
+            if (!accessToken) {
+                redirectToLogin();
+                return null;
+            }
+
+            const headers = options.headers || {};
+
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    ...headers,
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                redirectToLogin();
+                return null;
+            }
+
+            return response;
+        }
+
         function fmt(num) {
             if (num == null) {
                 return '0';
@@ -297,7 +333,12 @@
             const switcher = document.getElementById('tenantSwitcher');
 
             try {
-                const res = await fetch('/api/tenants/my');
+                const res = await apiFetch('/api/tenants/my');
+
+                if (!res) {
+                    return;
+                }
+
                 const json = await res.json();
 
                 if (!res.ok) {
@@ -345,8 +386,9 @@
         }
 
         async function switchTenant(tenantId) {
+            console.log('switchTenant called, tenantId =', tenantId);  // 加這行
             try {
-                const switchRes = await fetch('/api/tenants/switch', {
+                const switchRes = await apiFetch('/api/tenants/switch', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -355,6 +397,10 @@
                         tenantId: tenantId
                     })
                 });
+
+                if (!switchRes) {
+                    return;
+                }
 
                 let switchJson = null;
 
@@ -370,6 +416,16 @@
                     return;
                 }
 
+                const data = normalizeApiData(switchJson);
+
+                if (data && data.accessToken) {
+                    localStorage.setItem('accessToken', data.accessToken);
+                }
+
+                if (data && data.refreshToken) {
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                }
+
                 location.reload();
 
             } catch (e) {
@@ -383,7 +439,12 @@
             resetDashboardView();
 
             try {
-                const res = await fetch('/api/dashboard/summary');
+                const res = await apiFetch('/api/dashboard/summary');
+
+                if (!res) {
+                    return;
+                }
+
                 const json = await res.json();
 
                 if (!res.ok) {
@@ -572,10 +633,10 @@
                     const tr = document.createElement('tr');
 
                     tr.innerHTML = `
-                        <td>${b.categoryName}</td>
-                        <td class="text-end">TWD ${fmt(amount)}</td>
-                        <td class="text-end">${pct}%</td>
-                    `;
+                    <td>${b.categoryName}</td>
+                    <td class="text-end">TWD ${fmt(amount)}</td>
+                    <td class="text-end">${pct}%</td>
+                `;
 
                     tbody.appendChild(tr);
                 });
