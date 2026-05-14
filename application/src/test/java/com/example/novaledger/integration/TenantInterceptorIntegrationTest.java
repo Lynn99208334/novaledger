@@ -2,12 +2,14 @@ package com.example.novaledger.integration;
 
 import com.example.novaledger.auth.jwt.JwtTokenProvider;
 import com.example.novaledger.auth.service.RedisBlacklistService;
+import com.example.novaledger.common.tenant.AuthContext;
 import com.example.novaledger.common.tenant.TenantContext;
 import com.example.novaledger.common.tenant.TenantInterceptor;
 import com.example.novaledger.config.WebMvcConfig;
 import com.example.novaledger.controller.TenantTestController;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,14 +22,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * TenantInterceptor 的「架構級整合測試」
- *
- * 驗證：
- * 1. 無 tenant header → 401
- * 2. 有 tenant header → request 正常通過
- * 3. request 結束後 → TenantContext 一定被 clear（afterCompletion）
- */
 @WebMvcTest(
         controllers = TenantTestController.class,
         excludeAutoConfiguration = {
@@ -37,10 +31,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 @Import({
         TenantInterceptor.class,
-        WebMvcConfig.class   // ⚠️ 你註冊 interceptor 的 WebMvcConfigurer
+        WebMvcConfig.class
 })
-//@AutoConfigureMockMvc(addFilters = false)
 class TenantInterceptorIntegrationTest {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -50,12 +44,11 @@ class TenantInterceptorIntegrationTest {
     @MockitoBean
     private RedisBlacklistService redisBlacklistService;
 
+    @MockitoBean
+    AuthContext authContext;
+
     private final String uriTemplate = "/api/test/tenant";
 
-    /**
-     * 這一段是整個測試的「封印」
-     * 只要 afterCompletion 沒清 ThreadLocal，測試一定會炸
-     */
     @AfterEach
     void afterEach() {
         assertThat(TenantContext.getTenantId())
@@ -65,12 +58,16 @@ class TenantInterceptorIntegrationTest {
 
     @Test
     void request_without_tenantId_should_return_401() throws Exception {
+        Mockito.when(authContext.getCurrentTenantId()).thenReturn(null);
+
         mockMvc.perform(get(uriTemplate))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void request_with_tenantId_should_pass_and_clear_context_after_request() throws Exception {
+        Mockito.when(authContext.getCurrentTenantId()).thenReturn(100L);
+
         mockMvc.perform(
                         get(uriTemplate)
                                 .sessionAttr("tenantId", 100L)
