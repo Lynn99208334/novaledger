@@ -4,6 +4,7 @@ import com.example.novaledger.auth.repository.UserRepository;
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
 import com.example.novaledger.common.response.ApiResponse;
+import com.example.novaledger.common.security.AuthenticatedUserPrincipal;
 import com.example.novaledger.dto.tenant.TenantResponse;
 import com.example.novaledger.dto.tenant.TenantSwitchRequest;
 import com.example.novaledger.service.TenantSwitchService;
@@ -28,12 +29,18 @@ public class TenantController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<TenantResponse>>> findMyTenants(Authentication authentication,
-                                                                           HttpSession session) {
-        Long userId = getCurrentUserId(authentication);
-        List<TenantResponse> response = tenantSwitchService.findMyTenants(userId, session);
+    public ResponseEntity<ApiResponse<List<TenantResponse>>> findMyTenants() {
+        List<TenantResponse> response = tenantSwitchService.findMyTenants();
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
+
+//    @GetMapping("/my")
+//    public ResponseEntity<ApiResponse<List<TenantResponse>>> findMyTenants(Authentication authentication,
+//                                                                           HttpSession session) {
+//        Long userId = getCurrentUserId(authentication);
+//        List<TenantResponse> response = tenantSwitchService.findMyTenants(userId, session);
+//        return ResponseEntity.ok(ApiResponse.ok(response));
+//    }
 
     @PostMapping("/switch")
     public ResponseEntity<ApiResponse<TenantResponse>> switchTenant(@RequestBody TenantSwitchRequest request,
@@ -45,14 +52,11 @@ public class TenantController {
     }
 
     private Long getCurrentUserId(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
+        if (authentication == null || authentication.getPrincipal() == null) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED, "尚未登入");
         }
 
-        String username = authentication.getName();
-
-        return userRepository.findByEmail(username)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND))
-                .getId();
+        AuthenticatedUserPrincipal principal = (AuthenticatedUserPrincipal) authentication.getPrincipal();
+        return principal.getUserId();
     }
 }

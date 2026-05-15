@@ -31,7 +31,7 @@
     <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0"
           role="search">
         <div class="input-group">
-            <input class="form-control" type="text" placeholder="Search for..." aria-label="Search" />
+            <input class="form-control" type="text" placeholder="Search for..." aria-label="Search"/>
             <button class="btn btn-primary" type="button">
                 <i class="fas fa-search"></i>
             </button>
@@ -40,33 +40,29 @@
 
     <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
 
-        <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+        <li class="nav-item dropdown" id="userDropdownItem" style="display:none;">
             <a class="nav-link dropdown-toggle"
                id="navbarDropdown" href="#" role="button"
                data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-user fa-fw me-1"></i>
-                <span sec:authentication="name"></span>
+                <span id="navUsername"></span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                 <li class="dropdown-item-text small text-muted">
-                    登入身分：<strong sec:authentication="name"></strong>
+                    登入身分：<strong id="navUsernameDetail"></strong>
                 </li>
-                <li class="dropdown-item-text small text-muted">
-                    權限：<span sec:authentication="principal.authorities"></span>
-                </li>
+                <li class="dropdown-item-text small text-muted" id="navTokenExpiry"></li>
                 <li><hr class="dropdown-divider"/></li>
                 <li>
-                    <form th:action="@{/logout}" method="post" class="m-0">
-                        <button type="submit" class="dropdown-item d-flex align-items-center">
-                            <i class="fas fa-sign-out-alt me-2"></i> Logout
-                        </button>
-                    </form>
+                    <button type="button" class="dropdown-item d-flex align-items-center" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </button>
                 </li>
             </ul>
         </li>
 
-        <li class="nav-item" sec:authorize="!isAuthenticated()">
-            <a class="nav-link" th:href="@{/page/login}">
+        <li class="nav-item" id="loginLinkItem" style="display:none;">
+            <a class="nav-link" href="/page/login">
                 <i class="fas fa-sign-in-alt me-1"></i> Login
             </a>
         </li>
@@ -118,7 +114,6 @@
                 信用卡分析
             </a>
 
-            <!-- Admin 專區：僅 ADMIN 可見 -->
             <div class="sb-sidenav-menu-heading" sec:authorize="hasRole('ADMIN')">後台管理</div>
 
             <a class="nav-link" th:href="@{/page/admin/banks}"
@@ -132,7 +127,6 @@
                 <div class="sb-nav-link-icon"><i class="fas fa-users-cog"></i></div>
                 使用者管理
             </a>
-
         </div>
     </div>
     <div class="sb-sidenav-footer">
@@ -141,11 +135,133 @@
     </div>
 </nav>
 
+
 <!-- ── Vendor JS（放在 </body> 前用） ─────────────────────── -->
 <th:block th:fragment="vendor-js">
     <script defer src="/js/vendor/sockjs.v1.6.1.min.js"></script>
     <script defer src="/js/vendor/stomp.umd.v7.0.0.min.js"></script>
     <script defer src="/js/vendor/sweetalert2.all.v11.10.6.min.js"></script>
+
+    <script>
+        function getTokenExpiration(token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.exp ? payload.exp * 1000 : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function formatCountdown(ms) {
+            if (ms <= 0) return '已過期';
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes} 分 ${seconds} 秒後登出`;
+        }
+
+        let countdownInterval = null;
+
+        function initNavbar() {
+            const token = localStorage.getItem('accessToken');
+            const username = localStorage.getItem('username');
+
+            const userDropdownItem = document.getElementById('userDropdownItem');
+            const loginLinkItem = document.getElementById('loginLinkItem');
+
+            if (!userDropdownItem || !loginLinkItem) {
+                return;
+            }
+
+            if (token && username) {
+                userDropdownItem.style.display = '';
+                loginLinkItem.style.display = 'none';
+
+                const navUsername = document.getElementById('navUsername');
+                const navUsernameDetail = document.getElementById('navUsernameDetail');
+                if (navUsername) navUsername.textContent = username;
+                if (navUsernameDetail) navUsernameDetail.textContent = username;
+
+                const expMs = getTokenExpiration(token);
+                if (expMs) {
+                    const expiryEl = document.getElementById('navTokenExpiry');
+                    if (countdownInterval) clearInterval(countdownInterval);
+
+                    countdownInterval = setInterval(() => {
+                        const remaining = expMs - Date.now();
+                        if (expiryEl) expiryEl.textContent = formatCountdown(remaining);
+                        if (remaining <= 0) {
+                            clearInterval(countdownInterval);
+                            handleLogout();
+                        }
+                    }, 1000);
+                }
+            } else {
+                userDropdownItem.style.display = 'none';
+                loginLinkItem.style.display = '';
+            }
+        }
+
+        async function handleLogout() {
+            const token = localStorage.getItem('accessToken');
+
+            if (token) {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Logout API call failed, proceeding with local cleanup', e);
+                }
+            }
+
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('username');
+            window.location.href = '/page/login';
+        }
+
+        function redirectToLogin() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/page/login';
+        }
+
+        async function apiFetch(url, options = {}) {
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                redirectToLogin();
+                return null;
+            }
+
+            const headers = options.headers || {};
+
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    ...headers,
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                redirectToLogin();
+                return null;
+            }
+
+            return response;
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initNavbar);
+        } else {
+            initNavbar();
+        }
+    </script>
 </th:block>
 
 </body>

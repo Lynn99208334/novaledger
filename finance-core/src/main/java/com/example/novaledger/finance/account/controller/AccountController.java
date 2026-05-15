@@ -33,7 +33,7 @@ public class AccountController {
     public ResponseEntity<ApiResponse<AccountResponse>> createAccount(
             @Valid @RequestBody CreateAccountRequest request,
             HttpServletRequest httpRequest) {
-        Long userId = authContext.getCurrentUserId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
         AccountResponse account = accountService.createAccount(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(account));
     }
@@ -42,7 +42,7 @@ public class AccountController {
     @Operation(summary = "列出帳戶")
     public ResponseEntity<ApiResponse<List<AccountResponse>>> getAccounts(
             HttpServletRequest httpRequest) {
-        Long userId = authContext.getCurrentUserId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
         List<AccountResponse> accounts = accountService.getAccounts(userId);
         return ResponseEntity.ok(ApiResponse.ok(accounts));
     }
@@ -53,7 +53,7 @@ public class AccountController {
             @PathVariable Long accountId,
             @Valid @RequestBody CreateAccountRequest request,
             HttpServletRequest httpRequest) {
-        Long userId = authContext.getCurrentUserId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
         AccountResponse account = accountService.updateAccount(userId, accountId, request);
         return ResponseEntity.ok(ApiResponse.ok(account));
     }
@@ -63,7 +63,7 @@ public class AccountController {
     public ResponseEntity<ApiResponse<Void>> deleteAccount(
             @PathVariable Long accountId,
             HttpServletRequest httpRequest) {
-        Long userId = authContext.getCurrentUserId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
         accountService.deleteAccount(userId, accountId);
         return ResponseEntity.ok(ApiResponse.ok());
     }

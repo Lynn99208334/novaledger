@@ -24,17 +24,16 @@ class JwtTokenProviderTest {
 
     @Test
     void generateAccessToken_shouldContainCorrectClaims() {
-        String token = jwtTokenProvider.generateAccessToken(1L, 10L, List.of("ROLE_USER"));
+        String token = jwtTokenProvider.generateAccessToken(1L,  List.of("ROLE_USER"));
 
         Claims claims = jwtTokenProvider.getClaims(token);
         assertThat(claims.getSubject()).isEqualTo("1");
-        assertThat(claims.get("tenantId", Long.class)).isEqualTo(10L);
         assertThat(claims.get("roles", List.class)).contains("ROLE_USER");
     }
 
     @Test
     void validateToken_shouldReturnTrue_whenTokenIsValid() {
-        String token = jwtTokenProvider.generateAccessToken(1L, 10L, List.of("ROLE_USER"));
+        String token = jwtTokenProvider.generateAccessToken(1L,  List.of("ROLE_USER"));
         assertThat(jwtTokenProvider.validateToken(token)).isTrue();
     }
 
@@ -45,7 +44,7 @@ class JwtTokenProviderTest {
                 1L,  // 1ms，馬上過期
                 604800000L
         );
-        String token = shortLivedProvider.generateAccessToken(1L, 10L, List.of("ROLE_USER"));
+        String token = shortLivedProvider.generateAccessToken(1L,  List.of("ROLE_USER"));
 
         try { Thread.sleep(10); } catch (InterruptedException ignored) {}
 
@@ -54,7 +53,7 @@ class JwtTokenProviderTest {
 
     @Test
     void validateToken_shouldReturnFalse_whenTokenIsTampered() {
-        String token = jwtTokenProvider.generateAccessToken(1L, 10L, List.of("ROLE_USER"));
+        String token = jwtTokenProvider.generateAccessToken(1L,  List.of("ROLE_USER"));
         String tampered = token + "tampered";
         assertThat(jwtTokenProvider.validateToken(tampered)).isFalse();
     }

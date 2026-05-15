@@ -28,6 +28,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_PATHS = {
             "/health",
             "/info",
+            "/page/dashboard",
             "/page/login",
             "/page/register",
             "/api/auth/**",

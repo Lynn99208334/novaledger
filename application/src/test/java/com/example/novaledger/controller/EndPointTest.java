@@ -1,5 +1,7 @@
 package com.example.novaledger.controller;
 
+import com.example.novaledger.auth.service.RedisBlacklistService;
+import com.example.novaledger.common.tenant.AuthContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,7 +21,13 @@ public class EndPointTest {
     MockMvc mockMvc;
 
     @MockitoBean
+    private RedisBlacklistService redisBlacklistService;
+
+    @MockitoBean
     com.example.novaledger.auth.jwt.JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    AuthContext authContext;
 
     @Test
     void health_should_pass_without_tenant_header() throws Exception {

@@ -7,6 +7,7 @@ import com.example.novaledger.auth.repository.TenantRepository;
 import com.example.novaledger.auth.repository.UserTenantRepository;
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
+import com.example.novaledger.common.tenant.AuthContext;
 import com.example.novaledger.dto.tenant.TenantResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ import java.util.List;
 @Service
 public class TenantSwitchService {
 
-    public static final String SESSION_CURRENT_TENANT_ID = "CURRENT_TENANT_ID";
+    public static final String SESSION_CURRENT_TENANT_ID = "currentTenantId";
 
     private static final UserTenantStatus USER_TENANT_STATUS_ACTIVE = UserTenantStatus.ACTIVE;
     private static final String TENANT_STATUS_ACTIVE = "ACTIVE";
@@ -26,13 +27,50 @@ public class TenantSwitchService {
 
     private final TenantRepository tenantRepository;
     private final UserTenantRepository userTenantRepository;
+    private final AuthContext authContext;
 
     public TenantSwitchService(TenantRepository tenantRepository,
-                               UserTenantRepository userTenantRepository) {
+                               UserTenantRepository userTenantRepository, AuthContext authContext) {
         this.tenantRepository = tenantRepository;
         this.userTenantRepository = userTenantRepository;
+        this.authContext = authContext;
     }
 
+    @Transactional(readOnly = true)
+    public List<TenantResponse> findMyTenants() {
+        Long userId = authContext.requireCurrentUserId();
+        Long currentTenantId = authContext.requireCurrentTenantId();
+
+        List<UserTenant> userTenants =
+                userTenantRepository.findByUserIdAndStatusAndDeletedAtIsNull(
+                        userId,
+                        USER_TENANT_STATUS_ACTIVE
+                );
+
+        List<TenantResponse> result = new ArrayList<>();
+
+        for (UserTenant userTenant : userTenants) {
+            Tenant tenant = userTenant.getTenant();
+
+            if (tenant == null) {
+                continue;
+            }
+
+            if (!TENANT_STATUS_ACTIVE.equals(tenant.getStatus())) {
+                continue;
+            }
+
+            boolean current = currentTenantId.equals(tenant.getId());
+
+            result.add(toTenantResponse(tenant, userTenant, current));
+        }
+
+        return result;
+    }
+
+    /**
+     * session用法
+     */
     @Transactional(readOnly = true)
     public List<TenantResponse> findMyTenants(Long userId, HttpSession session) {
         List<UserTenant> userTenants =
@@ -47,7 +85,8 @@ public class TenantSwitchService {
             currentTenantId = resolveDefaultTenantId(userTenants);
 
             if (currentTenantId != null) {
-                session.setAttribute(SESSION_CURRENT_TENANT_ID, currentTenantId);
+                session.setAttribute(authContext.SESSION_CURRENT_TENANT_ID, currentTenantId);
+
             }
         }
 
@@ -90,7 +129,7 @@ public class TenantSwitchService {
                 .findByIdAndStatus(tenantId, TENANT_STATUS_ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TENANT_NOT_FOUND));
 
-        session.setAttribute(SESSION_CURRENT_TENANT_ID, tenant.getId());
+        session.setAttribute(authContext.SESSION_CURRENT_TENANT_ID, tenant.getId());
 
         return toTenantResponse(tenant, userTenant, true);
     }

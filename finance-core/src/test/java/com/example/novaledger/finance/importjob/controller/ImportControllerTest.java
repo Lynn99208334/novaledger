@@ -48,8 +48,8 @@ class ImportControllerTest {
         mockResponse.setOriginalFilename("往來明細.csv");
         mockResponse.setCreatedAt(LocalDateTime.now());
 
-        when(authContext.getCurrentTenantId(any())).thenReturn(1L);
-        when(authContext.getCurrentUserId(any())).thenReturn(1L);
+        when(authContext.getCurrentTenantId()).thenReturn(1L);
+        when(authContext.getCurrentUserId()).thenReturn(1L);
         when(importService.createUploadJob(any(), anyString(), anyString(), anyLong(), anyLong(), anyLong()))
                 .thenReturn(mockResponse);
 

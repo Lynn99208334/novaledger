@@ -1,6 +1,8 @@
 package com.example.novaledger.integration.tenant;
 
 import com.example.novaledger.auth.jwt.JwtTokenProvider;
+import com.example.novaledger.auth.service.RedisBlacklistService;
+import com.example.novaledger.common.tenant.AuthContext;
 import com.example.novaledger.common.tenant.TenantInterceptor;
 import com.example.novaledger.controller.TenantDebugController;
 import com.example.novaledger.service.TenantDebugService;
@@ -26,7 +28,13 @@ class TenantHeaderMissingTest {
     TenantDebugService tenantDebugService;
 
     @MockitoBean
+    private RedisBlacklistService redisBlacklistService;
+
+    @MockitoBean
     JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    AuthContext authContext;
 
     @Test
     void request_without_tenant_header_should_be_rejected() throws Exception {

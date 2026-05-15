@@ -34,7 +34,7 @@ public class CardController {
     public ResponseEntity<ApiResponse<CardResponse>> createCard(
             @Valid @RequestBody CreateCardRequest request,
             HttpServletRequest httpRequest) {
-        Long userId = authContext.getCurrentUserId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
         CardResponse card = cardService.createCard(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(card));
     }
@@ -43,7 +43,7 @@ public class CardController {
     @Operation(summary = "列出信用卡")
     public ResponseEntity<ApiResponse<List<CardResponse>>> getCards(
             HttpServletRequest httpRequest) {
-        Long userId = authContext.getCurrentUserId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
         List<CardResponse> cards = cardService.getCards(userId);
         return ResponseEntity.ok(ApiResponse.ok(cards));
     }
@@ -54,7 +54,7 @@ public class CardController {
             @PathVariable Long cardId,
             @Valid @RequestBody UpdateCardRequest request,
             HttpServletRequest httpRequest) {
-        Long userId = authContext.getCurrentUserId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
         CardResponse card = cardService.updateCard(userId, cardId, request);
         return ResponseEntity.ok(ApiResponse.ok(card));
     }
@@ -64,7 +64,7 @@ public class CardController {
     public ResponseEntity<ApiResponse<Void>> deleteCard(
             @PathVariable Long cardId,
             HttpServletRequest httpRequest) {
-        Long userId = authContext.getCurrentUserId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
         cardService.deleteCard(userId, cardId);
         return ResponseEntity.ok(ApiResponse.ok());
     }

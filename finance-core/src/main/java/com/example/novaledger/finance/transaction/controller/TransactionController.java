@@ -48,8 +48,8 @@ public class TransactionController {
             @Valid @RequestBody CreateTransactionRequest request,
             HttpServletRequest httpRequest) {
 
-        Long userId = authContext.getCurrentUserId(httpRequest);
-        Long tenantId = authContext.getCurrentTenantId(httpRequest);
+        Long userId = authContext.getCurrentUserId();
+        Long tenantId = authContext.getCurrentTenantId();
 
         Transaction tx = toEntity(request, tenantId, userId);
         List<TransactionItem> items = toItemEntities(request.getItems());
@@ -72,7 +72,7 @@ public class TransactionController {
             @RequestParam(defaultValue = "20") int size,
             HttpServletRequest httpRequest) {
 
-        Long tenantId = authContext.getCurrentTenantId(httpRequest);
+        Long tenantId = authContext.getCurrentTenantId();
         PageRequest pageable = PageRequest.of(page, size, Sort.by("transactionDate").descending());
 
         Page<Transaction> txPage;
@@ -100,7 +100,7 @@ public class TransactionController {
             @Valid @RequestBody UpdateTransactionRequest request,
             HttpServletRequest httpRequest) {
 
-        Long tenantId = authContext.getCurrentTenantId(httpRequest);
+        Long tenantId = authContext.getCurrentTenantId();
 
         Transaction updated = new Transaction();
         updated.setTxTypeCode(request.getTxTypeCode());
@@ -124,7 +124,7 @@ public class TransactionController {
             @PathVariable Long transactionId,
             HttpServletRequest httpRequest) {
 
-        Long tenantId = authContext.getCurrentTenantId(httpRequest);
+        Long tenantId = authContext.getCurrentTenantId();
         transactionService.deleteTransaction(transactionId, tenantId);
         return ResponseEntity.ok(ApiResponse.ok());
     }

@@ -8,20 +8,103 @@
 
 <!-- ── Vendor CSS（放進 <head> 用） ───────────────────────── -->
 <th:block th:fragment="vendor-css">
-    <!-- 共用第三方樣式：依專案實際需要增減版本 -->
     <link rel="stylesheet" href="/css/vendor/sweetalert2.v11.10.6.min.css"/>
-    <!-- 你也可以在這裡加上全站共用的其他 CSS（例：/css/vendor/datatables.min.css） -->
 </th:block>
 
 <!-- ── Vendor JS（放在 </body> 前用） ─────────────────────── -->
 <th:block th:fragment="vendor-js">
-    <!-- 共用第三方腳本（若只有少數頁面需要，改放到該頁的 page-js） -->
     <script defer src="/js/vendor/sockjs.v1.6.1.min.js"></script>
     <script defer src="/js/vendor/stomp.umd.v7.0.0.min.js"></script>
     <script defer src="/js/vendor/sweetalert2.all.v11.10.6.min.js"></script>
 
-    <!-- 你也可以在這裡追加其他全站共用 JS（例如 bootstrap.bundle、datatables 等） -->
-    <!-- <script defer src="/js/vendor/bootstrap.bundle.v5.2.3.min.js"></script> -->
+    <script>
+        function getTokenExpiration(token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                return payload.exp ? payload.exp * 1000 : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function formatCountdown(ms) {
+            if (ms <= 0) return '已過期';
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes} 分 ${seconds} 秒後登出`;
+        }
+
+        let countdownInterval = null;
+
+        function initNavbar() {
+            const token = localStorage.getItem('accessToken');
+            const username = localStorage.getItem('username');
+
+            const userDropdownItem = document.getElementById('userDropdownItem');
+            const loginLinkItem = document.getElementById('loginLinkItem');
+
+            if (!userDropdownItem || !loginLinkItem) {
+                return;
+            }
+
+            if (token && username) {
+                userDropdownItem.style.display = '';
+                loginLinkItem.style.display = 'none';
+
+                const navUsername = document.getElementById('navUsername');
+                const navUsernameDetail = document.getElementById('navUsernameDetail');
+                if (navUsername) navUsername.textContent = username;
+                if (navUsernameDetail) navUsernameDetail.textContent = username;
+
+                const expMs = getTokenExpiration(token);
+                if (expMs) {
+                    const expiryEl = document.getElementById('navTokenExpiry');
+                    if (countdownInterval) clearInterval(countdownInterval);
+
+                    countdownInterval = setInterval(() => {
+                        const remaining = expMs - Date.now();
+                        if (expiryEl) expiryEl.textContent = formatCountdown(remaining);
+                        if (remaining <= 0) {
+                            clearInterval(countdownInterval);
+                            handleLogout();
+                        }
+                    }, 1000);
+                }
+            } else {
+                userDropdownItem.style.display = 'none';
+                loginLinkItem.style.display = '';
+            }
+        }
+
+        async function handleLogout() {
+            const token = localStorage.getItem('accessToken');
+
+            if (token) {
+                try {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Logout API call failed, proceeding with local cleanup', e);
+                }
+            }
+
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('username');
+            window.location.href = '/page/login';
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initNavbar);
+        } else {
+            initNavbar();
+        }
+    </script>
 </th:block>
 
 </body>
