@@ -8,7 +8,7 @@ A multi-tenant personal finance SaaS application built with **Spring Boot 3.x Mo
 
 ## Live Demo
 
-🔗 **[https://your-railway-url.railway.app](https://your-railway-url.railway.app)**
+🔗 **[https://your-railway-url.railway.app](https://tableaudemov2-production.up.railway.app/page/login)**
 
 | Role | Email | Password |
 |------|-------|----------|
