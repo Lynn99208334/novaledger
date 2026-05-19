@@ -47,9 +47,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 Long userId = jwtTokenProvider.getUserId(token);
+                Long tenantId = jwtTokenProvider.getTenantId(token);
                 List<String> roles = jwtTokenProvider.getRoles(token);
 
-                AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, roles, jti);
+                AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, tenantId, roles, jti);
 
                 List<GrantedAuthority> authorities = roles.stream()
                         .map(SimpleGrantedAuthority::new)

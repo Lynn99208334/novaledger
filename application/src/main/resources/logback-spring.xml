@@ -5,47 +5,65 @@
     <!-- 基本屬性設定 -->
     <!-- ================================================= -->
 
-    <!-- 由 Spring Boot 注入的應用名稱 -->
     <springProperty scope="context"
                     name="APP_NAME"
                     source="spring.application.name"
                     defaultValue="NovaLedger"/>
 
-    <!-- 通用 log pattern（可 grep、可讀、適合 CI / prod） -->
-    <property name="LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"/>
+    <!-- dev/local 純文字 pattern（帶 MDC：traceId, userId, tenantId） -->
+    <property name="DEV_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [traceId=%X{traceId:-?} userId=%X{userId:-?} tenantId=%X{tenantId:-?}] %logger{36} - %msg%n"/>
 
     <!-- ================================================= -->
     <!-- Appenders -->
     <!-- ================================================= -->
 
-    <!-- Console Appender -->
-    <appender name="CONSOLE"
+    <!-- Console Appender：純文字，dev/local 用 -->
+    <appender name="CONSOLE_TEXT"
               class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
+            <pattern>${DEV_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Console Appender：JSON，prod 用 -->
+    <appender name="CONSOLE_JSON"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <providers>
+                <timestamp/>
+                <logLevel/>
+                <loggerName>
+                    <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+                </loggerName>
+                <mdc/>
+                <message/>
+                <stackTrace/>
+            </providers>
+            <customFields>{"app":"${APP_NAME}"}</customFields>
         </encoder>
     </appender>
 
     <!-- ================================================= -->
-    <!-- default（沒有指定 spring.profiles.active 時） -->
+    <!-- default -->
     <!-- ================================================= -->
-    <!-- ⚠️ 一定要存在，否則 default context 沒有 root -->
-    <root level="info">
-        <appender-ref ref="CONSOLE"/>
+    <root level="INFO">
+        <appender-ref ref="CONSOLE_TEXT"/>
     </root>
 
     <!-- ================================================= -->
-    <!-- local / dev：本機開發 -->
+    <!-- local / dev -->
     <!-- ================================================= -->
     <springProfile name="local,dev">
 
         <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="CONSOLE_TEXT"/>
         </root>
 
         <!-- 專案自己的 package 開 DEBUG -->
-        <logger name="com.example.tableaudemov2" level="DEBUG"/>
+        <logger name="com.example.novaledger" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE_TEXT"/>
+        </logger>
 
     </springProfile>
 
@@ -55,24 +73,31 @@
     <springProfile name="test">
 
         <root level="WARN">
-            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="CONSOLE_TEXT"/>
         </root>
 
-        <logger name="com.example.tableaudemov2" level="INFO"/>
+        <logger name="com.example.novaledger" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE_TEXT"/>
+        </logger>
 
     </springProfile>
 
     <!-- ================================================= -->
-    <!-- prod：正式環境 -->
+    <!-- prod：Railway，輸出 JSON -->
     <!-- ================================================= -->
     <springProfile name="prod">
 
         <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="CONSOLE_JSON"/>
         </root>
 
-        <!-- 生產環境不開 DEBUG -->
-        <logger name="com.example.tableaudemov2" level="INFO"/>
+        <logger name="com.example.novaledger" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE_JSON"/>
+        </logger>
+
+        <logger name="org.flywaydb" level="WARN" additivity="false">
+            <appender-ref ref="CONSOLE_JSON"/>
+        </logger>
 
     </springProfile>
 

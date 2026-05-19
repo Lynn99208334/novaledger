@@ -116,7 +116,7 @@ public class AuthService {
 
         List<String> roles = List.of("ROLE_USER");
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), roles);
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), tenantId, roles);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
         return new AuthResponse(accessToken, refreshToken, user.getUsername());
