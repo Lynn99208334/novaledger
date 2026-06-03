@@ -38,15 +38,24 @@ public class JwtTokenProvider {
         );
     }
 
-    public String generateAccessToken(Long userId, List<String> roles) {
+    public String generateAccessToken(Long userId, Long tenantId, List<String> roles) {
         return Jwts.builder()
                 .setId(UUID.randomUUID().toString())
                 .setSubject(String.valueOf(userId))
+                .claim("tenantId", tenantId)
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public Long getTenantId(String token) {
+        Object tenantId = getClaims(token).get("tenantId");
+        if (tenantId == null) return null;
+        if (tenantId instanceof Long l) return l;
+        if (tenantId instanceof Integer i) return i.longValue();
+        return Long.valueOf(tenantId.toString());
     }
 
     public String generateRefreshToken(Long userId) {

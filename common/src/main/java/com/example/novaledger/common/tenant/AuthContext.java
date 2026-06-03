@@ -22,6 +22,13 @@ public class AuthContext {
     }
 
     public Long getCurrentTenantId() {
+        // 優先從 JWT principal 取（前後端分離路徑）
+        AuthenticatedUserPrincipal principal = getPrincipal();
+        if (principal != null && principal.getTenantId() != null) {
+            return principal.getTenantId();
+        }
+
+        // fallback：session-based（Thymeleaf / tenant switching）
         ServletRequestAttributes attrs =
                 (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attrs == null) {

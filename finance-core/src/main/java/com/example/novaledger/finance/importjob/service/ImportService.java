@@ -2,8 +2,11 @@ package com.example.novaledger.finance.importjob.service;
 
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
+import com.example.novaledger.common.logging.AuditLog;
+import com.example.novaledger.common.logging.AuditType;
 import com.example.novaledger.finance.enums.ImportStatus;
 import com.example.novaledger.finance.enums.ParseStatus;
+import com.example.novaledger.finance.importjob.dto.ImportSummary;
 import com.example.novaledger.finance.importjob.dto.JobStatusResponse;
 import com.example.novaledger.finance.importjob.dto.UploadJobResponse;
 import com.example.novaledger.finance.importjob.entity.UploadFile;
@@ -21,6 +24,8 @@ import com.example.novaledger.finance.importrecord.repository.ParsedRecordReposi
 import com.example.novaledger.finance.transaction.entity.Transaction;
 import com.example.novaledger.finance.transaction.entity.TransactionItem;
 import com.example.novaledger.finance.transaction.service.TransactionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +40,7 @@ import java.util.List;
 @Service
 public class ImportService {
 
+    private static final Logger log = LoggerFactory.getLogger(ImportService.class);
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     private static final List<String> ALLOWED_EXTENSIONS = List.of("xlsx", "xls", "csv");
 
@@ -72,12 +78,15 @@ public class ImportService {
     public UploadJobResponse createUploadJob(MultipartFile file, String jobType,
                                              String bankCode, Long accountId,
                                              Long tenantId, Long userId) {
+        log.info("action=CREATE_UPLOAD_JOB tenantId={} userId={} filename={} bankCode={}",
+                tenantId, userId, file.getOriginalFilename(), bankCode);
         validateFile(file);
 
         byte[] fileBytes;
         try {
             fileBytes = file.getBytes();
         } catch (IOException e) {
+            log.error("action=CREATE_UPLOAD_JOB result=FAILED reason=FILE_READ_FAILED filename={}", file.getOriginalFilename(), e);
             throw new BusinessException(ErrorCode.IMPORT_FILE_READ_FAILED);
         }
 
@@ -92,6 +101,8 @@ public class ImportService {
         job.setAccountId(accountId);
         uploadJobRepository.save(job);
 
+        log.info("action=CREATE_UPLOAD_JOB result=SUCCESS jobId={} parserKey={}", job.getId(), parserKey);
+
         UploadJobResponse response = new UploadJobResponse();
         response.setJobId(job.getId());
         response.setStatus(job.getStatus());
@@ -105,8 +116,11 @@ public class ImportService {
         return response;
     }
 
+    @AuditLog(action = "CONFIRM_IMPORT", type = AuditType.CREATE)
     @Transactional
-    public void confirmImport(Long jobId, Long tenantId, Long userId) {
+    public ImportSummary confirmImport(Long jobId, Long tenantId, Long userId) {
+        log.info("action=CONFIRM_IMPORT jobId={} tenantId={} userId={}", jobId, tenantId, userId);
+
         UploadJob job = uploadJobRepository.findByIdAndTenantId(jobId, tenantId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.IMPORT_JOB_NOT_FOUND));
 
@@ -114,9 +128,11 @@ public class ImportService {
                 .findByUploadJobIdAndTenantIdAndImportStatus(jobId, tenantId, ImportStatus.PENDING);
 
         if (pendingRecords.isEmpty()) {
-            return; // 冪等性保護：沒有 PENDING 的 record 就直接回傳
+            log.info("action=CONFIRM_IMPORT result=SKIPPED reason=NO_PENDING_RECORDS jobId={}", jobId);
+            return new ImportSummary(jobId, 0);
         }
 
+        int importedCount = 0;
         for (ParsedRecord record : pendingRecords) {
             String txTypeCode = record.getAmount().compareTo(BigDecimal.ZERO) < 0
                     ? "EXPENSE" : "INCOME";
@@ -140,7 +156,11 @@ public class ImportService {
 
             record.setImportStatus(ImportStatus.IMPORTED);
             parsedRecordRepository.save(record);
+            importedCount++;
         }
+
+        log.info("action=CONFIRM_IMPORT result=SUCCESS jobId={} importedCount={}", jobId, importedCount);
+        return new ImportSummary(jobId, importedCount);
     }
 
     private void validateFile(MultipartFile file) {
@@ -157,6 +177,7 @@ public class ImportService {
         String extension = originalFilename
                 .substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            log.warn("action=VALIDATE_FILE result=FAILED reason=FILE_TYPE_NOT_SUPPORTED filename={}", originalFilename);
             throw new BusinessException(ErrorCode.FILE_TYPE_NOT_SUPPORTED);
         }
     }
@@ -164,6 +185,7 @@ public class ImportService {
     @Async
     public void processImportJob(Long jobId, Long tenantId, byte[] fileBytes,
                                  String originalFilename, String mimeType, long fileSize) {
+        log.info("action=PROCESS_IMPORT_JOB jobId={} tenantId={} filename={}", jobId, tenantId, originalFilename);
         try {
             transactionTemplate.executeWithoutResult(status -> {
                 UploadJob job = uploadJobRepository.findByIdAndTenantId(jobId, tenantId)
@@ -209,13 +231,15 @@ public class ImportService {
                         record.setImportStatus(ImportStatus.FAILED);
                         record.setErrorMessage(result.getErrorMessage());
                         failCount++;
+                        log.warn("action=PARSE_RECORD result=FAILED jobId={} row={} reason={}",
+                                jobId, result.getRowNumber(), result.getErrorMessage());
 
-                        ImportLog log = new ImportLog();
-                        log.setTenantId(tenantId);
-                        log.setUploadJobId(jobId);
-                        log.setLogLevel("ERROR");
-                        log.setMessage(result.getErrorMessage());
-                        importLogRepository.save(log);
+                        ImportLog importLog = new ImportLog();
+                        importLog.setTenantId(tenantId);
+                        importLog.setUploadJobId(jobId);
+                        importLog.setLogLevel("ERROR");
+                        importLog.setMessage(result.getErrorMessage());
+                        importLogRepository.save(importLog);
                     }
 
                     parsedRecordRepository.save(record);
@@ -227,9 +251,13 @@ public class ImportService {
                 job.setFailCount(failCount);
                 job.setFinishedAt(LocalDateTime.now());
                 uploadJobRepository.save(job);
+
+                log.info("action=PROCESS_IMPORT_JOB result=SUCCESS jobId={} total={} success={} fail={}",
+                        jobId, results.size(), successCount, failCount);
             });
 
         } catch (Exception e) {
+            log.error("action=PROCESS_IMPORT_JOB result=FAILED jobId={} reason={}", jobId, e.getMessage(), e);
             importJobStatusService.markJobFailed(jobId, tenantId);
         }
     }

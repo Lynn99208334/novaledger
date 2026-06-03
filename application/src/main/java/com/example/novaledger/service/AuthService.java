@@ -9,9 +9,12 @@ import com.example.novaledger.auth.repository.UserRepository;
 import com.example.novaledger.auth.repository.UserTenantRepository;
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
+import com.example.novaledger.common.logging.AuditLog;
+import com.example.novaledger.common.logging.AuditType;
 import com.example.novaledger.common.tenant.AuthContext;
 import com.example.novaledger.dto.AuthResponse;
 import com.example.novaledger.dto.LoginRequest;
+import com.example.novaledger.dto.RegisterSummary;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,12 +37,17 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserTenantRepository userTenantRepository;
     private final AuthContext authContext;
+
     @Value("${app.auth.resend-cooldown-seconds:60}")
     private long resendCooldownSeconds;
 
     public AuthService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder, EmailService emailService, JwtTokenProvider jwtTokenProvider, UserTenantRepository userTenantRepository, AuthContext authContext) {
+            PasswordEncoder passwordEncoder,
+            EmailService emailService,
+            JwtTokenProvider jwtTokenProvider,
+            UserTenantRepository userTenantRepository,
+            AuthContext authContext) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
@@ -48,16 +56,17 @@ public class AuthService {
         this.authContext = authContext;
     }
 
-    // ========================
-    // 註冊
-    // ========================
-    public void register(RegisterRequest request) {
+    @AuditLog(action = "REGISTER_USER", type = AuditType.CREATE)
+    public RegisterSummary register(RegisterRequest request) {
+        log.info("action=REGISTER email={}", request.getEmail());
 
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("action=REGISTER result=FAILED reason=EMAIL_ALREADY_EXISTS email={}", request.getEmail());
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         if (userRepository.existsByUsername(request.getUsername())) {
+            log.warn("action=REGISTER result=FAILED reason=USERNAME_ALREADY_EXISTS username={}", request.getUsername());
             throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
@@ -67,40 +76,38 @@ public class AuthService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        System.out.println(">>> password before encode: [" + request.getPassword() + "]");
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-
         user.setStatus(UserStatus.REGISTERED);
         user.setEmailVerified(false);
         user.setEnabled(true);
-
-        // ⭐ 新增的三行
         user.setEmailVerifyToken(verifyToken);
         user.setEmailVerifyExpiredAt(expiredAt);
 
-        userRepository.save(user);
+        User saved = userRepository.save(user);
 
-        // ⭐ 寄送驗證信
-        String verifyLink =
-                "http://localhost:8111/api/auth/verify-email?token=" + verifyToken;
+        String verifyLink = "http://localhost:8111/api/auth/verify-email?token=" + verifyToken;
+        emailService.sendVerifyEmail(saved.getEmail(), verifyLink);
 
-        emailService.sendVerifyEmail(user.getEmail(), verifyLink);
+        log.info("action=REGISTER result=SUCCESS userId={}", saved.getId());
+        return new RegisterSummary(saved.getId(), saved.getUsername(), saved.getEmail());
     }
 
     public AuthResponse login(LoginRequest request, HttpSession session) {
+        log.info("action=LOGIN email={}", request.getEmail());
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        log.info("input password: {}", request.getPassword());
-        log.info("db password: {}", user.getPassword());
-        log.info("matches: {}", passwordEncoder.matches(request.getPassword(), user.getPassword()));
+                .orElseThrow(() -> {
+                    log.warn("action=LOGIN result=FAILED reason=USER_NOT_FOUND email={}", request.getEmail());
+                    return new BusinessException(ErrorCode.USER_NOT_FOUND);
+                });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("action=LOGIN result=FAILED reason=PASSWORD_INCORRECT userId={}", user.getId());
             throw new BusinessException(ErrorCode.PASSWORD_INCORRECT);
         }
 
         if (!Boolean.TRUE.equals(user.getEmailVerified())) {
+            log.warn("action=LOGIN result=FAILED reason=EMAIL_NOT_VERIFIED userId={}", user.getId());
             throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
@@ -110,15 +117,13 @@ public class AuthService {
                 .map(UserTenant::getTenantId)
                 .orElse(null);
 
-        log.info("[LOGIN] userId={}, tenantId={}", user.getId(), tenantId);
-
         session.setAttribute(authContext.SESSION_CURRENT_TENANT_ID, tenantId);
 
         List<String> roles = List.of("ROLE_USER");
-
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), roles);
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), tenantId, roles);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
+        log.info("action=LOGIN result=SUCCESS userId={} tenantId={}", user.getId(), tenantId);
         return new AuthResponse(accessToken, refreshToken, user.getUsername());
     }
 
@@ -129,5 +134,4 @@ public class AuthService {
     private LocalDateTime generateEmailVerifyExpiredAt() {
         return LocalDateTime.now().plusHours(24);
     }
-
 }

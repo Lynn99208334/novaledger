@@ -2,6 +2,7 @@ package com.example.novaledger.finance.importjob.controller;
 
 import com.example.novaledger.common.response.ApiResponse;
 import com.example.novaledger.common.tenant.AuthContext;
+import com.example.novaledger.finance.importjob.dto.ImportSummary;
 import com.example.novaledger.finance.importjob.dto.JobStatusResponse;
 import com.example.novaledger.finance.importjob.dto.UploadJobResponse;
 import com.example.novaledger.finance.importjob.service.ImportService;
@@ -48,14 +49,14 @@ public class ImportController {
 
     @Operation(summary = "確認匯入", description = "將 PENDING 的解析記錄寫入交易")
     @PostMapping("/jobs/{jobId}/confirm")
-    public ResponseEntity<ApiResponse<Void>> confirmImport(
+    public ResponseEntity<ApiResponse<ImportSummary>> confirmImport(
             @PathVariable Long jobId,
             HttpServletRequest request) {
 
         Long tenantId = authContext.getCurrentTenantId();
         Long userId = authContext.getCurrentUserId();
-        importService.confirmImport(jobId, tenantId, userId);
-        return ResponseEntity.ok(ApiResponse.ok());
+        ImportSummary summary = importService.confirmImport(jobId, tenantId, userId);
+        return ResponseEntity.ok(ApiResponse.ok(summary));
     }
 
     @GetMapping("/jobs/{jobId}/status")

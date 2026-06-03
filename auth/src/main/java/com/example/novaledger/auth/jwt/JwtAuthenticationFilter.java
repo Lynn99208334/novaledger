@@ -37,7 +37,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String token = resolveToken(request);
 
-            if (token != null && jwtTokenProvider.validateToken(token)) {
+            if (token != null) {
+                if (!jwtTokenProvider.validateToken(token)) {
+                    log.warn("action=JWT_VALIDATE result=FAILED reason=INVALID_TOKEN uri={}",
+                            request.getRequestURI());
+                } else {
                 String jti = jwtTokenProvider.getJti(token);
 
                 if (redisBlacklistService.isBlacklisted(jti)) {
@@ -47,9 +51,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 Long userId = jwtTokenProvider.getUserId(token);
+                Long tenantId = jwtTokenProvider.getTenantId(token);
                 List<String> roles = jwtTokenProvider.getRoles(token);
 
-                AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, roles, jti);
+                AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, tenantId, roles, jti);
 
                 List<GrantedAuthority> authorities = roles.stream()
                         .map(SimpleGrantedAuthority::new)
@@ -59,6 +64,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(principal, null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                TenantContext.setTenantId(tenantId);
+                }
             }
 
             filterChain.doFilter(request, response);

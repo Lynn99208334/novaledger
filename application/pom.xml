@@ -48,6 +48,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- AOP（LoggingAspect / AuditLogAspect 用）-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
@@ -165,6 +171,13 @@
         <!--                <artifactId>tess4j</artifactId>-->
         <!--                <version>5.11.0</version>-->
         <!--            </dependency>-->
+
+        <!-- Logstash JSON encoder（prod JSON log 用）-->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
 
         <!-- Utilities -->
         <dependency>
