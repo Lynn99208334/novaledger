@@ -30,16 +30,6 @@
     <appender name="CONSOLE_JSON"
               class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <providers>
-                <timestamp/>
-                <logLevel/>
-                <loggerName>
-                    <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
-                </loggerName>
-                <mdc/>
-                <message/>
-                <stackTrace/>
-            </providers>
             <customFields>{"app":"${APP_NAME}"}</customFields>
         </encoder>
     </appender>
