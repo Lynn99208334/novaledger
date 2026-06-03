@@ -4,6 +4,9 @@ import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
 import com.example.novaledger.auth.entity.User;
 import com.example.novaledger.auth.repository.UserRepository;
+import com.example.novaledger.common.logging.AuditLog;
+import com.example.novaledger.common.logging.AuditType;
+import com.example.novaledger.dto.VerifySummary;
 import com.example.novaledger.util.TimeProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +36,8 @@ public class EmailVerificationService {
     /**
      * Email 驗證
      */
-    public void verifyEmail(String token) {
+    @AuditLog(action = "VERIFY_EMAIL", type = AuditType.UPDATE)
+    public VerifySummary verifyEmail(String token) {
 
         User user = userRepository.findByEmailVerifyToken(token)
                 .orElseThrow(() ->
@@ -50,9 +54,11 @@ public class EmailVerificationService {
         user.setEmailVerified(true);
         user.setEmailVerifyToken(null);
         user.setEmailVerifyExpiredAt(null);
-        user.setEmailVerifyLastSentAt(null); // 可選：驗證完成後清掉
+        user.setEmailVerifyLastSentAt(null);
 
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+
+        return new VerifySummary(saved.getId(), saved.getEmail(), saved.getEmailVerified());
     }
 
     /**

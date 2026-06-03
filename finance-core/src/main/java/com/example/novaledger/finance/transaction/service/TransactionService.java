@@ -2,6 +2,9 @@ package com.example.novaledger.finance.transaction.service;
 
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
+import com.example.novaledger.common.logging.AuditContext;
+import com.example.novaledger.common.logging.AuditLog;
+import com.example.novaledger.common.logging.AuditType;
 import com.example.novaledger.finance.account.entity.UserAccount;
 import com.example.novaledger.finance.account.repository.UserAccountRepository;
 import com.example.novaledger.finance.creditcard.entity.UserCreditCard;
@@ -10,6 +13,9 @@ import com.example.novaledger.finance.transaction.entity.Transaction;
 import com.example.novaledger.finance.transaction.entity.TransactionItem;
 import com.example.novaledger.finance.transaction.repository.TransactionItemRepository;
 import com.example.novaledger.finance.transaction.repository.TransactionRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,24 +29,33 @@ import java.util.List;
 @Service
 public class TransactionService {
 
+    private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
+
     private final TransactionRepository transactionRepository;
     private final TransactionItemRepository transactionItemRepository;
     private final UserAccountRepository userAccountRepository;
     private final CreditCardRepository creditCardRepository;
+    private final ObjectMapper objectMapper;
 
     public TransactionService(
             TransactionRepository transactionRepository,
             TransactionItemRepository transactionItemRepository,
             UserAccountRepository userAccountRepository,
-            CreditCardRepository creditCardRepository) {
+            CreditCardRepository creditCardRepository,
+            ObjectMapper objectMapper) {
         this.transactionRepository = transactionRepository;
         this.transactionItemRepository = transactionItemRepository;
         this.userAccountRepository = userAccountRepository;
         this.creditCardRepository = creditCardRepository;
+        this.objectMapper = objectMapper;
     }
 
+    @AuditLog(action = "CREATE_TRANSACTION", type = AuditType.CREATE)
     @Transactional
     public Transaction createTransaction(Transaction transaction, List<TransactionItem> items) {
+        log.info("action=CREATE_TRANSACTION tenantId={} userId={} txType={} amount={}",
+                transaction.getTenantId(), transaction.getUserId(),
+                transaction.getTxTypeCode(), transaction.getTotalAmount());
         validateSource(transaction);
 
         Transaction saved = transactionRepository.save(transaction);
@@ -54,15 +69,21 @@ public class TransactionService {
         }
 
         updateBalance(saved, saved.getTotalAmount(), false);
-
+        log.info("action=CREATE_TRANSACTION result=SUCCESS transactionId={}", saved.getId());
         return saved;
     }
 
+    @AuditLog(action = "UPDATE_TRANSACTION", type = AuditType.UPDATE)
     @Transactional
     public Transaction updateTransaction(Long transactionId, Long tenantId, Transaction updated, List<TransactionItem> newItems) {
+        log.info("action=UPDATE_TRANSACTION transactionId={} tenantId={}", transactionId, tenantId);
         Transaction existing = transactionRepository
                 .findByIdAndTenantIdAndDeletedAtIsNull(transactionId, tenantId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRANSACTION_NOT_FOUND));
+
+        try {
+            AuditContext.setBeforeValue(objectMapper.writeValueAsString(existing));
+        } catch (Exception ignored) {}
 
         updateBalance(existing, existing.getTotalAmount(), true);
 
@@ -84,20 +105,27 @@ public class TransactionService {
         }
 
         updateBalance(saved, saved.getTotalAmount(), false);
-
+        log.info("action=UPDATE_TRANSACTION result=SUCCESS transactionId={}", saved.getId());
         return saved;
     }
 
+    @AuditLog(action = "DELETE_TRANSACTION", type = AuditType.DELETE)
     @Transactional
     public void deleteTransaction(Long transactionId, Long tenantId) {
+        log.info("action=DELETE_TRANSACTION transactionId={} tenantId={}", transactionId, tenantId);
         Transaction existing = transactionRepository
                 .findByIdAndTenantIdAndDeletedAtIsNull(transactionId, tenantId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRANSACTION_NOT_FOUND));
+
+        try {
+            AuditContext.setBeforeValue(objectMapper.writeValueAsString(existing));
+        } catch (Exception ignored) {}
 
         updateBalance(existing, existing.getTotalAmount(), true);
 
         existing.setDeletedAt(LocalDateTime.now());
         transactionRepository.save(existing);
+        log.info("action=DELETE_TRANSACTION result=SUCCESS transactionId={}", transactionId);
     }
 
     // ─── private helpers ───────────────────────────────────────────
