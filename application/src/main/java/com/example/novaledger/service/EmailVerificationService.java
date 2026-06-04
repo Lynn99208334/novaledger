@@ -6,10 +6,11 @@ import com.example.novaledger.auth.entity.User;
 import com.example.novaledger.auth.repository.UserRepository;
 import com.example.novaledger.common.logging.AuditLog;
 import com.example.novaledger.common.logging.AuditType;
+import com.example.novaledger.common.service.SystemConfigService;
 import com.example.novaledger.dto.VerifySummary;
 import com.example.novaledger.util.TimeProvider;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,34 +21,21 @@ import java.util.UUID;
 @Slf4j
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class EmailVerificationService {
-
 
     private final UserRepository userRepository;
     private final TimeProvider timeProvider;
-    @Value("${app.auth.resend-cooldown-seconds:60}")
-    private long resendCooldownSeconds;
+    private final SystemConfigService systemConfigService;
 
-    public EmailVerificationService(UserRepository userRepository, TimeProvider timeProvider) {
-        this.userRepository = userRepository;
-        this.timeProvider = timeProvider;
-    }
-
-    /**
-     * Email 驗證
-     */
     @AuditLog(action = "VERIFY_EMAIL", type = AuditType.UPDATE)
     public VerifySummary verifyEmail(String token) {
-
         User user = userRepository.findByEmailVerifyToken(token)
-                .orElseThrow(() ->
-                        new BusinessException(ErrorCode.EMAIL_VERIFY_TOKEN_INVALID)
-                );
+                .orElseThrow(() -> new BusinessException(ErrorCode.EMAIL_VERIFY_TOKEN_INVALID));
 
         LocalDateTime now = timeProvider.now();
 
-        if (user.getEmailVerifyExpiredAt() == null ||
-                now.isAfter(user.getEmailVerifyExpiredAt())) {
+        if (user.getEmailVerifyExpiredAt() == null || now.isAfter(user.getEmailVerifyExpiredAt())) {
             throw new BusinessException(ErrorCode.EMAIL_VERIFY_TOKEN_EXPIRED);
         }
 
@@ -57,19 +45,12 @@ public class EmailVerificationService {
         user.setEmailVerifyLastSentAt(null);
 
         User saved = userRepository.save(user);
-
         return new VerifySummary(saved.getId(), saved.getEmail(), saved.getEmailVerified());
     }
 
-    /**
-     * 重新寄送驗證信
-     */
     public void resendVerificationEmail(String email) {
-
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new BusinessException(ErrorCode.USER_NOT_FOUND)
-                );
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (Boolean.TRUE.equals(user.getEmailVerified())) {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_VERIFIED);
@@ -77,27 +58,19 @@ public class EmailVerificationService {
 
         LocalDateTime now = timeProvider.now();
 
-        // ⛔ 冷卻時間判斷（只看 lastSentAt）
         if (isInCooldown(user, now)) {
             throw new BusinessException(ErrorCode.EMAIL_RESEND_TOO_FREQUENT);
         }
 
-        // 產生新 token
+        int expireMinutes = systemConfigService.getInteger("auth.token.expire.minutes");
         user.setEmailVerifyToken(UUID.randomUUID().toString());
-        user.setEmailVerifyExpiredAt(now.plusMinutes(15));
-
-        // ⭐ 關鍵：記錄「這一次寄信的時間」
+        user.setEmailVerifyExpiredAt(now.plusMinutes(expireMinutes));
         user.setEmailVerifyLastSentAt(now);
-
         userRepository.save(user);
-
-        // send email（略）
     }
 
-    /**
-     * 👉 冷卻時間判斷（純 domain 邏輯，可單元測試）
-     */
     boolean isInCooldown(User user, LocalDateTime now) {
+        long resendCooldownSeconds = systemConfigService.getInteger("auth.resend.cooldown.seconds");
 
         if (resendCooldownSeconds <= 0) {
             return false;
@@ -105,12 +78,10 @@ public class EmailVerificationService {
 
         LocalDateTime lastSentAt = user.getEmailVerifyLastSentAt();
         if (lastSentAt == null) {
-            return false; // 從未寄過信
+            return false;
         }
 
-        long secondsSinceLastSend =
-                Duration.between(lastSentAt, now).getSeconds();
-
+        long secondsSinceLastSend = Duration.between(lastSentAt, now).getSeconds();
         return secondsSinceLastSend < resendCooldownSeconds;
     }
 }

@@ -41,7 +41,9 @@ public class SecurityConfig {
             "/js/**",
             "/images/**",
             "/fonts/**",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/page/verify-email-success",
+            "/page/verify-email-error"
     };
 
     @Bean

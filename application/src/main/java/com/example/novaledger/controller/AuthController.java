@@ -76,10 +76,17 @@ public class AuthController {
 
     @GetMapping("/verify-email")
     @Operation(summary = "Email 驗證")
-    public ResponseEntity<ApiResponse<Void>> verifyEmail(
-            @RequestParam("token") String token) {
-        emailVerificationService.verifyEmail(token);
-        return ResponseEntity.ok(ApiResponse.ok());
+    public ResponseEntity<Void> verifyEmail(@RequestParam("token") String token) {
+        try {
+            emailVerificationService.verifyEmail(token);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", "/page/verify-email-success")
+                    .build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", "/page/verify-email-error")
+                    .build();
+        }
     }
 
     @PostMapping("/resend-verification")

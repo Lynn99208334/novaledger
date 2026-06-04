@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>驗證失敗 - NovaLedger</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 48px 40px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            backdrop-filter: blur(12px);
+        }
+        .icon {
+            width: 72px;
+            height: 72px;
+            background: rgba(239,68,68,0.15);
+            border: 2px solid rgba(239,68,68,0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+        .icon svg { width: 36px; height: 36px; stroke: #ef4444; fill: none; }
+        .brand { color: #f1f5f9; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 28px; opacity: 0.6; }
+        h1 { color: #f1f5f9; font-size: 24px; font-weight: 600; margin-bottom: 12px; }
+        p { color: #94a3b8; font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+        .hint { color: #64748b; font-size: 13px; margin-top: -20px; margin-bottom: 32px; }
+        .btn {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: opacity 0.2s;
+            margin-right: 8px;
+        }
+        .btn-secondary {
+            display: inline-block;
+            padding: 12px 32px;
+            background: rgba(255,255,255,0.08);
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: opacity 0.2s;
+        }
+        .btn:hover, .btn-secondary:hover { opacity: 0.85; }
+        .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">NovaLedger</div>
+        <div class="icon">
+            <svg viewBox="0 0 24 24" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </div>
+        <h1>驗證連結無效</h1>
+        <p>此驗證連結已過期或已被使用。<br>請重新申請一封驗證信。</p>
+        <div class="hint">驗證連結通常在 24 小時內有效。</div>
+        <div class="actions">
+            <a href="/page/login" class="btn">前往登入</a>
+            <a href="/page/register" class="btn-secondary">重新註冊</a>
+        </div>
+    </div>
+</body>
+</html>

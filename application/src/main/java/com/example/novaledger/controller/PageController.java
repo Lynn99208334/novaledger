@@ -66,4 +66,14 @@ public class PageController {
     public String adminUsersPage() {
         return "admin/userList";
     }
+
+    @GetMapping("/verify-email-success")
+    public String verifyEmailSuccess() {
+        return "verify-email-success";
+    }
+
+    @GetMapping("/verify-email-error")
+    public String verifyEmailError() {
+        return "verify-email-error";
+    }
 }
