@@ -1,10 +1,15 @@
 package com.example.novaledger.service;
 
 import com.example.novaledger.auth.dto.RegisterRequest;
+import com.example.novaledger.auth.entity.Role;
+import com.example.novaledger.auth.entity.Tenant;
 import com.example.novaledger.auth.entity.User;
 import com.example.novaledger.auth.entity.UserTenant;
 import com.example.novaledger.auth.enums.UserStatus;
+import com.example.novaledger.auth.enums.UserTenantStatus;
 import com.example.novaledger.auth.jwt.JwtTokenProvider;
+import com.example.novaledger.auth.repository.RoleRepository;
+import com.example.novaledger.auth.repository.TenantRepository;
 import com.example.novaledger.auth.repository.UserRepository;
 import com.example.novaledger.auth.repository.UserTenantRepository;
 import com.example.novaledger.common.exception.BusinessException;
@@ -36,6 +41,8 @@ public class AuthService {
     private final EmailService emailService;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserTenantRepository userTenantRepository;
+    private final TenantRepository tenantRepository;
+    private final RoleRepository roleRepository;
     private final AuthContext authContext;
 
     @Value("${app.auth.resend-cooldown-seconds:60}")
@@ -47,12 +54,16 @@ public class AuthService {
             EmailService emailService,
             JwtTokenProvider jwtTokenProvider,
             UserTenantRepository userTenantRepository,
+            TenantRepository tenantRepository,
+            RoleRepository roleRepository,
             AuthContext authContext) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userTenantRepository = userTenantRepository;
+        this.tenantRepository = tenantRepository;
+        this.roleRepository = roleRepository;
         this.authContext = authContext;
     }
 
@@ -85,10 +96,36 @@ public class AuthService {
 
         User saved = userRepository.save(user);
 
+        // 建立個人 Tenant
+        Tenant tenant = new Tenant();
+        tenant.setCode("personal_" + saved.getId());
+        tenant.setName(saved.getUsername() + "'s Workspace");
+        tenant.setType("PERSONAL");
+        tenant.setPlan("FREE");
+        tenant.setOwnerUserId(saved.getId());
+        tenant.setStatus("ACTIVE");
+        Tenant savedTenant = tenantRepository.save(tenant);
+
+        // 查系統預設 MEMBER role
+        Role memberRole = roleRepository.findByCodeAndTenantIdIsNull("MEMBER")
+                .orElseThrow(() -> {
+                    log.error("action=REGISTER result=FAILED reason=MEMBER_ROLE_NOT_FOUND");
+                    return new BusinessException(ErrorCode.INTERNAL_ERROR);
+                });
+
+        // 建立 UserTenant 關聯
+        UserTenant userTenant = new UserTenant();
+        userTenant.setUserId(saved.getId());
+        userTenant.setTenantId(savedTenant.getId());
+        userTenant.setRoleId(memberRole.getId());
+        userTenant.setStatus(UserTenantStatus.ACTIVE);
+        userTenant.setJoinedAt(LocalDateTime.now());
+        userTenantRepository.save(userTenant);
+
         String verifyLink = "http://localhost:8111/api/auth/verify-email?token=" + verifyToken;
         emailService.sendVerifyEmail(saved.getEmail(), verifyLink);
 
-        log.info("action=REGISTER result=SUCCESS userId={}", saved.getId());
+        log.info("action=REGISTER result=SUCCESS userId={} tenantId={}", saved.getId(), savedTenant.getId());
         return new RegisterSummary(saved.getId(), saved.getUsername(), saved.getEmail());
     }
 

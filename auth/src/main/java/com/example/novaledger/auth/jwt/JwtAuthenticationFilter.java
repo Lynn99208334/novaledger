@@ -7,6 +7,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -42,36 +43,72 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     log.warn("action=JWT_VALIDATE result=FAILED reason=INVALID_TOKEN uri={}",
                             request.getRequestURI());
                 } else {
-                String jti = jwtTokenProvider.getJti(token);
+                    String jti = jwtTokenProvider.getJti(token);
 
-                if (redisBlacklistService.isBlacklisted(jti)) {
-                    log.warn("Blacklisted JWT detected, jti={}", jti);
-                    writeUnauthorizedResponse(response, "JWT token has been logged out");
-                    return;
+                    if (redisBlacklistService.isBlacklisted(jti)) {
+                        log.warn("Blacklisted JWT detected, jti={}", jti);
+                        writeUnauthorizedResponse(response, "JWT token has been logged out");
+                        return;
+                    }
+
+                    Long userId = jwtTokenProvider.getUserId(token);
+                    Long tenantId = jwtTokenProvider.getTenantId(token);
+                    List<String> roles = jwtTokenProvider.getRoles(token);
+
+                    AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, tenantId, roles, jti);
+
+                    List<GrantedAuthority> authorities = roles.stream()
+                            .map(SimpleGrantedAuthority::new)
+                            .collect(Collectors.toList());
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    TenantContext.setTenantId(tenantId);
                 }
-
-                Long userId = jwtTokenProvider.getUserId(token);
-                Long tenantId = jwtTokenProvider.getTenantId(token);
-                List<String> roles = jwtTokenProvider.getRoles(token);
-
-                AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, tenantId, roles, jti);
-
-                List<GrantedAuthority> authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                TenantContext.setTenantId(tenantId);
-                }
+            } else {
+                // Bearer token 不存在，嘗試從 session 還原認證（formLogin 流程）
+                restoreAuthFromSession(request);
             }
 
             filterChain.doFilter(request, response);
         } finally {
             TenantContext.clear();
         }
+    }
+
+    private void restoreAuthFromSession(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) return;
+
+        Object userIdObj = session.getAttribute("userId");
+        Object tenantIdObj = session.getAttribute("tenantId");
+        Object rolesObj = session.getAttribute("roles");
+
+        if (userIdObj == null) return;
+
+        Long userId = (Long) userIdObj;
+        Long tenantId = tenantIdObj != null ? (Long) tenantIdObj : null;
+
+        @SuppressWarnings("unchecked")
+        List<String> roles = (rolesObj instanceof List<?> list)
+                ? list.stream().map(Object::toString).collect(Collectors.toList())
+                : List.of("ROLE_MEMBER");
+
+        AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, tenantId, roles, null);
+
+        List<GrantedAuthority> authorities = roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        TenantContext.setTenantId(tenantId);
+
+        log.debug("action=SESSION_AUTH_RESTORE userId={} tenantId={}", userId, tenantId);
     }
 
     private String resolveToken(HttpServletRequest request) {
