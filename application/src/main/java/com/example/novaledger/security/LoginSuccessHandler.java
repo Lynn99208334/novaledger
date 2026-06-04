@@ -5,20 +5,23 @@ import com.example.novaledger.auth.repository.UserTenantRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserTenantRepository userTenantRepository;
-
-    public LoginSuccessHandler(UserTenantRepository userTenantRepository) {
-        this.userTenantRepository = userTenantRepository;
-    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -33,11 +36,16 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
                 .map(UserTenant::getTenantId)
                 .orElse(null);
 
+        List<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
         HttpSession session = request.getSession();
-        System.out.println(">>> LoginSuccessHandler: userId=" + userId);
-        System.out.println(">>> LoginSuccessHandler: tenantId=" + tenantId);
         session.setAttribute("tenantId", tenantId);
         session.setAttribute("userId", userId);
+        session.setAttribute("roles", roles);
+
+        log.debug("action=LOGIN_SUCCESS userId={} tenantId={} roles={}", userId, tenantId, roles);
 
         response.sendRedirect("/page/dashboard");
     }
