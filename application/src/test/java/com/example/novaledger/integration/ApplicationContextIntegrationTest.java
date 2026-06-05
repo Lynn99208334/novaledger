@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
  * CI 執行：自動用 test profile（ci.yml 設定 SPRING_PROFILES_ACTIVE=test）
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @DisplayName("基礎整合測試 - Spring Context + DB 連線")
 class ApplicationContextIntegrationTest {
 
