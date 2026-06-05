@@ -66,4 +66,24 @@ public class PageController {
     public String adminUsersPage() {
         return "admin/userList";
     }
+
+    @GetMapping("/verify-email-success")
+    public String verifyEmailSuccess() {
+        return "verify-email-success";
+    }
+
+    @GetMapping("/verify-email-error")
+    public String verifyEmailError() {
+        return "verify-email-error";
+    }
+
+    @GetMapping("/forgot-password")
+    public String forgotPasswordPage() {
+        return "forgot-password";
+    }
+
+    @GetMapping("/reset-password")
+    public String resetPasswordPage() {
+        return "reset-password";
+    }
 }

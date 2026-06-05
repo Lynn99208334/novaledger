@@ -36,12 +36,16 @@ public enum ErrorCode {
     EMAIL_VERIFY_TOKEN_INVALID("AUTH_012", "Email Verification Token Invalid", 400),
     EMAIL_VERIFY_TOKEN_EXPIRED("AUTH_013", "Email Verification Token Expired", 400),
 
+    PASSWORD_RESET_TOKEN_INVALID("AUTH_014", "Password Reset Token Invalid", 400),
+    PASSWORD_RESET_TOKEN_EXPIRED("AUTH_015", "Password Reset Token Expired", 400),
+
     ACCOUNT_DISABLED("AUTH_020", "Account Disabled", 403),
     ACCOUNT_NOT_ACTIVE("AUTH_021", "Account Not Active", 403),
 
     LOGIN_FAILED("AUTH_030", "Login Failed", 401),
     PASSWORD_INCORRECT("AUTH_032", "Password Incorrect", 401),
     LOGOUT_FAILED("AUTH_031", "Logout Failed", 400),
+    LOGIN_BLOCKED("AUTH_033", "Too many failed attempts. Please try again later.", 429),
 
     // ========================
     // Tenant
