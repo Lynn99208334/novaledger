@@ -48,6 +48,9 @@ public class AuthService {
     private final SystemConfigService systemConfigService;
     private final LoginRateLimiter loginRateLimiter;
 
+    @org.springframework.beans.factory.annotation.Value("${app.base-url}")
+    private String appBaseUrl;
+
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
@@ -126,7 +129,7 @@ public class AuthService {
         userTenant.setJoinedAt(LocalDateTime.now());
         userTenantRepository.save(userTenant);
 
-        String verifyLink = "http://localhost:8111/api/auth/verify-email?token=" + verifyToken;
+        String verifyLink = appBaseUrl + "/api/auth/verify-email?token=" + verifyToken;
         emailService.sendVerifyEmail(saved.getEmail(), verifyLink);
 
         log.info("action=REGISTER result=SUCCESS userId={} tenantId={}", saved.getId(), savedTenant.getId());
