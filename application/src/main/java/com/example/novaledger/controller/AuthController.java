@@ -48,8 +48,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
-                                              HttpSession session) {
-        AuthResponse response = authService.login(request, session);
+                                              HttpSession session,
+                                              HttpServletRequest httpRequest) {
+        String ip = getClientIp(httpRequest);
+        AuthResponse response = authService.login(request, session, ip);
         return ResponseEntity.ok(response);
     }
 
@@ -123,5 +125,13 @@ public class AuthController {
             return bearer.substring(7);
         }
         return null;
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

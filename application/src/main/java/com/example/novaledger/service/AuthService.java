@@ -21,6 +21,7 @@ import com.example.novaledger.common.tenant.AuthContext;
 import com.example.novaledger.dto.AuthResponse;
 import com.example.novaledger.dto.LoginRequest;
 import com.example.novaledger.dto.RegisterSummary;
+import com.example.novaledger.ratelimit.LoginRateLimiter;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,6 +46,7 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final AuthContext authContext;
     private final SystemConfigService systemConfigService;
+    private final LoginRateLimiter loginRateLimiter;
 
     public AuthService(
             UserRepository userRepository,
@@ -55,7 +57,8 @@ public class AuthService {
             TenantRepository tenantRepository,
             RoleRepository roleRepository,
             AuthContext authContext,
-            SystemConfigService systemConfigService) {
+            SystemConfigService systemConfigService,
+            LoginRateLimiter loginRateLimiter) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
@@ -65,6 +68,7 @@ public class AuthService {
         this.roleRepository = roleRepository;
         this.authContext = authContext;
         this.systemConfigService = systemConfigService;
+        this.loginRateLimiter = loginRateLimiter;
     }
 
     @AuditLog(action = "REGISTER_USER", type = AuditType.CREATE)
@@ -129,24 +133,36 @@ public class AuthService {
         return new RegisterSummary(saved.getId(), saved.getUsername(), saved.getEmail());
     }
 
-    public AuthResponse login(LoginRequest request, HttpSession session) {
+    public AuthResponse login(LoginRequest request, HttpSession session, String ip) {
         log.info("action=LOGIN email={}", request.getEmail());
+
+        // 檢查是否已被鎖定
+        if (loginRateLimiter.isBlocked(ip)) {
+            log.warn("action=LOGIN result=BLOCKED ip={}", ip);
+            throw new BusinessException(ErrorCode.LOGIN_BLOCKED);
+        }
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
+                    loginRateLimiter.recordFailure(ip);
                     log.warn("action=LOGIN result=FAILED reason=USER_NOT_FOUND email={}", request.getEmail());
                     return new BusinessException(ErrorCode.USER_NOT_FOUND);
                 });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            loginRateLimiter.recordFailure(ip);
             log.warn("action=LOGIN result=FAILED reason=PASSWORD_INCORRECT userId={}", user.getId());
             throw new BusinessException(ErrorCode.PASSWORD_INCORRECT);
         }
 
         if (!Boolean.TRUE.equals(user.getEmailVerified())) {
+            loginRateLimiter.recordFailure(ip);
             log.warn("action=LOGIN result=FAILED reason=EMAIL_NOT_VERIFIED userId={}", user.getId());
             throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
+
+        // 登入成功，清除失敗計數
+        loginRateLimiter.clearFailures(ip);
 
         Long tenantId = userTenantRepository.findByUserId(user.getId())
                 .stream()

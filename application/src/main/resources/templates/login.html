@@ -139,6 +139,7 @@
         const loginError = document.getElementById("loginError");
 
         loginError.classList.add("d-none");
+        loginError.textContent = "";
 
         try {
             const response = await fetch("/api/auth/login", {
@@ -153,6 +154,17 @@
             });
 
             if (!response.ok) {
+                const data = await response.json();
+                const errorCode = data?.error?.errorCode;
+
+                if (errorCode === "AUTH_033") {
+                    loginError.textContent = "登入失敗次數過多，請 15 分鐘後再試。";
+                } else if (errorCode === "AUTH_001") {
+                    loginError.textContent = "Email 尚未驗證，請先完成驗證。";
+                } else {
+                    loginError.textContent = "帳號或密碼錯誤。";
+                }
+
                 loginError.classList.remove("d-none");
                 return;
             }
@@ -167,6 +179,7 @@
 
         } catch (error) {
             console.error("Login failed", error);
+            loginError.textContent = "發生錯誤，請稍後再試。";
             loginError.classList.remove("d-none");
         }
     });
