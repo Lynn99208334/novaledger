@@ -7,9 +7,12 @@ import com.example.novaledger.common.response.ApiErrorResponse;
 import com.example.novaledger.common.response.ApiResponse;
 import com.example.novaledger.dto.AuthResponse;
 import com.example.novaledger.dto.LoginRequest;
+import com.example.novaledger.dto.ForgotPasswordRequest;
+import com.example.novaledger.dto.ResetPasswordRequest;
 import com.example.novaledger.dto.ResendVerificationRequest;
 import com.example.novaledger.service.AuthService;
 import com.example.novaledger.service.EmailVerificationService;
+import com.example.novaledger.service.PasswordResetService;
 import io.jsonwebtoken.JwtException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,6 +34,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisBlacklistService redisBlacklistService;
 
@@ -94,6 +98,22 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(
             @Valid @RequestBody ResendVerificationRequest request) {
         emailVerificationService.resendVerificationEmail(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "申請忘記密碼（寄重設信）")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestPasswordReset(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "重設密碼")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.ok());
     }
 

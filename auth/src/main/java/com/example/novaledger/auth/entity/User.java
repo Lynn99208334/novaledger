@@ -79,6 +79,22 @@ public class User extends BaseEntity {
     @Column(name = "email_verify_last_sent_at")
     private LocalDateTime emailVerifyLastSentAt;
 
+    // ========================
+    // 忘記密碼流程
+    // ========================
+
+    /**
+     * 密碼重設 Token
+     */
+    @Column(name = "password_reset_token", length = 100)
+    private String passwordResetToken;
+
+    /**
+     * 密碼重設 Token 過期時間
+     */
+    @Column(name = "password_reset_expired_at")
+    private LocalDateTime passwordResetExpiredAt;
+
     @Column(name = "is_system_admin", nullable = false)
     private Boolean isSystemAdmin = false;
 
@@ -170,6 +186,21 @@ public class User extends BaseEntity {
         this.emailVerifyLastSentAt = emailVerifyLastSentAt;
     }
 
+    public String getPasswordResetToken() {
+        return passwordResetToken;
+    }
+
+    public void setPasswordResetToken(String passwordResetToken) {
+        this.passwordResetToken = passwordResetToken;
+    }
+
+    public LocalDateTime getPasswordResetExpiredAt() {
+        return passwordResetExpiredAt;
+    }
+
+    public void setPasswordResetExpiredAt(LocalDateTime passwordResetExpiredAt) {
+        this.passwordResetExpiredAt = passwordResetExpiredAt;
+    }
 
     public Boolean getSystemAdmin() {
         return isSystemAdmin;
