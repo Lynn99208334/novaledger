@@ -27,7 +27,7 @@ VALUES (
     (SELECT ID FROM tenants WHERE CODE = 'alice-personal'),
     (SELECT ID FROM users   WHERE USERNAME = 'alice'),
     'BANK', '808', NULL,
-    '0820979072999',
+    NULL,
     '玉山銀行 美金帳戶',
     'USD', 3200.00, 3200.00,
     'Demo 美金帳戶',
