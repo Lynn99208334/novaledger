@@ -26,6 +26,12 @@
                                 <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
                             </div>
                             <div class="mb-3">
+                                <label for="alias" class="form-label">帳戶別名</label>
+                                <input type="text" id="alias" th:field="*{alias}"
+                                       class="form-control" placeholder="例：薪轉戶、日常花費" maxlength="50"/>
+                                <div class="form-text">選填，方便辨識的自訂名稱。</div>
+                            </div>
+                            <div class="mb-3">
                                 <label for="bankCode" class="form-label">銀行代碼</label>
                                 <input type="text" id="bankCode" th:field="*{bankCode}"
                                        class="form-control" placeholder="例：812" maxlength="10"/>

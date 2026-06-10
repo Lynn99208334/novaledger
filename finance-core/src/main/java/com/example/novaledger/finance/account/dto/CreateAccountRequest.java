@@ -16,6 +16,8 @@ public class CreateAccountRequest {
     @NotBlank
     private String name;
 
+    private String alias;
+
     @NotBlank
     private String currencyCode;
 

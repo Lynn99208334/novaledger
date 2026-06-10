@@ -157,6 +157,7 @@ CREATE TABLE user_accounts (
 
     -- 顯示資訊
                                NAME            VARCHAR(100)   NOT NULL,                    -- 顯示名稱
+                               ALIAS           VARCHAR(50),                                -- 帳戶別名（Optional）
 
     -- 金融資訊
                                CURRENCY_CODE   CHAR(3)        NOT NULL,                    -- 幣別
