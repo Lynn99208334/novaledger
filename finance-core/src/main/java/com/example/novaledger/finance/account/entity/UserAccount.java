@@ -65,19 +65,6 @@ public class UserAccount extends BaseTenantEntity {
     public String getAccountNumber() { return accountNumber; }
     public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
 
-    /**
-     * 回傳遮罩後的帳號，僅顯示後四碼。
-     * 例："01312345678" → "****5678"
-     * 將在 S20 統一搬移至 SensitiveDataMasker。
-     */
-    public String getMaskedAccountNumber() {
-        if (accountNumber == null || accountNumber.length() < 4) {
-            return accountNumber;
-        }
-        String last4 = accountNumber.substring(accountNumber.length() - 4);
-        return "****" + last4;
-    }
-
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 

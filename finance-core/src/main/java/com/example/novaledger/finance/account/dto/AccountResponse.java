@@ -1,5 +1,7 @@
 package com.example.novaledger.finance.account.dto;
 
+import com.example.novaledger.common.masking.MaskType;
+import com.example.novaledger.common.masking.Sensitive;
 import com.example.novaledger.finance.account.entity.UserAccount;
 import com.example.novaledger.finance.account.enums.AccountType;
 import lombok.Data;
@@ -21,6 +23,7 @@ public class AccountResponse {
     private BigDecimal initialBalance;
     private String bankCode;
     private Long branchId;
+    @Sensitive(MaskType.ACCOUNT_NUMBER)
     private String accountNumber;
     private String notes;
     private LocalDateTime createdAt;
@@ -39,7 +42,7 @@ public class AccountResponse {
         dto.setInitialBalance(account.getInitialBalance());
         dto.setBankCode(account.getBankCode());
         dto.setBranchId(account.getBranchId());
-        dto.setAccountNumber(account.getMaskedAccountNumber());
+        dto.setAccountNumber(account.getAccountNumber());
         dto.setNotes(account.getNotes());
         dto.setCreatedAt(account.getCreatedAt());
         dto.setUpdatedAt(account.getUpdatedAt());

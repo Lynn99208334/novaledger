@@ -30,7 +30,7 @@ public class AccountNumberConverter implements AttributeConverter<String, String
         if (encryptionService == null) {
             return plainText;
         }
-        return encryptionService.encrypt(plainText);
+        return encryptionService.encrypt(plainText);  // 明文 → 密文
     }
 
     @Override
@@ -38,6 +38,6 @@ public class AccountNumberConverter implements AttributeConverter<String, String
         if (encryptionService == null) {
             return cipherText;
         }
-        return encryptionService.decrypt(cipherText);
+        return encryptionService.decrypt(cipherText); // 密文 → 明文
     }
 }

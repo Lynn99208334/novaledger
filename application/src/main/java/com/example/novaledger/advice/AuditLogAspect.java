@@ -18,9 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Service 層寫入操作 Audit Log。
  * 攔截標注 @AuditLog 的 Service method，根據 AuditType 決定 before/after_value：
@@ -30,18 +27,15 @@ import java.util.Set;
  *   DELETE：before = AuditContext 取得（Service 負責 set），after = null
  *
  * AuditContext 由 Service 在 proceed 前 set，Aspect 在 finally 負責 clear。
+ *
+ * 敏感欄位遮罩：直接使用 objectMapper.writeValueAsString() 序列化，
+ * 讓 DTO 欄位上的 @Sensitive annotation 自動套用遮罩，不再手動處理 SENSITIVE_FIELDS。
  */
 @Aspect
 @Component
 public class AuditLogAspect {
 
     private static final Logger log = LoggerFactory.getLogger(AuditLogAspect.class);
-
-    private static final Set<String> SENSITIVE_FIELDS = Set.of(
-            "password", "accountNumber", "cardNumber", "token"
-    );
-
-    private static final Set<String> EMAIL_FIELDS = Set.of("email");
 
     private final AuditLogService auditLogService;
     private final ObjectMapper objectMapper;
@@ -98,7 +92,7 @@ public class AuditLogAspect {
     }
 
     private String resolveAfterValue(AuditType type, Object result, Throwable thrown) {
-        if (thrown != null) return null; // 執行失敗，after = null
+        if (thrown != null) return null;
         return switch (type) {
             case CREATE, UPDATE -> serializeResult(result);
             case DELETE -> null;
@@ -161,40 +155,17 @@ public class AuditLogAspect {
         return className;
     }
 
+    /**
+     * 直接用 objectMapper.writeValueAsString() 序列化，
+     * 讓 DTO 欄位上的 @Sensitive annotation 自動套用遮罩。
+     */
     private String serializeResult(Object result) {
         if (result == null) return null;
         try {
-            return maskAndSerialize(result);
+            return objectMapper.writeValueAsString(result);
         } catch (Exception e) {
             log.warn("action=AUDIT_SERIALIZE_RESULT result=FAILED reason={}", e.getMessage());
             return null;
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private String maskAndSerialize(Object obj) throws Exception {
-        Map<String, Object> map = objectMapper.convertValue(obj, Map.class);
-        for (String field : SENSITIVE_FIELDS) {
-            if (map.containsKey(field)) {
-                map.put(field, "***");
-            }
-        }
-        for (String field : EMAIL_FIELDS) {
-            if (map.containsKey(field) && map.get(field) instanceof String email) {
-                map.put(field, maskEmail(email));
-            }
-        }
-        return objectMapper.writeValueAsString(map);
-    }
-
-    private String maskEmail(String email) {
-        if (email == null || !email.contains("@")) return "***";
-        String[] parts = email.split("@", 2);
-        String local = parts[0];
-        String domain = parts[1];
-        if (local.length() <= 2) {
-            return local.charAt(0) + "***@" + domain;
-        }
-        return local.substring(0, 2) + "***@" + domain;
     }
 }
