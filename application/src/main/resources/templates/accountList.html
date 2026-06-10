@@ -52,21 +52,21 @@
                             <td class="text-center text-nowrap">
                                 <button type="button"
                                         class="btn btn-outline-primary btn-sm me-1"
+                                        data-action="edit-account"
                                         th:data-account-id="${account.id}"
                                         th:data-account-name="${account.name}"
                                         th:data-account-type="${account.accountType}"
                                         th:data-currency-code="${account.currencyCode}"
                                         th:data-bank-code="${account.bankCode}"
                                         th:data-account-number="${account.accountNumber}"
-                                        th:data-notes="${account.notes}"
-                                        onclick="openEditModal(this)">
+                                        th:data-notes="${account.notes}">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button type="button"
                                         class="btn btn-outline-danger btn-sm"
+                                        data-action="delete-account"
                                         th:data-account-id="${account.id}"
-                                        th:data-account-name="${account.name}"
-                                        onclick="confirmDelete(this)">
+                                        th:data-account-name="${account.name}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -117,7 +117,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-primary" onclick="submitEdit()">儲存</button>
+                        <button type="button" class="btn btn-primary" id="submitEditBtn">儲存</button>
                     </div>
                 </div>
             </div>
@@ -126,80 +126,7 @@
 </th:block>
 
 <th:block th:fragment="pagejs">
-    <script>
-        function openEditModal(btn) {
-            document.getElementById('editAccountId').value     = btn.dataset.accountId;
-            document.getElementById('editAccountType').value   = btn.dataset.accountType;
-            document.getElementById('editName').value          = btn.dataset.accountName;
-            document.getElementById('editCurrencyCode').value  = btn.dataset.currencyCode;
-            document.getElementById('editBankCode').value      = btn.dataset.bankCode || '';
-            document.getElementById('editAccountNumber').value = btn.dataset.accountNumber || '';
-            document.getElementById('editNotes').value         = btn.dataset.notes || '';
-            new bootstrap.Modal(document.getElementById('editAccountModal')).show();
-        }
-
-        function submitEdit() {
-            const accountId     = document.getElementById('editAccountId').value;
-            const accountType   = document.getElementById('editAccountType').value;
-            const name          = document.getElementById('editName').value.trim();
-            const currencyCode  = document.getElementById('editCurrencyCode').value;
-            const bankCode      = document.getElementById('editBankCode').value.trim();
-            const accountNumber = document.getElementById('editAccountNumber').value.trim();
-            const notes         = document.getElementById('editNotes').value.trim();
-
-            if (!name) {
-                Swal.fire({ icon: 'warning', title: '請填寫帳戶名稱' });
-                return;
-            }
-
-            fetch(`/api/accounts/${accountId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accountType, name, currencyCode, initialBalance: 0,
-                    bankCode: bankCode || null, accountNumber: accountNumber || null, notes: notes || null })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({ icon: 'success', title: '儲存成功', timer: 1200, showConfirmButton: false })
-                            .then(() => location.reload());
-                    } else {
-                        Swal.fire({ icon: 'error', title: '儲存失敗', text: data.message || '請稍後再試' });
-                    }
-                })
-                .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤', text: '請稍後再試' }));
-        }
-
-        function confirmDelete(btn) {
-            const accountId   = btn.dataset.accountId;
-            const accountName = btn.dataset.accountName;
-
-            Swal.fire({
-                title: '確定要刪除？',
-                html: `帳戶「<strong>${accountName}</strong>」刪除後無法復原。`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: '確定刪除',
-                cancelButtonText: '取消'
-            }).then(result => {
-                if (result.isConfirmed) {
-                    fetch(`/api/accounts/${accountId}`, { method: 'DELETE' })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire({ icon: 'success', title: '已刪除', timer: 1200, showConfirmButton: false })
-                                    .then(() => location.reload());
-                            } else {
-                                Swal.fire({ icon: 'error', title: '刪除失敗', text: data.message || '請稍後再試' });
-                            }
-                        })
-                        .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤', text: '請稍後再試' }));
-                }
-            });
-        }
-    </script>
+    <script th:src="@{/js/accounts.js}"></script>
 </th:block>
 
 </html>

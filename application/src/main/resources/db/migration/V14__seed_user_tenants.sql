@@ -91,4 +91,32 @@ WHERE u.USERNAME = 'son'
       AND ut.DELETED_AT IS NULL
 );
 
+-- ========================================
+-- sys_admin → admin-personal（MEMBER）
+-- ========================================
+INSERT INTO user_tenants (
+    USER_ID,
+    TENANT_ID,
+    ROLE_ID,
+    STATUS,
+    JOINED_AT
+)
+SELECT
+    u.ID,
+    t.ID,
+    r.ID,
+    'ACTIVE',
+    NOW()
+FROM users u
+         JOIN tenants t ON t.CODE = 'admin-personal'
+         JOIN roles r ON r.CODE = 'MEMBER'
+WHERE u.USERNAME = 'sys_admin'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM user_tenants ut
+    WHERE ut.USER_ID = u.ID
+      AND ut.TENANT_ID = t.ID
+      AND ut.DELETED_AT IS NULL
+);
+
 SET FOREIGN_KEY_CHECKS = 1;

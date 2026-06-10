@@ -13,6 +13,7 @@ import com.example.novaledger.finance.importjob.entity.UploadFile;
 import com.example.novaledger.finance.importjob.entity.UploadJob;
 import com.example.novaledger.finance.importjob.parser.ParseResult;
 import com.example.novaledger.finance.importjob.parser.ParserRegistry;
+import com.example.novaledger.finance.importjob.util.MimeTypeValidator;
 import com.example.novaledger.finance.importjob.repository.UploadFileRepository;
 import com.example.novaledger.finance.importjob.repository.UploadJobRepository;
 import com.example.novaledger.finance.importrecord.dto.ParsedRecordErrorResponse;
@@ -53,6 +54,7 @@ public class ImportService {
     private final ImportJobStatusService importJobStatusService;
     private final TransactionTemplate transactionTemplate;
     private final TransactionService transactionService;
+    private final MimeTypeValidator mimeTypeValidator;
 
     public ImportService(UploadJobRepository uploadJobRepository,
                          UploadFileRepository uploadFileRepository,
@@ -62,7 +64,8 @@ public class ImportService {
                          ParserRegistry parserRegistry,
                          ImportJobStatusService importJobStatusService,
                          TransactionTemplate transactionTemplate,
-                         TransactionService transactionService) {
+                         TransactionService transactionService,
+                         MimeTypeValidator mimeTypeValidator) {
         this.uploadJobRepository = uploadJobRepository;
         this.uploadFileRepository = uploadFileRepository;
         this.fileParserService = fileParserService;
@@ -72,6 +75,7 @@ public class ImportService {
         this.importJobStatusService = importJobStatusService;
         this.transactionTemplate = transactionTemplate;
         this.transactionService = transactionService;
+        this.mimeTypeValidator = mimeTypeValidator;
     }
 
     @Transactional
@@ -89,6 +93,9 @@ public class ImportService {
             log.error("action=CREATE_UPLOAD_JOB result=FAILED reason=FILE_READ_FAILED filename={}", file.getOriginalFilename(), e);
             throw new BusinessException(ErrorCode.IMPORT_FILE_READ_FAILED);
         }
+
+        // S10: Tika MIME type 驗證 - 防止改名攻擊
+        mimeTypeValidator.validate(fileBytes, file.getOriginalFilename());
 
         String parserKey = parserRegistry.resolveParserKey(bankCode, file.getOriginalFilename());
 

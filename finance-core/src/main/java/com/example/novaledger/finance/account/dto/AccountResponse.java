@@ -37,7 +37,7 @@ public class AccountResponse {
         dto.setInitialBalance(account.getInitialBalance());
         dto.setBankCode(account.getBankCode());
         dto.setBranchId(account.getBranchId());
-        dto.setAccountNumber(account.getAccountNumber());
+        dto.setAccountNumber(account.getMaskedAccountNumber());
         dto.setNotes(account.getNotes());
         dto.setCreatedAt(account.getCreatedAt());
         dto.setUpdatedAt(account.getUpdatedAt());

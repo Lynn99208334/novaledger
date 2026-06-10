@@ -59,7 +59,7 @@
                                placeholder="例：31.5" step="0.000001" min="0.000001" />
                     </div>
                     <div class="col-md-3">
-                        <button class="btn btn-primary w-100" onclick="submitUpdateRate()">
+                        <button class="btn btn-primary w-100" id="submitRateBtn">
                             <i class="fas fa-save me-1"></i> 更新
                         </button>
                     </div>
@@ -70,72 +70,7 @@
 </th:block>
 
 <th:block th:fragment="pagejs">
-    <script>
-        document.addEventListener('DOMContentLoaded', loadRates);
-
-        function loadRates() {
-            fetch('/api/exchange-rates')
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.success) {
-                        document.getElementById('ratesBody').innerHTML =
-                            '<tr><td colspan="5" class="text-center text-danger">載入失敗</td></tr>';
-                        return;
-                    }
-                    const rates = data.data;
-                    if (!rates || rates.length === 0) {
-                        document.getElementById('ratesBody').innerHTML =
-                            '<tr><td colspan="5" class="text-center text-muted">尚無匯率資料</td></tr>';
-                        return;
-                    }
-                    document.getElementById('ratesBody').innerHTML = rates.map(r => `
-                        <tr>
-                            <td><strong>${r.baseCurrency}</strong></td>
-                            <td class="text-end">${r.rate}</td>
-                            <td>${r.rateDate}</td>
-                            <td>${r.source || '-'}</td>
-                            <td class="text-center">
-                                <button class="btn btn-outline-primary btn-sm"
-                                        onclick="prefillForm('${r.baseCurrency}', ${r.rate})">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('');
-                })
-                .catch(() => {
-                    document.getElementById('ratesBody').innerHTML =
-                        '<tr><td colspan="5" class="text-center text-danger">網路錯誤</td></tr>';
-                });
-        }
-
-        function prefillForm(baseCurrency, rate) {
-            document.getElementById('baseCurrency').value = baseCurrency;
-            document.getElementById('rateValue').value = rate;
-            document.getElementById('rateValue').focus();
-        }
-
-        function submitUpdateRate() {
-            const baseCurrency = document.getElementById('baseCurrency').value;
-            const rate = parseFloat(document.getElementById('rateValue').value);
-            if (!rate || rate <= 0) { Swal.fire({ icon: 'warning', title: '請輸入有效匯率' }); return; }
-            fetch('/api/exchange-rates', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ baseCurrency, quoteCurrency: 'TWD', rate })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({ icon: 'success', title: '更新成功', timer: 1200, showConfirmButton: false })
-                        .then(() => loadRates());
-                } else {
-                    Swal.fire({ icon: 'error', title: '更新失敗', text: data.error || '請稍後再試' });
-                }
-            })
-            .catch(() => Swal.fire({ icon: 'error', title: '網路錯誤', text: '請稍後再試' }));
-        }
-    </script>
+    <script th:src="@{/js/exchange-rates.js}"></script>
 </th:block>
 
 </html>

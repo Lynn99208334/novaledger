@@ -72,6 +72,7 @@ public enum ErrorCode {
     FILE_TOO_LARGE("IMPORT_002", "File size exceeds 10MB limit", 400),
     FILE_INVALID("IMPORT_003", "Invalid file name", 400),
     FILE_TYPE_NOT_SUPPORTED("IMPORT_004", "Only .xlsx, .xls or .csv files are supported", 400),
+    FILE_TYPE_MISMATCH("IMPORT_009", "File content does not match the declared file extension", 400),
     IMPORT_PARSER_NOT_FOUND("IMPORT_005", "Parser not found for the given format", 400),
     IMPORT_FILE_READ_FAILED("IMPORT_006", "Failed to read uploaded file", 500),
     IMPORT_JOB_NOT_FOUND("IMPORT_007", "Import job not found", 404),

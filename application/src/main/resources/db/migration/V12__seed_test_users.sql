@@ -94,6 +94,15 @@ INSERT INTO tenants (
     (SELECT ID FROM users WHERE USERNAME = 'son'),
     'ACTIVE',
     NOW(), NOW(), NULL
+),
+-- Admin 管理帳本
+(
+    'admin-personal',
+    'Admin 的管理帳本',
+    'PERSONAL', 'FREE',
+    (SELECT ID FROM users WHERE USERNAME = 'sys_admin'),
+    'ACTIVE',
+    NOW(), NOW(), NULL
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

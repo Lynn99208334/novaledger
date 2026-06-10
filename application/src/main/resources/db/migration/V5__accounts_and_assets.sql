@@ -153,7 +153,7 @@ CREATE TABLE user_accounts (
     -- 銀行資訊（BANK 類型必填）
                                BANK_CODE       VARCHAR(10),                                -- 所屬銀行代碼（Optional）
                                BRANCH_ID       BIGINT,                                     -- 所屬分行 ID（Optional）
-                               ACCOUNT_NUMBER  VARCHAR(50),                                -- 帳戶號碼，部分遮罩（Optional）
+                               ACCOUNT_NUMBER  VARCHAR(500),                               -- 帳戶號碼（AES-256-GCM 加密後 Base64，Optional）
 
     -- 顯示資訊
                                NAME            VARCHAR(100)   NOT NULL,                    -- 顯示名稱

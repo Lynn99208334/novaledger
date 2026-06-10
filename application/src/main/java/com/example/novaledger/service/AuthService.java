@@ -175,7 +175,9 @@ public class AuthService {
 
         session.setAttribute(authContext.SESSION_CURRENT_TENANT_ID, tenantId);
 
-        List<String> roles = List.of("ROLE_USER");
+        List<String> roles = Boolean.TRUE.equals(user.getSystemAdmin())
+                ? List.of("ROLE_ADMIN")
+                : List.of("ROLE_USER");
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), tenantId, roles);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
