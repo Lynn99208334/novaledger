@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AesEncryptionServiceTest {
 
     // 32 bytes alphanumeric key（測試專用，與任何環境的真實 key 不同）
-    private static final String TEST_KEY = "UnitTestOnlyKey00XxYyZzAaBbCcDdEe";
+    private static final String TEST_KEY = "UnitTestOnlyKey00XxYyZzAaBbCcDd1";
 
     private AesEncryptionService service;
 
