@@ -48,6 +48,7 @@ public class AccountService {
         account.setUserId(userId);
         account.setAccountType(request.getAccountType());
         account.setName(request.getName());
+        account.setAlias(request.getAlias());
         account.setCurrencyCode(request.getCurrencyCode());
         account.setInitialBalance(request.getInitialBalance());
         account.setCurrentBalance(request.getInitialBalance());
@@ -95,6 +96,7 @@ public class AccountService {
         } catch (Exception ignored) {}
 
         account.setName(request.getName());
+        account.setAlias(request.getAlias());
         account.setCurrencyCode(request.getCurrencyCode());
         account.setBankCode(request.getBankCode());
         account.setBranchId(request.getBranchId());

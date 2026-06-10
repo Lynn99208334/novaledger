@@ -15,6 +15,7 @@ public class AccountResponse {
     private Long userId;
     private AccountType accountType;
     private String name;
+    private String alias;
     private String currencyCode;
     private BigDecimal currentBalance;
     private BigDecimal initialBalance;
@@ -32,6 +33,7 @@ public class AccountResponse {
         dto.setUserId(account.getUserId());
         dto.setAccountType(account.getAccountType());
         dto.setName(account.getName());
+        dto.setAlias(account.getAlias());
         dto.setCurrencyCode(account.getCurrencyCode());
         dto.setCurrentBalance(account.getCurrentBalance());
         dto.setInitialBalance(account.getInitialBalance());

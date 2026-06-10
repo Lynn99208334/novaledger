@@ -12,6 +12,7 @@ function openEditModal(btn) {
     document.getElementById('editAccountId').value     = btn.dataset.accountId;
     document.getElementById('editAccountType').value   = btn.dataset.accountType;
     document.getElementById('editName').value          = btn.dataset.accountName;
+    document.getElementById('editAlias').value         = btn.dataset.accountAlias || '';
     document.getElementById('editCurrencyCode').value  = btn.dataset.currencyCode;
     document.getElementById('editBankCode').value      = btn.dataset.bankCode || '';
     document.getElementById('editAccountNumber').value = btn.dataset.accountNumber || '';
@@ -23,6 +24,7 @@ function submitEdit() {
     const accountId     = document.getElementById('editAccountId').value;
     const accountType   = document.getElementById('editAccountType').value;
     const name          = document.getElementById('editName').value.trim();
+    const alias         = document.getElementById('editAlias').value.trim();
     const currencyCode  = document.getElementById('editCurrencyCode').value;
     const bankCode      = document.getElementById('editBankCode').value.trim();
     const accountNumber = document.getElementById('editAccountNumber').value.trim();
@@ -36,8 +38,16 @@ function submitEdit() {
     fetch(`/api/accounts/${accountId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountType, name, currencyCode, initialBalance: 0,
-            bankCode: bankCode || null, accountNumber: accountNumber || null, notes: notes || null })
+        body: JSON.stringify({
+            accountType,
+            name,
+            alias: alias || null,
+            currencyCode,
+            initialBalance: 0,
+            bankCode: bankCode || null,
+            accountNumber: accountNumber || null,
+            notes: notes || null
+        })
     })
     .then(res => res.json())
     .then(data => {

@@ -32,6 +32,9 @@ public class UserAccount extends BaseTenantEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(length = 50)
+    private String alias;
+
     @Column(name = "currency_code", nullable = false, length = 3)
     private String currencyCode;
 
@@ -77,6 +80,9 @@ public class UserAccount extends BaseTenantEntity {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public String getAlias() { return alias; }
+    public void setAlias(String alias) { this.alias = alias; }
 
     public String getCurrencyCode() { return currencyCode; }
     public void setCurrencyCode(String currencyCode) { this.currencyCode = currencyCode; }
