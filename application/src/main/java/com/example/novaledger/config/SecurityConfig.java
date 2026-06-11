@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -29,7 +30,6 @@ public class SecurityConfig {
     private static final String[] PUBLIC_PATHS = {
             "/health",
             "/info",
-            "/page/dashboard",
             "/page/login",
             "/page/register",
             "/api/auth/**",
@@ -47,7 +47,8 @@ public class SecurityConfig {
             "/page/verify-email-error",
             "/page/forgot-password",
             "/page/reset-password",
-            "/page/error/**"
+            "/page/error/**",
+            "/error"
     };
 
     @Bean
@@ -93,7 +94,11 @@ public class SecurityConfig {
                                 response.setContentType("application/json");
                                 response.getWriter().write("{\"success\":false,\"error\":\"Access Denied\"}");
                             } else {
-                                response.sendRedirect("/page/error/403");
+                                // ⚑ DA2 擴充點：若未來有更多 role，可在此依 role 決定 redirect 目標
+                                var auth = SecurityContextHolder.getContext().getAuthentication();
+                                boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                                response.sendRedirect(isAdmin ? "/page/admin/dashboard" : "/page/dashboard");
                             }
                         })
                 )

@@ -54,7 +54,17 @@ document.addEventListener("DOMContentLoaded", function () {
             localStorage.setItem("refreshToken", data.refreshToken);
             localStorage.setItem("username", data.username);
 
-            window.location.href = "/page/dashboard";
+            // ⚑ DA2 擴充點：role-based redirect
+            // 從 JWT payload 解出 roles，依角色決定 redirect 目標
+            // DA2 完成後若有更多角色，在此新增對應的 redirect 路徑
+            const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+            const roles = payload.roles || [];
+
+            if (roles.includes("ROLE_ADMIN")) {
+                window.location.href = "/page/admin/dashboard";
+            } else {
+                window.location.href = "/page/dashboard";
+            }
 
         } catch (error) {
             console.error("Login failed", error);

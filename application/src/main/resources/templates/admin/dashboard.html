@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout('Admin Dashboard', ~{::content}, ~{::pagejs})}">
+
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">Admin Dashboard</h1>
+        </div>
+        <p class="text-muted">系統管理後台（完整內容於 S14 補齊）</p>
+
+        <div class="row mt-4">
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="fas fa-users fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">用戶管理</div>
+                                <a th:href="@{/page/admin/users}" class="stretched-link text-decoration-none">查看所有用戶</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="fas fa-university fa-2x text-success"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">銀行管理</div>
+                                <a th:href="@{/page/admin/banks}" class="stretched-link text-decoration-none">查看所有銀行</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                <i class="fas fa-exchange-alt fa-2x text-warning"></i>
+                            </div>
+                            <div>
+                                <div class="text-muted small">匯率管理</div>
+                                <a th:href="@{/page/exchange-rates}" class="stretched-link text-decoration-none">查看匯率設定</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="pagejs"></th:block>
+
+</html>

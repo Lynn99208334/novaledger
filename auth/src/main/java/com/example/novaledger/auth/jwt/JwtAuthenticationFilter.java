@@ -5,9 +5,9 @@ import com.example.novaledger.common.security.AuthenticatedUserPrincipal;
 import com.example.novaledger.common.tenant.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,14 +31,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisBlacklistService redisBlacklistService;
 
+    public static final String ACCESS_TOKEN_COOKIE = "access_token";
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
         try {
+            // ⚑ DA2 擴充點：token 解出 roles 後，未來可改為從動態 RBAC 查詢 permission set
             String token = resolveToken(request);
-
             if (token != null) {
                 if (!jwtTokenProvider.validateToken(token)) {
                     log.warn("action=JWT_VALIDATE result=FAILED reason=INVALID_TOKEN uri={}",
@@ -47,15 +50,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     if (redisBlacklistService.isBlacklisted(jti)) {
                         log.warn("Blacklisted JWT detected, jti={}", jti);
-                        writeUnauthorizedResponse(response, "JWT token has been logged out");
+                        // Cookie 來源的 blacklisted token：清除 cookie 並導回登入頁
+                        if (isFromCookie(request)) {
+                            clearAccessTokenCookie(response);
+                            response.sendRedirect("/page/login");
+                        } else {
+                            writeUnauthorizedResponse(response, "JWT token has been logged out");
+                        }
                         return;
                     }
 
                     Long userId = jwtTokenProvider.getUserId(token);
+                    String username = jwtTokenProvider.getUsername(token);
                     Long tenantId = jwtTokenProvider.getTenantId(token);
                     List<String> roles = jwtTokenProvider.getRoles(token);
 
-                    AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, tenantId, roles, jti);
+                    AuthenticatedUserPrincipal principal =
+                            new AuthenticatedUserPrincipal(userId, username, tenantId, roles, jti);
 
                     List<GrantedAuthority> authorities = roles.stream()
                             .map(SimpleGrantedAuthority::new)
@@ -64,12 +75,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(principal, null, authorities);
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    // 새 SecurityContext를 만들어서 명시적으로 set
+                    var context = SecurityContextHolder.createEmptyContext();
+                    context.setAuthentication(authentication);
+                    SecurityContextHolder.setContext(context);
+                    log.debug("action=JWT_AUTH_SET userId={} roles={} uri={}",
+                            userId, roles, request.getRequestURI());
                     TenantContext.setTenantId(tenantId);
                 }
-            } else {
-                // Bearer token 不存在，嘗試從 session 還原認證（formLogin 流程）
-                restoreAuthFromSession(request);
             }
 
             filterChain.doFilter(request, response);
@@ -78,57 +91,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void restoreAuthFromSession(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null) return;
-
-        Object userIdObj = session.getAttribute("userId");
-        Object tenantIdObj = session.getAttribute("tenantId");
-        Object rolesObj = session.getAttribute("roles");
-
-        if (userIdObj == null) return;
-
-        Long userId = (Long) userIdObj;
-        Long tenantId = tenantIdObj != null ? (Long) tenantIdObj : null;
-
-        @SuppressWarnings("unchecked")
-        List<String> roles = (rolesObj instanceof List<?> list)
-                ? list.stream().map(Object::toString).collect(Collectors.toList())
-                : List.of("ROLE_MEMBER");
-
-        AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, tenantId, roles, null);
-
-        List<GrantedAuthority> authorities = roles.stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, authorities);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        TenantContext.setTenantId(tenantId);
-
-        log.debug("action=SESSION_AUTH_RESTORE userId={} tenantId={}", userId, tenantId);
-    }
-
+    /**
+     * 優先從 Authorization header 讀取，其次從 HttpOnly cookie 讀取
+     * Header 優先：保留給 Swagger / Postman / 未來 Vue 前端使用
+     * Cookie：給 Thymeleaf SSR 頁面使用，讓 sec:authorize 能正確判斷
+     */
     private String resolveToken(HttpServletRequest request) {
+        // 1. Authorization header（API client / Swagger / Postman）
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);
         }
+
+        // 2. HttpOnly cookie（Thymeleaf SSR 頁面）
+        if (request.getCookies() != null) {
+            return Arrays.stream(request.getCookies())
+                    .filter(c -> ACCESS_TOKEN_COOKIE.equals(c.getName()))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+
         return null;
+    }
+
+    private boolean isFromCookie(HttpServletRequest request) {
+        String bearer = request.getHeader("Authorization");
+        return bearer == null || !bearer.startsWith("Bearer ");
+    }
+
+    public static void clearAccessTokenCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(ACCESS_TOKEN_COOKIE, "");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // dev 環境用 false，prod 改 true
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 
     private void writeUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-
-        String body = String.format(
+        response.getWriter().write(String.format(
                 "{\"success\":false,\"code\":\"JWT_BLACKLISTED\",\"message\":\"%s\"}",
                 message
-        );
-
-        response.getWriter().write(body);
+        ));
     }
 }

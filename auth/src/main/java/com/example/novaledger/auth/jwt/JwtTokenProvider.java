@@ -38,10 +38,11 @@ public class JwtTokenProvider {
         );
     }
 
-    public String generateAccessToken(Long userId, Long tenantId, List<String> roles) {
+    public String generateAccessToken(Long userId, String username, Long tenantId, List<String> roles) {
         return Jwts.builder()
                 .setId(UUID.randomUUID().toString())
                 .setSubject(String.valueOf(userId))
+                .claim("username", username)
                 .claim("tenantId", tenantId)
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
@@ -83,6 +84,10 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public String getUsername(String token) {
+        return getClaims(token).get("username", String.class);
     }
 
     public Long getUserId(String token) {
