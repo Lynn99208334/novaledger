@@ -57,6 +57,11 @@ public class PageController {
         return "import";
     }
 
+    @GetMapping("/admin/dashboard")
+    public String adminDashboard() {
+        return "admin/dashboard";
+    }
+
     @GetMapping("/admin/banks")
     public String adminBanksPage() {
         return "admin/bankList";

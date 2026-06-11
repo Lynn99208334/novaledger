@@ -1,6 +1,7 @@
 package com.example.novaledger.controller;
 
 import com.example.novaledger.auth.dto.RegisterRequest;
+import com.example.novaledger.auth.jwt.JwtAuthenticationFilter;
 import com.example.novaledger.auth.jwt.JwtTokenProvider;
 import com.example.novaledger.auth.service.RedisBlacklistService;
 import com.example.novaledger.common.response.ApiErrorResponse;
@@ -16,7 +17,9 @@ import com.example.novaledger.service.PasswordResetService;
 import io.jsonwebtoken.JwtException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,21 +52,44 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
                                               HttpSession session,
-                                              HttpServletRequest httpRequest) {
+                                              HttpServletRequest httpRequest,
+                                              HttpServletResponse httpResponse) {
         String ip = getClientIp(httpRequest);
-        AuthResponse response = authService.login(request, session, ip);
-        return ResponseEntity.ok(response);
+        AuthResponse authResponse = authService.login(request, session, ip);
+
+        // 寫入 HttpOnly cookie，讓 Thymeleaf SSR 頁面的 JwtAuthenticationFilter 可以讀取
+        // SameSite=Strict 防 CSRF，HttpOnly 防 XSS
+        // ⚑ 未來換 Vue 時：Vue 走 Authorization header，cookie 可保留或移除，兩者互不影響
+        Cookie accessTokenCookie = new Cookie(
+                JwtAuthenticationFilter.ACCESS_TOKEN_COOKIE,
+                authResponse.getAccessToken()
+        );
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(false); // dev 環境 false，prod 透過 application-prod.properties 覆蓋
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(60 * 60 * 24); // 24 小時，與 JWT 有效期對齊
+        httpResponse.addCookie(accessTokenCookie);
+
+        return ResponseEntity.ok(authResponse);
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "登出（JWT 加入黑名單）")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
-        String token = resolveToken(request);
+    @Operation(summary = "登出（JWT 加入黑名單 + 清除 cookie）")
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request,
+                                                     HttpServletResponse response) {
+        // 優先從 cookie 取 token，其次從 header
+        String token = resolveTokenFromCookie(request);
+        if (token == null) {
+            token = resolveTokenFromHeader(request);
+        }
+
+        // 無論 token 是否存在，都清除 cookie
+        JwtAuthenticationFilter.clearAccessTokenCookie(response);
 
         if (token == null) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.fail(new ApiErrorResponse(
-                            null, "MISSING_TOKEN", 400, "Authorization header is missing or invalid", null)));
+                            null, "MISSING_TOKEN", 400, "Token is missing", null)));
         }
 
         try {
@@ -119,10 +145,20 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok());
     }
 
-    private String resolveToken(HttpServletRequest request) {
+    private String resolveTokenFromHeader(HttpServletRequest request) {
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);
+        }
+        return null;
+    }
+
+    private String resolveTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if (JwtAuthenticationFilter.ACCESS_TOKEN_COOKIE.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
         }
         return null;
     }

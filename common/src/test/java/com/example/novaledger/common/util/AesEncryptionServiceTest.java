@@ -77,7 +77,11 @@ class AesEncryptionServiceTest {
         // GCM AuthTag 驗證：密文被竄改應拋出例外
         String original = "013-12345678-9";
         String encrypted = service.encrypt(original);
-        String tampered = encrypted.substring(0, encrypted.length() - 1) + "X";
+
+        // 將 Base64 decode 後直接竄改 byte，確保竄改到 AuthTag 區域
+        byte[] combined = java.util.Base64.getDecoder().decode(encrypted);
+        combined[combined.length - 1] ^= 0xFF; // flip last byte (AuthTag 區域)
+        String tampered = java.util.Base64.getEncoder().encodeToString(combined);
 
         assertThatThrownBy(() -> service.decrypt(tampered))
                 .isInstanceOf(RuntimeException.class)

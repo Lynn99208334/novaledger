@@ -139,7 +139,6 @@ public class AuthService {
     public AuthResponse login(LoginRequest request, HttpSession session, String ip) {
         log.info("action=LOGIN email={}", request.getEmail());
 
-        // 檢查是否已被鎖定
         if (loginRateLimiter.isBlocked(ip)) {
             log.warn("action=LOGIN result=BLOCKED ip={}", ip);
             throw new BusinessException(ErrorCode.LOGIN_BLOCKED);
@@ -164,7 +163,6 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
-        // 登入成功，清除失敗計數
         loginRateLimiter.clearFailures(ip);
 
         Long tenantId = userTenantRepository.findByUserId(user.getId())
@@ -173,12 +171,17 @@ public class AuthService {
                 .map(UserTenant::getTenantId)
                 .orElse(null);
 
+        // tenantId 存入 session 供 TenantInterceptor 讀取（key 必須是 "tenantId"）
         session.setAttribute(authContext.SESSION_CURRENT_TENANT_ID, tenantId);
 
         List<String> roles = Boolean.TRUE.equals(user.getSystemAdmin())
                 ? List.of("ROLE_ADMIN")
                 : List.of("ROLE_USER");
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), tenantId, roles);
+
+        // SecurityContext 由 JwtAuthenticationFilter 從 cookie 讀取 JWT 後每個 request 重建
+        // 不再手動存入 session，避免 devtools classloader 序列化問題
+        // ⚑ DA2 擴充點：roles 目前從 user.systemAdmin 判斷，DA2 完成後可改為從動態 RBAC 查詢
+        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getUsername(), tenantId, roles);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
         log.info("action=LOGIN result=SUCCESS userId={} tenantId={}", user.getId(), tenantId);

@@ -33,7 +33,13 @@ public class JpaUserDetailsService implements UserDetailsService {
             if (!skipEmailVerify && !Boolean.TRUE.equals(user.getEmailVerified())) {
                 throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
             }
-            return new SecurityUser(user);
+            return new SecurityUser(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getPassword(),
+                    Boolean.TRUE.equals(user.getEnabled()),
+                    Boolean.TRUE.equals(user.getSystemAdmin())
+            );
         } catch (Exception e) {
             throw e;
         }
