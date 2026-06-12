@@ -31,6 +31,8 @@ function resetDashboardView() {
     document.getElementById('monthlyIncome').textContent = '—';
     document.getElementById('monthlyExpense').textContent = '—';
 
+    document.getElementById('accountCardsRow').innerHTML = '';
+
     document.getElementById('noBreakdownMsg').style.display = 'none';
     document.getElementById('noBreakdownTable').style.display = 'none';
     document.getElementById('categoryPieChart').style.display = '';
@@ -148,6 +150,79 @@ async function switchTenant(tenantId) {
     }
 }
 
+/**
+ * 載入「我的帳戶」逐帳戶卡片。
+ *
+ * 資料來源：
+ *   - GET /api/accounts：帳戶清單（alias、遮罩後帳號、currentBalance、bankCode、currencyCode）
+ *   - GET /api/banks：銀行清單，前端組成 bankCode -> 銀行名稱 對照表
+ *
+ * 卡片顯示：別名（無則用帳戶名稱）、銀行名稱 + 遮罩帳號、目前餘額（不遮罩，金額正常顯示）。
+ */
+async function loadAccountCards() {
+    const container = document.getElementById('accountCardsRow');
+    if (!container) return;
+    container.innerHTML = '';
+
+    try {
+        const [accountsRes, banksRes] = await Promise.all([
+            apiFetch('/api/accounts'),
+            apiFetch('/api/banks')
+        ]);
+
+        if (!accountsRes) return;
+
+        const accountsJson = await accountsRes.json();
+        if (!accountsRes.ok || accountsJson.success === false) {
+            console.error('GET /api/accounts failed', accountsJson);
+            return;
+        }
+        const accounts = normalizeApiData(accountsJson) || [];
+
+        let bankNameMap = {};
+        if (banksRes && banksRes.ok) {
+            const banksJson = await banksRes.json();
+            const banks = normalizeApiData(banksJson) || [];
+            bankNameMap = banks.reduce((map, bank) => {
+                map[bank.bankCode] = bank.shortName || bank.name;
+                return map;
+            }, {});
+        }
+
+        accounts.forEach(account => {
+            const displayName = account.alias || account.name;
+            const bankName = account.bankCode
+                ? (bankNameMap[account.bankCode] || account.bankCode)
+                : null;
+
+            const subtitleParts = [];
+            if (bankName) subtitleParts.push(bankName);
+            if (account.accountNumber) subtitleParts.push(account.accountNumber);
+            const subtitle = subtitleParts.join(' · ');
+
+            const card = document.createElement('div');
+            card.className = 'col-xl-3 col-md-6';
+            card.innerHTML = `
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between mb-2">
+                            <div>
+                                <div class="fw-semibold">${displayName}</div>
+                                <div class="text-muted small">${subtitle}</div>
+                            </div>
+                            <i class="fas fa-university text-muted opacity-50"></i>
+                        </div>
+                        <div class="h5 mb-0 fw-bold">${account.currencyCode} ${fmt(account.currentBalance)}</div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (e) {
+        console.error('loadAccountCards error', e);
+    }
+}
+
 async function loadDashboard() {
     resetDashboardView();
     try {
@@ -175,6 +250,8 @@ async function loadDashboard() {
             Object.entries(byCurrency).map(([c, a]) => `${c} ${fmt(a)}`).join('　');
         document.getElementById('monthlyIncome').textContent = 'TWD ' + fmt(data.monthlyIncome);
         document.getElementById('monthlyExpense').textContent = 'TWD ' + fmt(data.monthlyExpense);
+
+        await loadAccountCards();
 
         if (!chartAvailable) return;
 
