@@ -216,7 +216,7 @@ CREATE TABLE bank_file_formats (
     -- 格式資訊
                                    FILE_TYPE     VARCHAR(10)  NOT NULL,                    -- EXCEL / CSV
                                    RELEASED_DATE DATE         NOT NULL,                    -- 銀行格式釋出日期
-                                   PARSER_KEY    VARCHAR(50)  NOT NULL,                    -- 對應 parser 實作，如 SINOPAC_EXCEL
+                                   PARSER_KEY    VARCHAR(100) NOT NULL,                    -- 對應 parser 實作，格式：{BANK_CODE}_{FILE_TYPE}_{YYYYMMDD}，如 807_CSV_20250401
 
     -- 狀態
                                    IS_ACTIVE     TINYINT      NOT NULL DEFAULT 1,          -- 是否啟用
@@ -226,6 +226,7 @@ CREATE TABLE bank_file_formats (
                                    UPDATED_AT    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
                                    PRIMARY KEY (ID),
+                                   UNIQUE KEY uk_parser_key (PARSER_KEY),
                                    INDEX idx_bank_file_formats_lookup (BANK_CODE, FILE_TYPE, RELEASED_DATE),
 
                                    CONSTRAINT fk_bff_bank
@@ -236,7 +237,10 @@ CREATE TABLE bank_file_formats (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO bank_file_formats (BANK_CODE, FILE_TYPE, RELEASED_DATE, PARSER_KEY, IS_ACTIVE, CREATED_AT, UPDATED_AT) VALUES
-    ('807', 'CSV', '2024-01-01', 'SINOPAC_CSV', 1, NOW(), NOW());
+    ('806', 'CSV', '2026-06-15', '806_CSV_20260615', 1, NOW(), NOW()),
+    ('807', 'CSV', '2025-04-01', '807_CSV_20250401', 1, NOW(), NOW()),
+    ('808', 'CSV', '2025-04-01', '808_CSV_20250401', 1, NOW(), NOW()),
+    ('822', 'CSV', '2025-04-01', '822_CSV_20250401', 1, NOW(), NOW());
 
 
 

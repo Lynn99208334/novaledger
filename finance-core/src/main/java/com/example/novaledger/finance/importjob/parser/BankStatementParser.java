@@ -1,6 +1,7 @@
 package com.example.novaledger.finance.importjob.parser;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BankStatementParser {
 
@@ -32,4 +33,13 @@ public interface BankStatementParser {
      * @param rows 已讀取的所有列（含 header）
      */
     List<ParseResult> parse(List<List<String>> rows);
+
+    /**
+     * 從檔案內容中擷取帳號
+     * 用於比對使用者選定的帳戶，不一致時擋下匯入
+     * 無法擷取時回傳 Optional.empty()，視為無法驗證、放行
+     */
+    default Optional<String> extractAccountNumber(List<List<String>> rows) {
+        return Optional.empty();
+    }
 }

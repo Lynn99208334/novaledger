@@ -4,7 +4,8 @@ let pollTimer = null;
 const SUPPORTED_BANKS = [
     { bankCode: '822', name: '中國信託銀行', hint: '支援 CSV 格式' },
     { bankCode: '808', name: '玉山銀行',     hint: '支援 CSV 格式（開發中）' },
-    { bankCode: '807', name: '永豐銀行',     hint: '支援 CSV 格式（開發中）' }
+    { bankCode: '807', name: '永豐銀行',     hint: '支援 CSV 格式（開發中）' },
+    { bankCode: '806', name: '元大銀行',     hint: '支援 CSV 格式（開發中）' }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
