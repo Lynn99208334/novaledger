@@ -16,6 +16,7 @@ public class ParseResult {
     private BigDecimal balance;      // 存摺有，信用卡可為 null
     private int rowNumber;
     private List<String> rawData;
+    private String dedupKey;          // SHA-256，由 Service 層計算後回填
 
 
     // 靜態工廠方法
@@ -74,5 +75,13 @@ public class ParseResult {
 
     public List<String> getRawData() {
         return rawData;
+    }
+
+    public String getDedupKey() {
+        return dedupKey;
+    }
+
+    public void setDedupKey(String dedupKey) {
+        this.dedupKey = dedupKey;
     }
 }

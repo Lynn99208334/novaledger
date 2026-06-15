@@ -35,7 +35,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
 import java.util.List;
 
 @Service
@@ -136,7 +140,7 @@ public class ImportService {
 
         if (pendingRecords.isEmpty()) {
             log.info("action=CONFIRM_IMPORT result=SKIPPED reason=NO_PENDING_RECORDS jobId={}", jobId);
-            return new ImportSummary(jobId, 0);
+            return new ImportSummary(jobId, 0, 0);
         }
 
         int importedCount = 0;
@@ -166,8 +170,9 @@ public class ImportService {
             importedCount++;
         }
 
-        log.info("action=CONFIRM_IMPORT result=SUCCESS jobId={} importedCount={}", jobId, importedCount);
-        return new ImportSummary(jobId, importedCount);
+        int skippedCount = job.getDupCount() != null ? job.getDupCount() : 0;
+        log.info("action=CONFIRM_IMPORT result=SUCCESS jobId={} importedCount={} skippedCount={}", jobId, importedCount, skippedCount);
+        return new ImportSummary(jobId, importedCount, skippedCount);
     }
 
     private void validateFile(MultipartFile file) {
@@ -215,6 +220,7 @@ public class ImportService {
 
                 int successCount = 0;
                 int failCount = 0;
+                int dupCount = 0;
 
                 for (ParseResult result : results) {
                     ParsedRecord record = new ParsedRecord();
@@ -225,14 +231,32 @@ public class ImportService {
                     record.setRawData(buildRawDataJson(result));
 
                     if (result.isSuccess()) {
-                        record.setParseStatus(ParseStatus.SUCCESS.name());
-                        record.setImportStatus(ImportStatus.PENDING);
-                        record.setTransactionDate(result.getTransactionDate());
-                        record.setDescription(result.getDescription());
-                        record.setAmount(result.getAmount());
-                        record.setBalance(result.getBalance());
-                        record.setCurrencyCode("TWD");
-                        successCount++;
+                        String dedupKey = calculateDedupKey(
+                                job.getAccountId(), result);
+
+                        if (parsedRecordRepository.existsByDedupKey(dedupKey)) {
+                            record.setParseStatus(ParseStatus.SUCCESS.name());
+                            record.setImportStatus(ImportStatus.DUPLICATE);
+                            record.setTransactionDate(result.getTransactionDate());
+                            record.setDescription(result.getDescription());
+                            record.setAmount(result.getAmount());
+                            record.setBalance(result.getBalance());
+                            record.setCurrencyCode("TWD");
+                            // dedupKey 不寫入，避免違反 UNIQUE constraint
+                            dupCount++;
+                            log.debug("action=PARSE_RECORD result=DUPLICATE jobId={} row={} dedupKey={}",
+                                    jobId, result.getRowNumber(), dedupKey);
+                        } else {
+                            record.setParseStatus(ParseStatus.SUCCESS.name());
+                            record.setImportStatus(ImportStatus.PENDING);
+                            record.setTransactionDate(result.getTransactionDate());
+                            record.setDescription(result.getDescription());
+                            record.setAmount(result.getAmount());
+                            record.setBalance(result.getBalance());
+                            record.setCurrencyCode("TWD");
+                            record.setDedupKey(dedupKey);
+                            successCount++;
+                        }
                     } else {
                         record.setParseStatus(ParseStatus.FAILED.name());
                         record.setImportStatus(ImportStatus.FAILED);
@@ -256,16 +280,34 @@ public class ImportService {
                 job.setTotalCount(results.size());
                 job.setSuccessCount(successCount);
                 job.setFailCount(failCount);
+                job.setDupCount(dupCount);
                 job.setFinishedAt(LocalDateTime.now());
                 uploadJobRepository.save(job);
 
-                log.info("action=PROCESS_IMPORT_JOB result=SUCCESS jobId={} total={} success={} fail={}",
-                        jobId, results.size(), successCount, failCount);
+                log.info("action=PROCESS_IMPORT_JOB result=SUCCESS jobId={} total={} success={} fail={} dup={}",
+                        jobId, results.size(), successCount, failCount, dupCount);
             });
 
         } catch (Exception e) {
             log.error("action=PROCESS_IMPORT_JOB result=FAILED jobId={} reason={}", jobId, e.getMessage(), e);
             importJobStatusService.markJobFailed(jobId, tenantId);
+        }
+    }
+
+    private String calculateDedupKey(Long accountId, ParseResult result) {
+        // SHA-256(accountId + date + amount + balance)
+        // balance 為 null 時用空字串，確保信用卡類型仍可去重
+        String raw = accountId + "|"
+                + result.getTransactionDate() + "|"
+                + result.getAmount().toPlainString() + "|"
+                + (result.getBalance() != null ? result.getBalance().toPlainString() : "");
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(raw.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256 是 JDK 標準，不可能不存在，但必須 catch checked exception
+            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 

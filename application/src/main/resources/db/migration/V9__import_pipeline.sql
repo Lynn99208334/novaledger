@@ -22,6 +22,7 @@ CREATE TABLE upload_jobs (
                              TOTAL_COUNT   INT,
                              SUCCESS_COUNT INT,
                              FAIL_COUNT    INT,
+                             DUP_COUNT     INT,
 
                              CREATED_AT    DATETIME    NOT NULL,
                              UPDATED_AT    DATETIME,
@@ -87,10 +88,12 @@ CREATE TABLE parsed_records (
                                 AMOUNT           DECIMAL(15,2),
                                 BALANCE          DECIMAL(15,2),
                                 CURRENCY_CODE    VARCHAR(10)   DEFAULT 'TWD',
+                                DEDUP_KEY        VARCHAR(64)   NULL COMMENT 'SHA-256(accountId+date+amount+balance)，用於去重',
 
                                 CREATED_AT     DATETIME    NOT NULL,
                                 UPDATED_AT     DATETIME,
 
+                                UNIQUE KEY uk_parsed_records_dedup (DEDUP_KEY),
                                 INDEX idx_parsed_records_job_status (TENANT_ID, UPLOAD_JOB_ID, PARSE_STATUS),
                                 INDEX idx_parsed_records_file       (UPLOAD_FILE_ID),
                                 INDEX idx_parsed_records_import     (TENANT_ID, IMPORT_STATUS),

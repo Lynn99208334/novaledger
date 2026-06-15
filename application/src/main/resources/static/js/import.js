@@ -119,16 +119,26 @@ function showResults(job, previews, errors) {
     document.getElementById('statSuccess').textContent = job.successCount || 0;
     document.getElementById('statFail').textContent    = job.failCount    || 0;
 
-    document.getElementById('previewTableBody').innerHTML = previews.map(row => `
-        <tr>
+    document.getElementById('previewTableBody').innerHTML = previews.map(row => {
+        const amount = row.amount ?? 0;
+        const expense = amount < 0 ? formatAmount(Math.abs(amount)) : '';
+        const income  = amount >= 0 ? formatAmount(amount) : '';
+        const isDuplicate = row.importStatus === 'DUPLICATE';
+        const rowClass = isDuplicate ? 'class="table-warning"' : '';
+        const note = isDuplicate ? '<span class="badge bg-warning text-dark">重複</span>' : '';
+        return `
+        <tr ${rowClass}>
             <td>${row.rowNumber ?? ''}</td>
             <td>${row.transactionDate ?? ''}</td>
             <td>${row.description ?? ''}</td>
-            <td class="text-end">${formatAmount(row.amount)}</td>
+            <td class="text-end text-danger">${expense}</td>
+            <td class="text-end text-success">${income}</td>
             <td class="text-end">${row.balance != null ? formatAmount(row.balance) : ''}</td>
             <td>${row.currencyCode ?? ''}</td>
+            <td>${note}</td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
     document.getElementById('previewCount').textContent = previews.length + ' 筆';
 
     if (errors.length > 0) {
@@ -160,7 +170,12 @@ function confirmImport() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire({ icon: 'success', title: '匯入成功', text: '交易資料已寫入，可至交易列表查看。' });
+                    const imported = data.data?.importedCount ?? 0;
+                    const skipped  = data.data?.skippedCount  ?? 0;
+                    const msg = skipped > 0
+                        ? `已寫入 ${imported} 筆交易記錄，${skipped} 筆重複跳過。`
+                        : `已寫入 ${imported} 筆交易記錄。`;
+                    Swal.fire({ icon: 'success', title: '匯入成功', text: msg });
                 } else {
                     document.getElementById('confirmImportBtn').disabled = false;
                     Swal.fire({ icon: 'error', title: '匯入失敗', text: data.error?.message || '請稍後再試' });
