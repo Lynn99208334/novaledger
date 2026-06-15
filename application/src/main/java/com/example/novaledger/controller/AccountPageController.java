@@ -4,6 +4,7 @@ import com.example.novaledger.common.tenant.AuthContext;
 import com.example.novaledger.finance.account.dto.CreateAccountRequest;
 import com.example.novaledger.finance.account.enums.AccountType;
 import com.example.novaledger.finance.account.service.AccountService;
+import com.example.novaledger.finance.bank.service.BankService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -17,10 +18,12 @@ public class AccountPageController {
 
     private final AccountService accountService;
     private final AuthContext authContext;
+    private final BankService bankService;
 
-    public AccountPageController(AccountService accountService, AuthContext authContext) {
+    public AccountPageController(AccountService accountService, AuthContext authContext, BankService bankService) {
         this.accountService = accountService;
         this.authContext = authContext;
+        this.bankService = bankService;
     }
 
     @GetMapping
@@ -34,6 +37,7 @@ public class AccountPageController {
     public String newAccountForm(Model model) {
         model.addAttribute("accountForm", new CreateAccountRequest());
         model.addAttribute("accountTypes", AccountType.values());
+        model.addAttribute("banks", bankService.getActiveBanks());
         return "accountCreate";
     }
 
@@ -44,6 +48,7 @@ public class AccountPageController {
                                 HttpServletRequest request) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("accountTypes", AccountType.values());
+            model.addAttribute("banks", bankService.getActiveBanks());
             return "accountCreate";
         }
         Long userId = authContext.getCurrentUserId();

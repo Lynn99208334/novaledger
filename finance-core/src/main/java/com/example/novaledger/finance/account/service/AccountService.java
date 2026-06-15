@@ -51,7 +51,10 @@ public class AccountService {
         account.setTenantId(tenantId);
         account.setUserId(userId);
         account.setAccountType(request.getAccountType());
-        account.setName(request.getName());
+        // name 由銀行名稱自動填入；若未選銀行則 fallback 到 alias 或 accountType
+        String resolvedName = request.getBankName() != null ? request.getBankName()
+                : (request.getAlias() != null ? request.getAlias() : request.getAccountType().getDisplayName());
+        account.setName(resolvedName);
         account.setAlias(request.getAlias());
         account.setCurrencyCode(request.getCurrencyCode());
         account.setInitialBalance(request.getInitialBalance());
@@ -105,7 +108,9 @@ public class AccountService {
             AuditContext.setBeforeValue(objectMapper.writeValueAsString(AccountResponse.from(account)));
         } catch (Exception ignored) {}
 
-        account.setName(request.getName());
+        String resolvedName = request.getBankName() != null ? request.getBankName()
+                : (request.getAlias() != null ? request.getAlias() : request.getAccountType().getDisplayName());
+        account.setName(resolvedName);
         account.setAlias(request.getAlias());
         account.setCurrencyCode(request.getCurrencyCode());
         account.setBankCode(request.getBankCode());
