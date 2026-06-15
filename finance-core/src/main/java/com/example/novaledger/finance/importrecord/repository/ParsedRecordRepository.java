@@ -15,4 +15,6 @@ public interface ParsedRecordRepository extends JpaRepository<ParsedRecord, Long
     List<ParsedRecord> findByUploadJobIdAndTenantIdAndImportStatus(Long uploadJobId, Long tenantId, ImportStatus importStatus);
 
     boolean existsByUploadJobIdAndTenantIdAndImportStatus(Long uploadJobId, Long tenantId, ImportStatus importStatus);
+
+    boolean existsByDedupKey(String dedupKey);
 }

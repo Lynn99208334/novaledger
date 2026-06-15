@@ -77,6 +77,7 @@ public enum ErrorCode {
     IMPORT_FILE_READ_FAILED("IMPORT_006", "Failed to read uploaded file", 500),
     IMPORT_JOB_NOT_FOUND("IMPORT_007", "Import job not found", 404),
     IMPORT_HTML_PARSE_FAILED("IMPORT_008", "Failed to parse HTML-based XLS file", 500),
+    IMPORT_ACCOUNT_MISMATCH("IMPORT_010", "Account number in file does not match the selected account", 400),
 
     // ========================
     // Transaction

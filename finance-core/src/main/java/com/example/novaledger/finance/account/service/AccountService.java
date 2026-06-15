@@ -12,6 +12,7 @@ import com.example.novaledger.finance.account.entity.AccountBalance;
 import com.example.novaledger.finance.account.entity.UserAccount;
 import com.example.novaledger.finance.account.repository.AccountBalanceRepository;
 import com.example.novaledger.finance.account.repository.UserAccountRepository;
+import com.example.novaledger.finance.bank.repository.BankRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,15 +28,18 @@ public class AccountService {
     private final AccountBalanceRepository accountBalanceRepository;
     private final AuthContext authContext;
     private final ObjectMapper objectMapper;
+    private final BankRepository bankRepository;
 
     public AccountService(UserAccountRepository userAccountRepository,
                           AccountBalanceRepository accountBalanceRepository,
                           AuthContext authContext,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          BankRepository bankRepository) {
         this.userAccountRepository = userAccountRepository;
         this.accountBalanceRepository = accountBalanceRepository;
         this.authContext = authContext;
         this.objectMapper = objectMapper;
+        this.bankRepository = bankRepository;
     }
 
     @AuditLog(action = "CREATE_ACCOUNT", type = AuditType.CREATE)
@@ -47,7 +51,10 @@ public class AccountService {
         account.setTenantId(tenantId);
         account.setUserId(userId);
         account.setAccountType(request.getAccountType());
-        account.setName(request.getName());
+        // name 由銀行名稱自動填入；若未選銀行則 fallback 到 alias 或 accountType
+        String resolvedName = request.getBankName() != null ? request.getBankName()
+                : (request.getAlias() != null ? request.getAlias() : request.getAccountType().getDisplayName());
+        account.setName(resolvedName);
         account.setAlias(request.getAlias());
         account.setCurrencyCode(request.getCurrencyCode());
         account.setInitialBalance(request.getInitialBalance());
@@ -72,10 +79,16 @@ public class AccountService {
 
     public List<AccountResponse> getAccounts(Long userId) {
         Long tenantId = authContext.getCurrentTenantId();
+        // 一次撈所有銀行，避免 N+1
+        var bankMap = bankRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        b -> b.getBankCode(),
+                        b -> b.getName()
+                ));
         return userAccountRepository
                 .findByTenantIdAndUserIdAndDeletedAtIsNull(tenantId, userId)
                 .stream()
-                .map(AccountResponse::from)
+                .map(a -> AccountResponse.from(a, a.getBankCode() != null ? bankMap.get(a.getBankCode()) : null))
                 .toList();
     }
 
@@ -95,7 +108,9 @@ public class AccountService {
             AuditContext.setBeforeValue(objectMapper.writeValueAsString(AccountResponse.from(account)));
         } catch (Exception ignored) {}
 
-        account.setName(request.getName());
+        String resolvedName = request.getBankName() != null ? request.getBankName()
+                : (request.getAlias() != null ? request.getAlias() : request.getAccountType().getDisplayName());
+        account.setName(resolvedName);
         account.setAlias(request.getAlias());
         account.setCurrencyCode(request.getCurrencyCode());
         account.setBankCode(request.getBankCode());

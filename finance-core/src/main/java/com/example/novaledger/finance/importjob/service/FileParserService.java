@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class FileParserService {
@@ -25,6 +26,22 @@ public class FileParserService {
         BankStatementParser parser = parserRegistry.getParser(parserKey);
         List<List<String>> rows = readRows(fileBytes, fileName);
         return parser.parse(rows);
+    }
+
+    public Optional<String> extractAccountNumber(byte[] fileBytes, String fileName, String parserKey) {
+        BankStatementParser parser = parserRegistry.getParser(parserKey);
+        List<List<String>> rows = readRows(fileBytes, fileName);
+        return parser.extractAccountNumber(rows);
+    }
+
+    public boolean canHandle(byte[] fileBytes, String fileName, String parserKey) {
+        BankStatementParser parser = parserRegistry.getParser(parserKey);
+        if (!parser.supportsFormatDetection()) {
+            // 此 parser 尚未實作格式偵測，跳過驗證
+            return true;
+        }
+        List<List<String>> rows = readRows(fileBytes, fileName);
+        return parser.canHandle(rows);
     }
 
     private List<List<String>> readRows(byte[] fileBytes, String fileName) {

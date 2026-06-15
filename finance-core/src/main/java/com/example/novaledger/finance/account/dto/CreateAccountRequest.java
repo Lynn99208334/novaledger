@@ -13,7 +13,6 @@ public class CreateAccountRequest {
     @NotNull
     private AccountType accountType;
 
-    @NotBlank
     private String name;
 
     private String alias;
@@ -25,6 +24,7 @@ public class CreateAccountRequest {
     private BigDecimal initialBalance;
 
     private String bankCode;
+    private String bankName;
     private Long branchId;
     private String accountNumber;
     private String notes;

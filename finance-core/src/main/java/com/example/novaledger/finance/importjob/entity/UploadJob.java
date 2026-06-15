@@ -29,6 +29,12 @@ public class UploadJob extends BaseTenantEntity {
     @Column(name = "fail_count")
     private Integer failCount;
 
+    @Column(name = "dup_count")
+    private Integer dupCount;
+
+    @Column(name = "fail_reason", length = 200)
+    private String failReason;
+
     @Column(name = "finished_at")
     private LocalDateTime finishedAt;
 
@@ -63,6 +69,12 @@ public class UploadJob extends BaseTenantEntity {
 
     public Integer getFailCount() { return failCount; }
     public void setFailCount(Integer failCount) { this.failCount = failCount; }
+
+    public Integer getDupCount() { return dupCount; }
+    public void setDupCount(Integer dupCount) { this.dupCount = dupCount; }
+
+    public String getFailReason() { return failReason; }
+    public void setFailReason(String failReason) { this.failReason = failReason; }
 
     public LocalDateTime getFinishedAt() { return finishedAt; }
     public void setFinishedAt(LocalDateTime finishedAt) { this.finishedAt = finishedAt; }

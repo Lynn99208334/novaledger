@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function openEditModal(btn) {
     document.getElementById('editAccountId').value     = btn.dataset.accountId;
     document.getElementById('editAccountType').value   = btn.dataset.accountType;
-    document.getElementById('editName').value          = btn.dataset.accountName;
     document.getElementById('editAlias').value         = btn.dataset.accountAlias || '';
     document.getElementById('editCurrencyCode').value  = btn.dataset.currencyCode;
     document.getElementById('editBankCode').value      = btn.dataset.bankCode || '';
@@ -23,15 +22,14 @@ function openEditModal(btn) {
 function submitEdit() {
     const accountId     = document.getElementById('editAccountId').value;
     const accountType   = document.getElementById('editAccountType').value;
-    const name          = document.getElementById('editName').value.trim();
     const alias         = document.getElementById('editAlias').value.trim();
     const currencyCode  = document.getElementById('editCurrencyCode').value;
     const bankCode      = document.getElementById('editBankCode').value.trim();
     const accountNumber = document.getElementById('editAccountNumber').value.trim();
     const notes         = document.getElementById('editNotes').value.trim();
 
-    if (!name) {
-        Swal.fire({ icon: 'warning', title: '請填寫帳戶名稱' });
+    if (!accountType) {
+        Swal.fire({ icon: 'warning', title: '請選擇帳戶類型' });
         return;
     }
 
@@ -40,7 +38,6 @@ function submitEdit() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             accountType,
-            name,
             alias: alias || null,
             currencyCode,
             initialBalance: 0,

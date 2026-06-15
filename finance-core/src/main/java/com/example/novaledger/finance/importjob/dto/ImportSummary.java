@@ -4,13 +4,16 @@ public class ImportSummary {
 
     private Long jobId;
     private int importedCount;
+    private int skippedCount;
 
-    public ImportSummary(Long jobId, int importedCount) {
+    public ImportSummary(Long jobId, int importedCount, int skippedCount) {
         this.jobId = jobId;
         this.importedCount = importedCount;
+        this.skippedCount = skippedCount;
     }
 
     public Long getId() { return jobId; }
     public Long getJobId() { return jobId; }
     public int getImportedCount() { return importedCount; }
+    public int getSkippedCount() { return skippedCount; }
 }

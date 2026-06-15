@@ -1,5 +1,7 @@
 package com.example.novaledger.finance.importjob.service;
 
+import com.example.novaledger.finance.account.entity.UserAccount;
+import com.example.novaledger.finance.account.repository.UserAccountRepository;
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
 import com.example.novaledger.common.logging.AuditLog;
@@ -35,8 +37,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ImportService {
@@ -55,6 +62,7 @@ public class ImportService {
     private final TransactionTemplate transactionTemplate;
     private final TransactionService transactionService;
     private final MimeTypeValidator mimeTypeValidator;
+    private final UserAccountRepository userAccountRepository;
 
     public ImportService(UploadJobRepository uploadJobRepository,
                          UploadFileRepository uploadFileRepository,
@@ -65,7 +73,8 @@ public class ImportService {
                          ImportJobStatusService importJobStatusService,
                          TransactionTemplate transactionTemplate,
                          TransactionService transactionService,
-                         MimeTypeValidator mimeTypeValidator) {
+                         MimeTypeValidator mimeTypeValidator,
+                         UserAccountRepository userAccountRepository) {
         this.uploadJobRepository = uploadJobRepository;
         this.uploadFileRepository = uploadFileRepository;
         this.fileParserService = fileParserService;
@@ -76,6 +85,7 @@ public class ImportService {
         this.transactionTemplate = transactionTemplate;
         this.transactionService = transactionService;
         this.mimeTypeValidator = mimeTypeValidator;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @Transactional
@@ -136,7 +146,7 @@ public class ImportService {
 
         if (pendingRecords.isEmpty()) {
             log.info("action=CONFIRM_IMPORT result=SKIPPED reason=NO_PENDING_RECORDS jobId={}", jobId);
-            return new ImportSummary(jobId, 0);
+            return new ImportSummary(jobId, 0, 0);
         }
 
         int importedCount = 0;
@@ -166,8 +176,9 @@ public class ImportService {
             importedCount++;
         }
 
-        log.info("action=CONFIRM_IMPORT result=SUCCESS jobId={} importedCount={}", jobId, importedCount);
-        return new ImportSummary(jobId, importedCount);
+        int skippedCount = job.getDupCount() != null ? job.getDupCount() : 0;
+        log.info("action=CONFIRM_IMPORT result=SUCCESS jobId={} importedCount={} skippedCount={}", jobId, importedCount, skippedCount);
+        return new ImportSummary(jobId, importedCount, skippedCount);
     }
 
     private void validateFile(MultipartFile file) {
@@ -210,11 +221,62 @@ public class ImportService {
                 uploadFile.setMimeType(mimeType);
                 uploadFileRepository.save(uploadFile);
 
+                // 帳號驗證：比對檔案內帳號與選定帳戶，不一致時擋下
+                if (job.getAccountId() != null) {
+                    Optional<String> detectedAccount = fileParserService.extractAccountNumber(
+                            fileBytes, originalFilename, job.getParserKey());
+                    if (detectedAccount.isPresent()) {
+                        UserAccount account = userAccountRepository
+                                .findByIdAndTenantIdAndDeletedAtIsNull(job.getAccountId(), tenantId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_001));
+                        String fileAccountNumber = detectedAccount.get().replaceAll("[^0-9]", "");
+                        String selectedAccountNumber = account.getAccountNumber() != null
+                                ? account.getAccountNumber().replaceAll("[^0-9]", "") : "";
+                        if (!fileAccountNumber.isEmpty() && !fileAccountNumber.equals(selectedAccountNumber)) {
+                            log.warn("action=ACCOUNT_MISMATCH jobId={} fileAccount={} selectedAccount={}",
+                                    jobId, fileAccountNumber, account.getMaskedAccountNumber());
+                            job.setStatus("FAILED");
+                            job.setFailReason("ACCOUNT_MISMATCH");
+                            job.setFinishedAt(LocalDateTime.now());
+                            uploadJobRepository.save(job);
+                            ImportLog mismatchLog = new ImportLog();
+                            mismatchLog.setTenantId(tenantId);
+                            mismatchLog.setUploadJobId(jobId);
+                            mismatchLog.setLogLevel("ERROR");
+                            mismatchLog.setMessage("帳號不符：檔案帳號（" + maskRaw(fileAccountNumber)
+                                    + "）與選定帳戶（" + account.getMaskedAccountNumber() + "）不符");
+                            importLogRepository.save(mismatchLog);
+                            return;
+                        }
+                    } else {
+                        log.info("action=ACCOUNT_VERIFY result=SKIPPED reason=NO_ACCOUNT_IN_FILE jobId={} parserKey={} accountId={}",
+                                jobId, job.getParserKey(), job.getAccountId());
+                    }
+                }
+
+                // 格式驗證：檢查 CSV 內容是否符合選定的 parser
+                boolean formatOk = fileParserService.canHandle(fileBytes, originalFilename, job.getParserKey());
+                if (!formatOk) {
+                    log.warn("action=FORMAT_MISMATCH jobId={} parserKey={}", jobId, job.getParserKey());
+                    job.setStatus("FAILED");
+                    job.setFailReason("FORMAT_MISMATCH");
+                    job.setFinishedAt(LocalDateTime.now());
+                    uploadJobRepository.save(job);
+                    ImportLog fmtLog = new ImportLog();
+                    fmtLog.setTenantId(tenantId);
+                    fmtLog.setUploadJobId(jobId);
+                    fmtLog.setLogLevel("ERROR");
+                    fmtLog.setMessage("檔案格式不符：請確認所選銀行與對帳單格式是否正確");
+                    importLogRepository.save(fmtLog);
+                    return;
+                }
+
                 List<ParseResult> results = fileParserService.parse(
                         fileBytes, originalFilename, job.getParserKey());
 
                 int successCount = 0;
                 int failCount = 0;
+                int dupCount = 0;
 
                 for (ParseResult result : results) {
                     ParsedRecord record = new ParsedRecord();
@@ -225,14 +287,32 @@ public class ImportService {
                     record.setRawData(buildRawDataJson(result));
 
                     if (result.isSuccess()) {
-                        record.setParseStatus(ParseStatus.SUCCESS.name());
-                        record.setImportStatus(ImportStatus.PENDING);
-                        record.setTransactionDate(result.getTransactionDate());
-                        record.setDescription(result.getDescription());
-                        record.setAmount(result.getAmount());
-                        record.setBalance(result.getBalance());
-                        record.setCurrencyCode("TWD");
-                        successCount++;
+                        String dedupKey = calculateDedupKey(
+                                job.getAccountId(), result);
+
+                        if (parsedRecordRepository.existsByDedupKey(dedupKey)) {
+                            record.setParseStatus(ParseStatus.SUCCESS.name());
+                            record.setImportStatus(ImportStatus.DUPLICATE);
+                            record.setTransactionDate(result.getTransactionDate());
+                            record.setDescription(result.getDescription());
+                            record.setAmount(result.getAmount());
+                            record.setBalance(result.getBalance());
+                            record.setCurrencyCode("TWD");
+                            // dedupKey 不寫入，避免違反 UNIQUE constraint
+                            dupCount++;
+                            log.debug("action=PARSE_RECORD result=DUPLICATE jobId={} row={} dedupKey={}",
+                                    jobId, result.getRowNumber(), dedupKey);
+                        } else {
+                            record.setParseStatus(ParseStatus.SUCCESS.name());
+                            record.setImportStatus(ImportStatus.PENDING);
+                            record.setTransactionDate(result.getTransactionDate());
+                            record.setDescription(result.getDescription());
+                            record.setAmount(result.getAmount());
+                            record.setBalance(result.getBalance());
+                            record.setCurrencyCode("TWD");
+                            record.setDedupKey(dedupKey);
+                            successCount++;
+                        }
                     } else {
                         record.setParseStatus(ParseStatus.FAILED.name());
                         record.setImportStatus(ImportStatus.FAILED);
@@ -256,16 +336,39 @@ public class ImportService {
                 job.setTotalCount(results.size());
                 job.setSuccessCount(successCount);
                 job.setFailCount(failCount);
+                job.setDupCount(dupCount);
                 job.setFinishedAt(LocalDateTime.now());
                 uploadJobRepository.save(job);
 
-                log.info("action=PROCESS_IMPORT_JOB result=SUCCESS jobId={} total={} success={} fail={}",
-                        jobId, results.size(), successCount, failCount);
+                log.info("action=PROCESS_IMPORT_JOB result=SUCCESS jobId={} total={} success={} fail={} dup={}",
+                        jobId, results.size(), successCount, failCount, dupCount);
             });
 
         } catch (Exception e) {
             log.error("action=PROCESS_IMPORT_JOB result=FAILED jobId={} reason={}", jobId, e.getMessage(), e);
             importJobStatusService.markJobFailed(jobId, tenantId);
+        }
+    }
+
+    private String maskRaw(String accountNumber) {
+        if (accountNumber == null || accountNumber.length() < 4) return accountNumber;
+        return "****" + accountNumber.substring(accountNumber.length() - 4);
+    }
+
+    private String calculateDedupKey(Long accountId, ParseResult result) {
+        // SHA-256(accountId + date + amount + balance)
+        // balance 為 null 時用空字串，確保信用卡類型仍可去重
+        String raw = accountId + "|"
+                + result.getTransactionDate() + "|"
+                + result.getAmount().toPlainString() + "|"
+                + (result.getBalance() != null ? result.getBalance().toPlainString() : "");
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(raw.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256 是 JDK 標準，不可能不存在，但必須 catch checked exception
+            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 
@@ -295,6 +398,7 @@ public class ImportService {
                 job.getTotalCount(),
                 job.getSuccessCount(),
                 job.getFailCount(),
+                job.getFailReason(),
                 job.getCreatedAt(),
                 job.getFinishedAt()
         );

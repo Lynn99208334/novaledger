@@ -48,6 +48,9 @@ public class ParsedRecord extends BaseTenantEntity {
     @Column(name = "currency_code", length = 10)
     private String currencyCode = "TWD";
 
+    @Column(name = "dedup_key", length = 64, unique = true)
+    private String dedupKey;
+
     public ParsedRecord() {}
 
     public Long getUploadJobId() { return uploadJobId; }
@@ -85,4 +88,7 @@ public class ParsedRecord extends BaseTenantEntity {
 
     public String getCurrencyCode() { return currencyCode; }
     public void setCurrencyCode(String currencyCode) { this.currencyCode = currencyCode; }
+
+    public String getDedupKey() { return dedupKey; }
+    public void setDedupKey(String dedupKey) { this.dedupKey = dedupKey; }
 }

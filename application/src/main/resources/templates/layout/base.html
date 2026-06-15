@@ -15,6 +15,7 @@
     <th:block th:replace="~{fragments/navbar :: vendor-css}"></th:block>
     <link th:href="@{/css/styles.css}" rel="stylesheet"/>
     <link th:href="@{/css/vendor/fontawesome.all.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/vendor/select2.min.css}" rel="stylesheet"/>
 </head>
 
 <body class="sb-nav-fixed">
@@ -41,6 +42,7 @@
     </div>
 </div>
 
+<script th:src="@{/js/vendor/jquery-3.7.1.min.js}"></script>
 <script th:src="@{/js/vendor/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/scripts.js}"></script>
 <th:block th:replace="~{fragments/navbar :: vendor-js}"></th:block>
