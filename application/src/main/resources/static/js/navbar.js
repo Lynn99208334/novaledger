@@ -24,11 +24,12 @@ function initNavbar() {
     const userDropdownItem = document.getElementById('userDropdownItem');
     const loginLinkItem = document.getElementById('loginLinkItem');
 
-    if (!userDropdownItem || !loginLinkItem) return;
+    // userDropdownItem 是必要元素；loginLinkItem 在 Admin topnav 不存在，允許 null
+    if (!userDropdownItem) return;
 
     if (token && username) {
         userDropdownItem.classList.remove('d-none-init');
-        loginLinkItem.classList.add('d-none-init');
+        if (loginLinkItem) loginLinkItem.classList.add('d-none-init');
 
         const navUsername = document.getElementById('navUsername');
         const navUsernameDetail = document.getElementById('navUsernameDetail');
@@ -51,7 +52,7 @@ function initNavbar() {
         }
     } else {
         userDropdownItem.classList.add('d-none-init');
-        loginLinkItem.classList.remove('d-none-init');
+        if (loginLinkItem) loginLinkItem.classList.remove('d-none-init');
     }
 }
 

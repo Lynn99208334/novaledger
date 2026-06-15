@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/css/vendor/sweetalert2.v11.10.6.min.css"/>
 </th:block>
 
-<!-- ── Top Navbar ───────────────────────────────────────────── -->
+<!-- ── Top Navbar（Member）───────────────────────────────────── -->
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark"
      th:fragment="topnav">
 
@@ -65,6 +65,47 @@
             <a class="nav-link" href="/page/login">
                 <i class="fas fa-sign-in-alt me-1"></i> Login
             </a>
+        </li>
+    </ul>
+</nav>
+
+<!-- ── Top Navbar（Admin）────────────────────────────────────── -->
+<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark"
+     th:fragment="topnav-admin">
+
+    <a class="navbar-brand ps-3" th:href="@{/page/admin/dashboard}">
+        NovaLedger <span class="badge bg-danger ms-1 small">Admin</span>
+    </a>
+
+    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0"
+            id="sidebarToggle"
+            aria-label="Toggle sidebar">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- 撐開空間，讓 user dropdown 靠右 -->
+    <div class="ms-auto"></div>
+
+    <ul class="navbar-nav me-3 me-lg-4">
+        <li class="nav-item dropdown d-none-init" id="userDropdownItem">
+            <a class="nav-link dropdown-toggle"
+               id="navbarDropdown" href="#" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-user-shield fa-fw me-1"></i>
+                <span id="navUsername"></span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                <li class="dropdown-item-text small text-muted">
+                    登入身分：<strong id="navUsernameDetail"></strong>
+                </li>
+                <li class="dropdown-item-text small text-muted" id="navTokenExpiry"></li>
+                <li><hr class="dropdown-divider"/></li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </button>
+                </li>
+            </ul>
         </li>
     </ul>
 </nav>
