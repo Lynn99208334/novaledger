@@ -1,10 +1,14 @@
 package com.example.novaledger.finance.importjob.controller;
 
+import com.example.novaledger.finance.bank.repository.BankFileFormatRepository;
 import com.example.novaledger.finance.importjob.parser.CtbcBankStatementParser;
 import com.example.novaledger.finance.importjob.parser.ParseResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,7 +16,11 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class CtbcBankStatementParserTest {
+
+    @Mock
+    private BankFileFormatRepository bankFileFormatRepository;
 
     private CtbcBankStatementParser parser;
 
@@ -24,7 +32,7 @@ class CtbcBankStatementParserTest {
 
     @BeforeEach
     void setUp() {
-        parser = new CtbcBankStatementParser();
+        parser = new CtbcBankStatementParser(bankFileFormatRepository);
     }
 
     private List<ParseResult> parseOneRow(List<String> dataRow) {
