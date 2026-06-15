@@ -23,6 +23,14 @@ public interface BankStatementParser {
     String getFileType();
 
     /**
+     * 是否支援格式自動偵測
+     * 有實作 canHandle() 的 parser 覆寫此方法回傳 true
+     */
+    default boolean supportsFormatDetection() {
+        return false;
+    }
+
+    /**
      * 判斷此 parser 是否能處理指定的原始列資料
      * 用於自動偵測（MVP 後啟用）
      */

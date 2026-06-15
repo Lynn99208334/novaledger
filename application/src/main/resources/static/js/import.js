@@ -96,9 +96,19 @@ function pollStatus(jobId) {
             document.getElementById('progressStatus').textContent = job.status;
             document.getElementById('progressDetail').textContent = `已處理 ${done} / ${total} 筆`;
 
-            if (job.status === 'COMPLETED' || job.status === 'FAILED') {
+            if (job.status === 'COMPLETED' || job.status === 'COMPLETED_WITH_ERRORS' || job.status === 'FAILED') {
                 clearInterval(pollTimer);
-                if (job.status === 'COMPLETED') {
+                if (job.status === 'FAILED') {
+                    document.getElementById('progressCard').classList.add('d-none');
+                    let msg = '請稍後再試，或聯繫客服。';
+                    if (job.failReason === 'ACCOUNT_MISMATCH') {
+                        msg = '帳號不符，請重新上傳對帳單。';
+                    } else if (job.failReason === 'FORMAT_MISMATCH') {
+                        msg = '銀行不符，請重新上傳對帳單。';
+                    }
+                    Swal.fire({ icon: 'error', title: '上傳失敗', text: msg })
+                        .then(() => resetPage());
+                } else {
                     Promise.all([
                         fetch(`/api/import/jobs/${jobId}/preview`, { headers: { 'X-Tenant-Id': '1' } }).then(r => r.json()),
                         fetch(`/api/import/jobs/${jobId}/errors`,  { headers: { 'X-Tenant-Id': '1' } }).then(r => r.json())
@@ -106,8 +116,6 @@ function pollStatus(jobId) {
                         document.getElementById('progressCard').classList.add('d-none');
                         showResults(job, previewRes.data || [], errorRes.data || []);
                     });
-                } else {
-                    Swal.fire({ icon: 'error', title: '解析失敗', text: '請確認檔案格式是否正確。' });
                 }
             }
         })

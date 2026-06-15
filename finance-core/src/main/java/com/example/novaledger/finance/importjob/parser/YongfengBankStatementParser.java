@@ -41,4 +41,21 @@ public class YongfengBankStatementParser extends AbstractColumnBasedStatementPar
     public boolean canHandle(List<List<String>> rows) {
         return false;
     }
+
+    @Override
+    public java.util.Optional<String> extractAccountNumber(List<List<String>> rows) {
+        // 第一行格式：帳號\t 169-018-0004153-6【分行名】幣別
+        // 取第二欄，擷取「【」之前的部分，去掉空白和 -
+        if (rows == null || rows.isEmpty()) return java.util.Optional.empty();
+        List<String> firstRow = rows.get(0);
+        if (firstRow.size() < 2) return java.util.Optional.empty();
+        String raw = firstRow.get(1).trim();
+        int bracketIdx = raw.indexOf('【');
+        if (bracketIdx > 0) {
+            raw = raw.substring(0, bracketIdx).trim();
+        }
+        String accountNumber = raw.replaceAll("[^0-9]", "");
+        if (accountNumber.isEmpty()) return java.util.Optional.empty();
+        return java.util.Optional.of(accountNumber);
+    }
 }

@@ -37,7 +37,20 @@ public class CtbcBankStatementParser extends AbstractColumnBasedStatementParser 
     }
 
     @Override
+    public boolean supportsFormatDetection() {
+        return true;
+    }
+
+    @Override
     public boolean canHandle(List<List<String>> rows) {
-        return false;
+        // header 在 index 3，檢查關鍵欄位名稱
+        if (rows == null || rows.size() < 4) return false;
+        List<String> header = rows.get(3);
+        if (header.size() < 5) return false;
+        return header.get(0).contains("日期")
+                && header.get(1).contains("摘要")
+                && header.get(2).contains("支出")
+                && header.get(3).contains("存入")
+                && header.get(4).contains("結餘");
     }
 }

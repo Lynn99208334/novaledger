@@ -23,6 +23,7 @@ CREATE TABLE upload_jobs (
                              SUCCESS_COUNT INT,
                              FAIL_COUNT    INT,
                              DUP_COUNT     INT,
+                             FAIL_REASON   VARCHAR(200),
 
                              CREATED_AT    DATETIME    NOT NULL,
                              UPDATED_AT    DATETIME,
