@@ -1,44 +1,62 @@
 let currentJobId = null;
 let pollTimer = null;
-
-const SUPPORTED_BANKS = [
-    { bankCode: '822', name: '中國信託銀行', hint: '支援 CSV 格式' },
-    { bankCode: '808', name: '玉山銀行',     hint: '支援 CSV 格式（開發中）' },
-    { bankCode: '807', name: '永豐銀行',     hint: '支援 CSV 格式（開發中）' },
-    { bankCode: '806', name: '元大銀行',     hint: '支援 CSV 格式（開發中）' }
-];
+let allAccounts = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    const select = document.getElementById('bankCodeSelect');
-    SUPPORTED_BANKS.forEach(bank => {
-        const opt = document.createElement('option');
-        opt.value = bank.bankCode;
-        opt.textContent = `${bank.name}（${bank.bankCode}）`;
-        opt.dataset.hint = bank.hint;
-        select.appendChild(opt);
-    });
-    select.addEventListener('change', () => {
-        const selected = SUPPORTED_BANKS.find(b => b.bankCode === select.value);
-        document.getElementById('bankHint').textContent = selected ? selected.hint : '';
-    });
-
-    fetch('/api/accounts')
-        .then(res => res.json())
-        .then(data => {
-            if (!data.success) return;
-            const accountSelect = document.getElementById('accountSelect');
-            (data.data || []).forEach(account => {
-                const opt = document.createElement('option');
-                opt.value = account.id;
-                opt.textContent = `${account.name}（${account.currencyCode}）`;
-                accountSelect.appendChild(opt);
-            });
-        });
-
+    loadAccounts();
+    document.getElementById('bankCodeSelect').addEventListener('change', onBankChange);
     document.getElementById('uploadBtn').addEventListener('click', startUpload);
     document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
     document.getElementById('resetBtn').addEventListener('click', resetPage);
 });
+
+function loadAccounts() {
+    fetch('/api/accounts')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+            allAccounts = (data.data || []).filter(a => a.bankCode);
+
+            // 產生不重複的銀行清單
+            const bankMap = {};
+            allAccounts.forEach(a => {
+                if (!bankMap[a.bankCode]) {
+                    bankMap[a.bankCode] = a.bankName || a.bankCode;
+                }
+            });
+
+            const bankSelect = document.getElementById('bankCodeSelect');
+            bankSelect.innerHTML = '<option value="">請選擇銀行...</option>';
+            Object.entries(bankMap).forEach(([code, name]) => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = `${name}（${code}）`;
+                bankSelect.appendChild(opt);
+            });
+        });
+}
+
+function onBankChange() {
+    const bankCode = document.getElementById('bankCodeSelect').value;
+    const accountSelect = document.getElementById('accountSelect');
+    accountSelect.innerHTML = '<option value="">請選擇帳戶...</option>';
+
+    if (!bankCode) return;
+
+    const filtered = allAccounts.filter(a => a.bankCode === bankCode);
+    filtered.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        const label = a.alias || a.name;
+        opt.textContent = `${label}（${a.currencyCode}）`;
+        accountSelect.appendChild(opt);
+    });
+
+    // 自動選第一個帳戶
+    if (filtered.length > 0) {
+        accountSelect.value = filtered[0].id;
+    }
+}
 
 function startUpload() {
     const fileInput = document.getElementById('fileInput');
@@ -102,9 +120,9 @@ function pollStatus(jobId) {
                     document.getElementById('progressCard').classList.add('d-none');
                     let msg = '請稍後再試，或聯繫客服。';
                     if (job.failReason === 'ACCOUNT_MISMATCH') {
-                        msg = '帳號不符，請重新上傳對帳單。';
+                        msg = '上傳的對帳單帳號與選定的帳戶不一致，請確認後重新上傳。';
                     } else if (job.failReason === 'FORMAT_MISMATCH') {
-                        msg = '銀行不符，請重新上傳對帳單。';
+                        msg = '上傳的檔案有誤，請確認所選銀行與對帳單檔案是否相符。';
                     }
                     Swal.fire({ icon: 'error', title: '上傳失敗', text: msg })
                         .then(() => resetPage());

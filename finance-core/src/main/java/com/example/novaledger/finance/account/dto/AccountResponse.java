@@ -20,6 +20,7 @@ public class AccountResponse {
     private BigDecimal currentBalance;
     private BigDecimal initialBalance;
     private String bankCode;
+    private String bankName;
     private Long branchId;
     private String accountNumber;
     private String notes;
@@ -27,6 +28,10 @@ public class AccountResponse {
     private LocalDateTime updatedAt;
 
     public static AccountResponse from(UserAccount account) {
+        return from(account, null);
+    }
+
+    public static AccountResponse from(UserAccount account, String bankName) {
         AccountResponse dto = new AccountResponse();
         dto.setId(account.getId());
         dto.setTenantId(account.getTenantId());
@@ -38,6 +43,7 @@ public class AccountResponse {
         dto.setCurrentBalance(account.getCurrentBalance());
         dto.setInitialBalance(account.getInitialBalance());
         dto.setBankCode(account.getBankCode());
+        dto.setBankName(bankName);
         dto.setBranchId(account.getBranchId());
         dto.setAccountNumber(account.getMaskedAccountNumber());
         dto.setNotes(account.getNotes());
