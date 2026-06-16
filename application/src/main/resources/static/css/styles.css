@@ -11389,6 +11389,7 @@ body {
 .cc-next-wrap { display: flex; justify-content: center; margin-top: 16px; }
 .cc-next-btn { background: #2ecc71; color: #fff; border: none; border-radius: 10px; padding: 10px 24px; }
 .preview-content { white-space: pre-wrap; }
+.pre-wrap { white-space: pre-wrap; word-break: break-all; }
 
 /* RWD */
 @media (max-width:768px){
