@@ -37,6 +37,10 @@ public class ParserRegistry {
         throw new BusinessException(ErrorCode.IMPORT_PARSER_NOT_FOUND);
     }
 
+    public List<BankStatementParser> getAllParsers() {
+        return new java.util.ArrayList<>(parsersByKey.values());
+    }
+
     public String resolveParserKey(String bankCode, String fileName) {
         String fileType = fileName.toLowerCase().endsWith(".csv") ? "CSV" : "XLSX";
         return parsersByKey.values().stream()
