@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/base :: layout('銀行管理', ~{::content}, ~{::pagejs})}">
+      th:replace="~{layout/admin-base :: layout('銀行管理', ~{::content}, ~{::pagejs})}">
 
 <th:block th:fragment="content">
     <div class="container-fluid px-4">
@@ -11,7 +11,7 @@
             </button>
         </div>
         <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a th:href="@{/page/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/page/admin/dashboard}">首頁</a></li>
             <li class="breadcrumb-item active">銀行管理</li>
         </ol>
 

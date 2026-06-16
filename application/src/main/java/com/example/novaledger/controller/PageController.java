@@ -57,21 +57,6 @@ public class PageController {
         return "import";
     }
 
-    @GetMapping("/admin/dashboard")
-    public String adminDashboard() {
-        return "admin/dashboard";
-    }
-
-    @GetMapping("/admin/banks")
-    public String adminBanksPage() {
-        return "admin/bankList";
-    }
-
-    @GetMapping("/admin/users")
-    public String adminUsersPage() {
-        return "admin/userList";
-    }
-
     @GetMapping("/verify-email-success")
     public String verifyEmailSuccess() {
         return "verify-email-success";

@@ -41,6 +41,7 @@ public enum ErrorCode {
 
     ACCOUNT_DISABLED("AUTH_020", "Account Disabled", 403),
     ACCOUNT_NOT_ACTIVE("AUTH_021", "Account Not Active", 403),
+    REGISTRATION_DISABLED("AUTH_022", "Registration is currently disabled", 403),
 
     LOGIN_FAILED("AUTH_030", "Login Failed", 401),
     PASSWORD_INCORRECT("AUTH_032", "Password Incorrect", 401),

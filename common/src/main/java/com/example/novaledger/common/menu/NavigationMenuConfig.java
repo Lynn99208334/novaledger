@@ -50,9 +50,15 @@ public final class NavigationMenuConfig {
                     "fas fa-chart-area", USER_ONLY),
 
             // ── 後台管理（僅 ADMIN）─────────────────────────────
-            new MenuItem("後台管理", "銀行管理", "/page/admin/banks",
-                    "fas fa-landmark", ADMIN_ONLY),
             new MenuItem("後台管理", "使用者管理", "/page/admin/users",
-                    "fas fa-users-cog", ADMIN_ONLY)
+                    "fas fa-users-cog", ADMIN_ONLY),
+            new MenuItem("後台管理", "Audit Log", "/page/admin/audit-logs",
+                    "fas fa-clipboard-list", ADMIN_ONLY),
+            new MenuItem("後台管理", "解析能力總覽", "/page/admin/parsers",
+                    "fas fa-file-alt", ADMIN_ONLY),
+            new MenuItem("後台管理", "匯率管理", "/page/admin/exchange-rates",
+                    "fas fa-coins", ADMIN_ONLY),
+            new MenuItem("後台管理", "系統設定", "/page/admin/system-config",
+                    "fas fa-cogs", ADMIN_ONLY)
     );
 }

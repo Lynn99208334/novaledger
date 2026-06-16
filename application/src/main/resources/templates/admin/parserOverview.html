@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin-base :: layout('解析能力總覽', ~{::content}, ~{::pagejs})}">
+
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">解析能力總覽</h1>
+        </div>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/page/admin/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item active">解析能力總覽</li>
+        </ol>
+
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <i class="fas fa-file-import me-1"></i> Parser 清單
+                <span class="text-muted small ms-2" id="totalCountLabel"></span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>銀行代碼</th>
+                            <th>銀行名稱</th>
+                            <th>檔案格式</th>
+                            <th>Parser Key</th>
+                            <th class="text-center">自動偵測</th>
+                            <th class="text-center">帳號擷取</th>
+                        </tr>
+                        </thead>
+                        <tbody id="parserTableBody">
+                        <tr><td colspan="6" class="text-center text-muted py-4">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="pagejs">
+    <script th:src="@{/js/admin-parsers.js}"></script>
+</th:block>
+
+</html>

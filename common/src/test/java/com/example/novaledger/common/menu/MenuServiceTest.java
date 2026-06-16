@@ -55,11 +55,11 @@ class MenuServiceTest {
                 .toList();
         assertThat(coreLabels).containsExactly("Admin Dashboard");
 
-        // 後台管理 section 應包含銀行管理與使用者管理
+        // 後台管理 section 應包含 S14 完成後的五個選單
         List<String> adminLabels = sections.get("後台管理").stream()
                 .map(MenuItem::label)
                 .toList();
-        assertThat(adminLabels).containsExactly("銀行管理", "使用者管理");
+        assertThat(adminLabels).containsExactly("使用者管理", "Audit Log", "解析能力總覽", "匯率管理", "系統設定");
     }
 
     @Test

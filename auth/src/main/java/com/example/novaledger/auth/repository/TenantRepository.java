@@ -8,6 +8,8 @@ import java.util.Optional;
 public interface TenantRepository extends JpaRepository<Tenant, Long> {
 
     Optional<Tenant> findByIdAndStatus(Long id, String status);
+
+    void deleteByOwnerUserId(Long ownerUserId);
 //    Optional<Tenant> findBySlug(String slug);
 }
 

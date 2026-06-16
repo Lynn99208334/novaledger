@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin-base :: layout('Audit Log 查詢', ~{::content}, ~{::pagejs})}">
+
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">Audit Log 查詢</h1>
+        </div>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/page/admin/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item active">Audit Log</li>
+        </ol>
+
+        <!-- 篩選列 -->
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-body py-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">User ID</label>
+                        <input type="number" id="filterUserId" class="form-control" placeholder="輸入 User ID"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">操作類型</label>
+                        <select id="filterAction" class="form-select">
+                            <option value="">全部</option>
+                            <option value="REGISTER">REGISTER</option>
+                            <option value="CREATE_ACCOUNT">CREATE_ACCOUNT</option>
+                            <option value="DELETE_ACCOUNT">DELETE_ACCOUNT</option>
+                            <option value="CONFIRM_IMPORT">CONFIRM_IMPORT</option>
+                            <option value="UPDATE_EXCHANGE_RATE">UPDATE_EXCHANGE_RATE</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">起始日期</label>
+                        <input type="date" id="filterDateFrom" class="form-control"/>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">結束日期</label>
+                        <input type="date" id="filterDateTo" class="form-control"/>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-primary btn-sm" id="searchBtn">查詢</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm ms-1" id="resetBtn">重設</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格 -->
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <i class="fas fa-clipboard-list me-1"></i> Audit Log 清單
+                <span class="text-muted small ms-2" id="totalCountLabel"></span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>User ID</th>
+                            <th>操作</th>
+                            <th>目標類型</th>
+                            <th>目標 ID</th>
+                            <th>IP 位址</th>
+                            <th>時間</th>
+                            <th class="text-center">詳情</th>
+                        </tr>
+                        </thead>
+                        <tbody id="auditLogTableBody">
+                        <tr><td colspan="8" class="text-center text-muted py-4">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分頁 -->
+        <nav>
+            <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
+    </div>
+
+    <!-- 詳情 Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailModalLabel">Audit Log 詳情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">變更前（Before）</label>
+                        <pre class="bg-light p-2 rounded small pre-wrap" id="detailBefore"></pre>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">變更後（After）</label>
+                        <pre class="bg-light p-2 rounded small pre-wrap" id="detailAfter"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="pagejs">
+    <script th:src="@{/js/admin-audit-logs.js}"></script>
+</th:block>
+
+</html>

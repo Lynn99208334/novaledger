@@ -78,6 +78,12 @@ public class AuthService {
     public RegisterSummary register(RegisterRequest request) {
         log.info("action=REGISTER email={}", request.getEmail());
 
+        boolean registrationEnabled = systemConfigService.getBoolean("registration.enabled");
+        if (!registrationEnabled) {
+            log.warn("action=REGISTER result=FAILED reason=REGISTRATION_DISABLED");
+            throw new BusinessException(ErrorCode.REGISTRATION_DISABLED);
+        }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("action=REGISTER result=FAILED reason=EMAIL_ALREADY_EXISTS email={}", request.getEmail());
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -161,6 +167,18 @@ public class AuthService {
             loginRateLimiter.recordFailure(ip);
             log.warn("action=LOGIN result=FAILED reason=EMAIL_NOT_VERIFIED userId={}", user.getId());
             throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            loginRateLimiter.recordFailure(ip);
+            log.warn("action=LOGIN result=FAILED reason=ACCOUNT_DISABLED userId={}", user.getId());
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            loginRateLimiter.recordFailure(ip);
+            log.warn("action=LOGIN result=FAILED reason=ACCOUNT_NOT_ACTIVE userId={} status={}", user.getId(), user.getStatus());
+            throw new BusinessException(ErrorCode.ACCOUNT_NOT_ACTIVE);
         }
 
         loginRateLimiter.clearFailures(ip);
