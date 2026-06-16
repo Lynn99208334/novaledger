@@ -13,6 +13,8 @@ public interface UploadJobRepository extends JpaRepository<UploadJob, Long> {
 
     List<UploadJob> findByTenantIdOrderByCreatedAtDesc(Long tenantId);
 
+    void deleteByCreatedBy(Long userId);
+
     @Query("SELECT COUNT(j) FROM UploadJob j WHERE j.status = 'PENDING'")
     long countPendingJobs();
 }

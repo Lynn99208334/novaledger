@@ -78,6 +78,12 @@ public class AuthService {
     public RegisterSummary register(RegisterRequest request) {
         log.info("action=REGISTER email={}", request.getEmail());
 
+        boolean registrationEnabled = systemConfigService.getBoolean("registration.enabled");
+        if (!registrationEnabled) {
+            log.warn("action=REGISTER result=FAILED reason=REGISTRATION_DISABLED");
+            throw new BusinessException(ErrorCode.REGISTRATION_DISABLED);
+        }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("action=REGISTER result=FAILED reason=EMAIL_ALREADY_EXISTS email={}", request.getEmail());
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);

@@ -2,9 +2,12 @@ let currentPage = 0;
 let currentKeyword = '';
 const PAGE_SIZE = 20;
 let debounceTimer = null;
+let isDevEnv = false;
 
 document.addEventListener('DOMContentLoaded', function () {
-    loadUsers(0, '');
+    checkDevEnv().then(() => {
+        loadUsers(0, '');
+    });
 
     // 即時搜尋（300ms debounce）
     document.getElementById('keywordInput').addEventListener('input', function () {
@@ -29,8 +32,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const userId = btn.getAttribute('data-user-id');
         if (action === 'disable') disableUser(Number(userId));
         if (action === 'enable') enableUser(Number(userId));
+        if (action === 'delete') deleteUser(Number(userId), btn.getAttribute('data-username'));
     });
 });
+
+async function checkDevEnv() {
+    try {
+        const res = await apiFetch('/api/dev/env');
+        if (res && res.ok) {
+            const body = await res.json();
+            isDevEnv = body.success && body.data && body.data.env === 'dev';
+        }
+    } catch (e) {
+        isDevEnv = false;
+    }
+}
 
 async function loadUsers(page, keyword) {
     currentPage = page;
@@ -72,11 +88,20 @@ function renderTable(users) {
         const lastLogin = u.lastLoginAt ? formatDatetime(u.lastLoginAt) : '－';
         const createdAt = formatDatetime(u.createdAt);
 
-        const actionBtn = u.isSystemAdmin
-            ? '<span class="text-muted small">不可操作</span>'
-            : u.enabled
+        let actionBtns;
+        if (u.isSystemAdmin) {
+            actionBtns = '<span class="text-muted small">不可操作</span>';
+        } else {
+            const toggleBtn = u.enabled
                 ? '<button class="btn btn-outline-danger btn-sm" data-action="disable" data-user-id="' + u.id + '">停用</button>'
                 : '<button class="btn btn-outline-success btn-sm" data-action="enable" data-user-id="' + u.id + '">啟用</button>';
+
+            const deleteBtn = isDevEnv
+                ? '<button class="btn btn-danger btn-sm ms-1" data-action="delete" data-user-id="' + u.id + '" data-username="' + escapeHtml(u.username) + '">刪除</button>'
+                : '';
+
+            actionBtns = toggleBtn + deleteBtn;
+        }
 
         return '<tr>' +
             '<td>' + u.id + '</td>' +
@@ -87,7 +112,7 @@ function renderTable(users) {
             '<td class="text-center">' + adminBadge + '</td>' +
             '<td>' + lastLogin + '</td>' +
             '<td>' + createdAt + '</td>' +
-            '<td class="text-center">' + actionBtn + '</td>' +
+            '<td class="text-center">' + actionBtns + '</td>' +
             '</tr>';
     }).join('');
 }
@@ -162,6 +187,30 @@ async function enableUser(userId) {
         loadUsers(currentPage, currentKeyword);
     } else {
         Swal.fire({ icon: 'error', title: '操作失敗', text: body.message });
+    }
+}
+
+async function deleteUser(userId, username) {
+    const confirmed = await Swal.fire({
+        title: '[DEV] 確認硬刪除？',
+        html: '將永久刪除 <strong>' + escapeHtml(username) + '</strong> 及其所有關聯資料，此操作無法復原。',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '確認刪除',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#dc3545'
+    });
+    if (!confirmed.isConfirmed) return;
+
+    const res = await apiFetch('/api/dev/admin/users/' + userId, { method: 'DELETE' });
+    if (!res) return;
+
+    const body = await res.json();
+    if (body.success) {
+        Swal.fire({ icon: 'success', title: '已刪除', timer: 1200, showConfirmButton: false });
+        loadUsers(currentPage, currentKeyword);
+    } else {
+        Swal.fire({ icon: 'error', title: '刪除失敗', text: body.message });
     }
 }
 

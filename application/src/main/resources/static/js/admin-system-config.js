@@ -73,15 +73,34 @@ function renderTable(configs) {
 function openEditModal(key, type, currentValue, desc) {
     document.getElementById('editModalKey').textContent = 'Key：' + key;
     document.getElementById('editModalDesc').textContent = desc || '';
-    document.getElementById('editValueInput').value = currentValue;
 
-    const hint = document.getElementById('editValueHint');
+    const inputArea = document.getElementById('editInputArea');
+
     if (type === 'BOOLEAN') {
-        hint.textContent = '請輸入 true 或 false';
-    } else if (type === 'INTEGER') {
-        hint.textContent = '請輸入整數';
+        // BOOLEAN：顯示 toggle，隱藏文字輸入
+        document.getElementById('editValueInput').style.display = 'none';
+        document.getElementById('editValueHint').textContent = '';
+        inputArea.innerHTML =
+            '<div class="form-check form-switch fs-5">' +
+            '<input class="form-check-input" type="checkbox" id="booleanToggle" ' +
+            (currentValue === 'true' ? 'checked' : '') + '>' +
+            '<label class="form-check-label ms-2" id="booleanLabel" for="booleanToggle">' +
+            (currentValue === 'true' ? 'true' : 'false') +
+            '</label>' +
+            '</div>';
+
+        // toggle 切換時同步更新 label 文字
+        document.getElementById('booleanToggle').addEventListener('change', function () {
+            document.getElementById('booleanLabel').textContent = this.checked ? 'true' : 'false';
+        });
     } else {
-        hint.textContent = '';
+        // STRING / INTEGER：顯示文字輸入，隱藏 toggle 區塊
+        inputArea.innerHTML = '';
+        const input = document.getElementById('editValueInput');
+        input.style.display = '';
+        input.value = currentValue;
+        const hint = document.getElementById('editValueHint');
+        hint.textContent = type === 'INTEGER' ? '請輸入整數' : '';
     }
 
     if (!modalInstance) {
@@ -91,16 +110,17 @@ function openEditModal(key, type, currentValue, desc) {
 }
 
 async function submitUpdate() {
-    const newValue = document.getElementById('editValueInput').value.trim();
+    let newValue;
 
-    // 基本格式驗證
-    if (editingType === 'BOOLEAN' && newValue !== 'true' && newValue !== 'false') {
-        alert('BOOLEAN 類型只能輸入 true 或 false');
-        return;
-    }
-    if (editingType === 'INTEGER' && isNaN(parseInt(newValue))) {
-        alert('INTEGER 類型請輸入整數');
-        return;
+    if (editingType === 'BOOLEAN') {
+        const toggle = document.getElementById('booleanToggle');
+        newValue = toggle.checked ? 'true' : 'false';
+    } else {
+        newValue = document.getElementById('editValueInput').value.trim();
+        if (editingType === 'INTEGER' && isNaN(parseInt(newValue))) {
+            alert('INTEGER 類型請輸入整數');
+            return;
+        }
     }
 
     const res = await apiFetch('/api/admin/system-configs/' + encodeURIComponent(editingKey), {
