@@ -163,6 +163,18 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            loginRateLimiter.recordFailure(ip);
+            log.warn("action=LOGIN result=FAILED reason=ACCOUNT_DISABLED userId={}", user.getId());
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            loginRateLimiter.recordFailure(ip);
+            log.warn("action=LOGIN result=FAILED reason=ACCOUNT_NOT_ACTIVE userId={} status={}", user.getId(), user.getStatus());
+            throw new BusinessException(ErrorCode.ACCOUNT_NOT_ACTIVE);
+        }
+
         loginRateLimiter.clearFailures(ip);
 
         Long tenantId = userTenantRepository.findByUserId(user.getId())

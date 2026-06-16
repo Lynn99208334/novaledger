@@ -12,9 +12,28 @@
             <li class="breadcrumb-item active">使用者管理</li>
         </ol>
 
-        <div class="card mb-4">
-            <div class="card-header">
+        <!-- 搜尋列 -->
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-4">
+                        <input type="text" id="keywordInput" class="form-control"
+                               placeholder="輸入帳號或 Email 即時搜尋..."/>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="resetBtn">
+                            重設
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格 -->
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-white">
                 <i class="fas fa-users me-1"></i> 使用者清單
+                <span class="text-muted small ms-2" id="totalCountLabel"></span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -27,16 +46,23 @@
                             <th class="text-center">Email 驗證</th>
                             <th class="text-center">狀態</th>
                             <th class="text-center">系統管理員</th>
+                            <th>最後登入</th>
                             <th>建立時間</th>
+                            <th class="text-center">操作</th>
                         </tr>
                         </thead>
                         <tbody id="userTableBody">
-                        <tr><td colspan="7" class="text-center text-muted py-4">載入中...</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-4">載入中...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <!-- 分頁 -->
+        <nav>
+            <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
     </div>
 </th:block>
 
