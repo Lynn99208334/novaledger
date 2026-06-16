@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin-base :: layout('匯率管理', ~{::content}, ~{::pagejs})}">
+
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">匯率管理</h1>
+        </div>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/page/admin/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item active">匯率管理</li>
+        </ol>
+
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <i class="fas fa-exchange-alt me-1"></i> 匯率清單
+                <span class="text-muted small ms-2">點擊「編輯」可修改當日匯率</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>基準幣別</th>
+                            <th>報價幣別</th>
+                            <th>匯率</th>
+                            <th>日期</th>
+                            <th>來源</th>
+                            <th class="text-center">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="rateTableBody">
+                        <tr><td colspan="6" class="text-center text-muted py-4">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編輯 Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">修改匯率</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3" id="editModalSubtitle"></p>
+                    <div class="mb-3">
+                        <label class="form-label">新匯率</label>
+                        <input type="number" id="editRateInput" class="form-control"
+                               step="0.000001" min="0" placeholder="例如 32.5"/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmEditBtn">確認更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="pagejs">
+    <script th:src="@{/js/admin-exchange-rates.js}"></script>
+</th:block>
+
+</html>

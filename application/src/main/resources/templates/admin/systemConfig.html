@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin-base :: layout('系統設定', ~{::content}, ~{::pagejs})}">
+
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">系統設定</h1>
+        </div>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a th:href="@{/page/admin/dashboard}">首頁</a></li>
+            <li class="breadcrumb-item active">系統設定</li>
+        </ol>
+
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <i class="fas fa-sliders-h me-1"></i> 設定清單
+                <span class="text-muted small ms-2">修改後立即生效（Cache 自動清除）</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Key</th>
+                            <th>說明</th>
+                            <th>類型</th>
+                            <th>目前值</th>
+                            <th>最後修改</th>
+                            <th class="text-center">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="configTableBody">
+                        <tr><td colspan="6" class="text-center text-muted py-4">載入中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編輯 Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">修改設定</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-1" id="editModalKey"></p>
+                    <p class="mb-3" id="editModalDesc"></p>
+                    <div class="mb-3">
+                        <label class="form-label">新值</label>
+                        <input type="text" id="editValueInput" class="form-control"/>
+                        <div class="form-text" id="editValueHint"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmEditBtn">確認更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="pagejs">
+    <script th:src="@{/js/admin-system-config.js}"></script>
+</th:block>
+
+</html>
