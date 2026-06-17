@@ -4,6 +4,7 @@ import com.example.novaledger.auth.entity.User;
 import com.example.novaledger.auth.repository.UserRepository;
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
+import com.example.novaledger.common.util.TokenHashUtil;
 import com.example.novaledger.service.EmailService;
 import com.example.novaledger.service.EmailVerificationService;
 import com.example.novaledger.util.TimeProvider;
@@ -53,16 +54,19 @@ class EmailVerificationIntegrationTest {
     @Test
     @DisplayName("有效 token → 驗證成功，emailVerified 應為 true")
     void verifyEmail_shouldSucceed_whenTokenValid() {
+        // DB 存 hash，模擬真實寫入情境
+        String rawToken = "valid-token";
         User user = new User();
         user.setUsername("verify-user");
         user.setEmail("verify@test.com");
         user.setPassword("password");
         user.setEmailVerified(false);
-        user.setEmailVerifyToken("valid-token");
+        user.setEmailVerifyToken(TokenHashUtil.hashToken(rawToken));
         user.setEmailVerifyExpiredAt(FIXED_NOW.plusMinutes(15));
         userRepository.save(user);
 
-        emailVerificationService.verifyEmail("valid-token");
+        // service 收到的是原始 token（來自 email 連結）
+        emailVerificationService.verifyEmail(rawToken);
 
         User updated = userRepository.findByEmail("verify@test.com").orElseThrow();
         assertTrue(updated.getEmailVerified());
@@ -72,18 +76,20 @@ class EmailVerificationIntegrationTest {
     @Test
     @DisplayName("過期 token → 應拋出 EMAIL_VERIFY_TOKEN_EXPIRED")
     void verifyEmail_shouldFail_whenTokenExpired() {
+        // DB 存 hash，token 已過期
+        String rawToken = "expired-token";
         User user = new User();
         user.setUsername("expired-user");
         user.setEmail("expired@test.com");
         user.setPassword("password");
         user.setEmailVerified(false);
-        user.setEmailVerifyToken("expired-token");
+        user.setEmailVerifyToken(TokenHashUtil.hashToken(rawToken));
         user.setEmailVerifyExpiredAt(FIXED_NOW.minusMinutes(1));
         userRepository.save(user);
 
         BusinessException ex = assertThrows(
                 BusinessException.class,
-                () -> emailVerificationService.verifyEmail("expired-token")
+                () -> emailVerificationService.verifyEmail(rawToken)
         );
 
         assertEquals(ErrorCode.EMAIL_VERIFY_TOKEN_EXPIRED, ex.getErrorCode());

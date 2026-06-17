@@ -18,6 +18,7 @@ import com.example.novaledger.common.logging.AuditLog;
 import com.example.novaledger.common.logging.AuditType;
 import com.example.novaledger.common.service.SystemConfigService;
 import com.example.novaledger.common.tenant.AuthContext;
+import com.example.novaledger.common.util.TokenHashUtil;
 import com.example.novaledger.dto.AuthResponse;
 import com.example.novaledger.dto.LoginRequest;
 import com.example.novaledger.dto.RegisterSummary;
@@ -94,7 +95,8 @@ public class AuthService {
             throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
-        String verifyToken = generateEmailVerifyToken();
+        String rawToken = generateEmailVerifyToken();
+        String hashedToken = TokenHashUtil.hashToken(rawToken);
         LocalDateTime expiredAt = generateEmailVerifyExpiredAt();
 
         User user = new User();
@@ -104,7 +106,7 @@ public class AuthService {
         user.setStatus(UserStatus.REGISTERED);
         user.setEmailVerified(false);
         user.setEnabled(true);
-        user.setEmailVerifyToken(verifyToken);
+        user.setEmailVerifyToken(hashedToken);
         user.setEmailVerifyExpiredAt(expiredAt);
 
         User saved = userRepository.save(user);
@@ -135,7 +137,7 @@ public class AuthService {
         userTenant.setJoinedAt(LocalDateTime.now());
         userTenantRepository.save(userTenant);
 
-        String verifyLink = appBaseUrl + "/api/auth/verify-email?token=" + verifyToken;
+        String verifyLink = appBaseUrl + "/api/auth/verify-email?token=" + rawToken;
         emailService.sendVerifyEmail(saved.getEmail(), verifyLink);
 
         log.info("action=REGISTER result=SUCCESS userId={} tenantId={}", saved.getId(), savedTenant.getId());
@@ -189,16 +191,12 @@ public class AuthService {
                 .map(UserTenant::getTenantId)
                 .orElse(null);
 
-        // tenantId 存入 session 供 TenantInterceptor 讀取（key 必須是 "tenantId"）
         session.setAttribute(authContext.SESSION_CURRENT_TENANT_ID, tenantId);
 
         List<String> roles = Boolean.TRUE.equals(user.getSystemAdmin())
                 ? List.of("ROLE_ADMIN")
                 : List.of("ROLE_USER");
 
-        // SecurityContext 由 JwtAuthenticationFilter 從 cookie 讀取 JWT 後每個 request 重建
-        // 不再手動存入 session，避免 devtools classloader 序列化問題
-        // ⚑ DA2 擴充點：roles 目前從 user.systemAdmin 判斷，DA2 完成後可改為從動態 RBAC 查詢
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getUsername(), tenantId, roles);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
