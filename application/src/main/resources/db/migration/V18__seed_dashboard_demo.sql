@@ -408,4 +408,76 @@ SELECT
     'Son 娛樂支出',
     NOW();
 
+-- ========================================
+-- ACCOUNT_BALANCES 月底快照 Seed
+-- 目的：讓報表折線圖有 12 個月歷史資料
+-- 涵蓋：Alice 個人帳 2025-07-31 ～ 2026-05-31
+-- 帳戶：玉山台幣、中信台幣、永豐台幣、玉山美金
+-- ========================================
+
+INSERT INTO account_balances (
+    TENANT_ID, ACCOUNT_ID, SNAPSHOT_DATE, BALANCE, CURRENCY_CODE, CREATED_AT, UPDATED_AT
+)
+SELECT
+    t.ID,
+    a.ID,
+    s.SNAPSHOT_DATE,
+    s.BALANCE,
+    a.CURRENCY_CODE,
+    NOW(),
+    NOW()
+FROM tenants t
+JOIN user_accounts a ON a.TENANT_ID = t.ID
+JOIN (
+    -- 玉山台幣 月底快照（餘額逐月成長）
+    SELECT '玉山銀行 臺幣綜存' AS ACCT_NAME, '2025-07-31' AS SNAPSHOT_DATE, 58000.00 AS BALANCE
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2025-08-31', 61000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2025-09-30', 65000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2025-10-31', 63000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2025-11-30', 68000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2025-12-31', 72000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2026-01-31', 70000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2026-02-28', 74000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2026-03-31', 78000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2026-04-30', 82000.00
+    UNION ALL SELECT '玉山銀行 臺幣綜存', '2026-05-31', 85000.00
+    -- 中信台幣 月底快照
+    UNION ALL SELECT '中信銀行 活期存款', '2025-07-31', 20000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2025-08-31', 22000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2025-09-30', 21000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2025-10-31', 24000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2025-11-30', 26000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2025-12-31', 28000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2026-01-31', 27000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2026-02-28', 29000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2026-03-31', 30000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2026-04-30', 31000.00
+    UNION ALL SELECT '中信銀行 活期存款', '2026-05-31', 32000.00
+    -- 永豐台幣 月底快照
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2025-07-31', 8000.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2025-08-31', 9000.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2025-09-30', 9500.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2025-10-31', 10000.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2025-11-30', 11000.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2025-12-31', 12000.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2026-01-31', 12500.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2026-02-28', 13000.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2026-03-31', 14000.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2026-04-30', 14500.00
+    UNION ALL SELECT '永豐銀行 活期儲蓄存款', '2026-05-31', 15500.00
+    -- 玉山美金 月底快照（USD）
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2025-07-31', 2000.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2025-08-31', 2100.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2025-09-30', 2200.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2025-10-31', 2300.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2025-11-30', 2500.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2025-12-31', 2700.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2026-01-31', 2800.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2026-02-28', 2900.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2026-03-31', 3000.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2026-04-30', 3100.00
+    UNION ALL SELECT '玉山銀行 美金帳戶', '2026-05-31', 3200.00
+) s ON a.NAME = s.ACCT_NAME
+WHERE t.CODE = 'alice-personal';
+
 SET FOREIGN_KEY_CHECKS = 1;

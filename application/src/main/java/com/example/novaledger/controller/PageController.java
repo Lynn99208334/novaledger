@@ -77,6 +77,16 @@ public class PageController {
         return "reset-password";
     }
 
+    @GetMapping("/report/monthly")
+    public String reportMonthlyPage() {
+        return "report-monthly";
+    }
+
+    @GetMapping("/report/yearly")
+    public String reportYearlyPage() {
+        return "report-yearly";
+    }
+
     @GetMapping("/error/403")
     public String error403() {
         return "error/403";

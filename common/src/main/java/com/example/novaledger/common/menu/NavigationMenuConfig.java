@@ -48,6 +48,10 @@ public final class NavigationMenuConfig {
                     "fas fa-coins", USER_ONLY),
             new MenuItem("系統管理", "信用卡分析", "/ccAnalysis",
                     "fas fa-chart-area", USER_ONLY),
+            new MenuItem("系統管理", "月報表", "/page/report/monthly",
+                    "fas fa-chart-line", USER_ONLY),
+            new MenuItem("系統管理", "年報表", "/page/report/yearly",
+                    "fas fa-chart-area", USER_ONLY),
 
             // ── 後台管理（僅 ADMIN）─────────────────────────────
             new MenuItem("後台管理", "使用者管理", "/page/admin/users",
