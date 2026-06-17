@@ -18,7 +18,8 @@
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark"
      th:fragment="topnav">
 
-    <a class="navbar-brand ps-3" th:href="@{/page/dashboard}">
+    <a class="navbar-brand ps-3 d-flex align-items-center gap-2" th:href="@{/page/dashboard}">
+        <img th:src="@{/images/novaledger-favicon-Growth.svg}" alt="NovaLedger" width="28" height="28" class="navbar-logo">
         NovaLedger
     </a>
 
@@ -73,7 +74,8 @@
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark"
      th:fragment="topnav-admin">
 
-    <a class="navbar-brand ps-3" th:href="@{/page/admin/dashboard}">
+    <a class="navbar-brand ps-3 d-flex align-items-center gap-2" th:href="@{/page/admin/dashboard}">
+        <img th:src="@{/images/novaledger-favicon-Growth.svg}" alt="NovaLedger" width="28" height="28" class="navbar-logo">
         NovaLedger <span class="badge bg-danger ms-1 small">Admin</span>
     </a>
 
