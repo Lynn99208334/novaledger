@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(
+          '月報表',
+          ~{::content},
+          ~{::pagejs}
+      )}">
+
+<th:block th:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h1 class="h3 mb-0">月報表</h1>
+        </div>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/page/dashboard">首頁</a></li>
+            <li class="breadcrumb-item active">月報表</li>
+        </ol>
+
+        <!-- 月份篩選 -->
+        <div class="card mb-4">
+            <div class="card-body d-flex align-items-center gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="form-label mb-0 text-nowrap">報表月份</label>
+                    <input type="text" id="monthPicker" class="form-control form-control-sm"
+                           style="width:140px" placeholder="YYYY-MM" readonly>
+                </div>
+                <button id="btnLoadReport" class="btn btn-primary btn-sm">載入報表</button>
+                <span id="loadingSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></span>
+            </div>
+        </div>
+
+        <!-- 摘要卡片 -->
+        <div class="row g-3 mb-4" id="summaryCards" style="display:none!important">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <p class="text-muted small mb-1">本月總資產（TWD）</p>
+                        <h4 class="mb-1" id="totalAsset">—</h4>
+                        <small class="text-muted" id="totalAssetNote"></small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <p class="text-muted small mb-1">本月淨變化</p>
+                        <h4 class="mb-1" id="netChange">—</h4>
+                        <small id="netChangeDetail"></small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <p class="text-muted small mb-2">本月收支</p>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small text-success">收入</span>
+                            <span class="small fw-semibold text-success" id="totalIncome">—</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small text-danger">支出</span>
+                            <span class="small fw-semibold text-danger" id="totalExpense">—</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-1">
+                            <span class="small text-muted">結餘</span>
+                            <span class="small fw-semibold" id="netIncome">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 帳戶類型分組 -->
+        <div class="row g-3 mb-4" id="typeGroupCards" style="display:none!important"></div>
+
+        <!-- 圓餅圖 + 帳戶明細 -->
+        <div class="row g-3 mb-4" id="detailRow" style="display:none!important">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold small">資產類型佔比</div>
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <canvas id="pieChart" style="max-width:200px;max-height:200px"></canvas>
+                        <div id="pieLegend" class="mt-3 w-100"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold small">各帳戶明細</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0" id="accountTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>帳戶</th>
+                                        <th class="text-end">原幣餘額</th>
+                                        <th class="text-end">TWD</th>
+                                        <th class="text-end">vs 上月</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="accountTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="noDataMsg" class="text-center text-muted py-5 d-none">此月份無資料</div>
+    </div>
+</th:block>
+
+<th:block th:fragment="pagejs">
+    <link th:href="@{/css/vendor/flatpickr.min.css}" rel="stylesheet"/>
+    <link th:href="@{/css/vendor/flatpickr-monthSelect.css}" rel="stylesheet"/>
+    <script th:src="@{/js/vendor/chart.umd.min.js}"></script>
+    <script th:src="@{/js/vendor/flatpickr.min.js}"></script>
+    <script th:src="@{/js/vendor/flatpickr-monthSelect.js}"></script>
+    <script th:src="@{/js/report-monthly.js}"></script>
+</th:block>
+
+</html>
