@@ -5,8 +5,8 @@ import com.example.novaledger.auth.repository.UserRepository;
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
 import com.example.novaledger.common.service.SystemConfigService;
+import com.example.novaledger.common.util.TokenHashUtil;
 import com.example.novaledger.util.TimeProvider;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,30 +43,36 @@ public class PasswordResetService {
     }
 
     /**
-     * 申請忘記密碼：產生 token，寄重設信
-     * 找不到 email 時不拋錯（避免 email 枚舉攻擊）
+     * 申請忘記密碼：產生 token，寄重設信。
+     * 找不到 email 時不拋錯（避免 email 枚舉攻擊）。
+     * DB 存 SHA-256 hash，email 連結帶原始 UUID。
      */
     public void requestPasswordReset(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
             int expireMinutes = systemConfigService.getInteger("auth.token.expire.minutes");
             LocalDateTime now = timeProvider.now();
 
-            String token = UUID.randomUUID().toString();
-            user.setPasswordResetToken(token);
+            String rawToken = UUID.randomUUID().toString();
+            String hashedToken = TokenHashUtil.hashToken(rawToken);
+
+            user.setPasswordResetToken(hashedToken);
             user.setPasswordResetExpiredAt(now.plusMinutes(expireMinutes));
             userRepository.save(user);
 
-            String resetLink = baseUrl + "/page/reset-password?token=" + token;
+            String resetLink = baseUrl + "/page/reset-password?token=" + rawToken;
             emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
             log.info("Password reset token issued for userId={}", user.getId());
         });
     }
 
     /**
-     * 重設密碼：驗證 token，更新密碼，清除 token
+     * 重設密碼：驗證 token，更新密碼，清除 token。
+     * 從 URL 取得原始 token → hash → 比對 DB。
      */
     public void resetPassword(String token, String newPassword) {
-        User user = userRepository.findByPasswordResetToken(token)
+        String hashedToken = TokenHashUtil.hashToken(token);
+
+        User user = userRepository.findByPasswordResetToken(hashedToken)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_INVALID));
 
         LocalDateTime now = timeProvider.now();

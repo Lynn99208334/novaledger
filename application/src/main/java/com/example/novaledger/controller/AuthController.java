@@ -96,6 +96,7 @@ public class AuthController {
             String jti = jwtTokenProvider.getJti(token);
             long remainingSeconds = jwtTokenProvider.getRemainingSeconds(token);
             redisBlacklistService.blacklist(jti, remainingSeconds);
+            authService.writeLogoutAuditLog(token, getClientIp(request));
             log.info("User logged out, jti={}", jti);
             return ResponseEntity.ok(ApiResponse.ok());
         } catch (JwtException e) {

@@ -4,6 +4,7 @@ import com.example.novaledger.auth.entity.User;
 import com.example.novaledger.auth.repository.UserRepository;
 import com.example.novaledger.common.exception.BusinessException;
 import com.example.novaledger.common.exception.ErrorCode;
+import com.example.novaledger.common.util.TokenHashUtil;
 import com.example.novaledger.service.EmailService;
 import com.example.novaledger.service.PasswordResetService;
 import com.example.novaledger.util.TimeProvider;
@@ -57,16 +58,19 @@ class PasswordResetIntegrationTest {
     @Test
     @DisplayName("有效 token → 重設密碼成功，token 應清除")
     void resetPassword_shouldSucceed_whenTokenValid() {
+        // DB 存 hash，模擬真實寫入情境
+        String rawToken = "valid-reset-token";
         User user = new User();
         user.setUsername("reset-user");
         user.setEmail("reset@test.com");
         user.setPassword(passwordEncoder.encode("oldPassword"));
         user.setEmailVerified(true);
-        user.setPasswordResetToken("valid-reset-token");
+        user.setPasswordResetToken(TokenHashUtil.hashToken(rawToken));
         user.setPasswordResetExpiredAt(FIXED_NOW.plusMinutes(15));
         userRepository.save(user);
 
-        passwordResetService.resetPassword("valid-reset-token", "newPassword123");
+        // service 收到的是原始 token（來自 email 連結）
+        passwordResetService.resetPassword(rawToken, "newPassword123");
 
         User updated = userRepository.findByEmail("reset@test.com").orElseThrow();
         assertTrue(passwordEncoder.matches("newPassword123", updated.getPassword()));
@@ -77,18 +81,20 @@ class PasswordResetIntegrationTest {
     @Test
     @DisplayName("過期 token → 應拋出 PASSWORD_RESET_TOKEN_EXPIRED")
     void resetPassword_shouldFail_whenTokenExpired() {
+        // DB 存 hash，token 已過期
+        String rawToken = "expired-reset-token";
         User user = new User();
         user.setUsername("expired-reset-user");
         user.setEmail("expired-reset@test.com");
         user.setPassword(passwordEncoder.encode("oldPassword"));
         user.setEmailVerified(true);
-        user.setPasswordResetToken("expired-reset-token");
+        user.setPasswordResetToken(TokenHashUtil.hashToken(rawToken));
         user.setPasswordResetExpiredAt(FIXED_NOW.minusMinutes(1));
         userRepository.save(user);
 
         BusinessException ex = assertThrows(
                 BusinessException.class,
-                () -> passwordResetService.resetPassword("expired-reset-token", "newPassword123")
+                () -> passwordResetService.resetPassword(rawToken, "newPassword123")
         );
 
         assertEquals(ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED, ex.getErrorCode());
@@ -114,7 +120,7 @@ class PasswordResetIntegrationTest {
     }
 
     @Test
-    @DisplayName("申請重設密碼：email 存在 → token 應寫入 DB")
+    @DisplayName("申請重設密碼：email 存在 → token 應寫入 DB（以 hash 形式）")
     void requestPasswordReset_shouldSetToken_whenEmailExists() {
         User user = new User();
         user.setUsername("token-user");
@@ -129,5 +135,7 @@ class PasswordResetIntegrationTest {
         assertNotNull(updated.getPasswordResetToken());
         assertNotNull(updated.getPasswordResetExpiredAt());
         assertTrue(updated.getPasswordResetExpiredAt().isAfter(FIXED_NOW));
+        // 確認存的是 hash（64 chars hex），不是原始 UUID
+        assertEquals(64, updated.getPasswordResetToken().length());
     }
 }

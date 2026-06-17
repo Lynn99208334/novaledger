@@ -46,8 +46,6 @@ public final class NavigationMenuConfig {
             // ── 系統管理（記帳相關，僅 USER）────────────────────
             new MenuItem("系統管理", "匯率管理", "/page/exchange-rates",
                     "fas fa-coins", USER_ONLY),
-            new MenuItem("系統管理", "信用卡分析", "/ccAnalysis",
-                    "fas fa-chart-area", USER_ONLY),
             new MenuItem("系統管理", "月報表", "/page/report/monthly",
                     "fas fa-chart-line", USER_ONLY),
             new MenuItem("系統管理", "年報表", "/page/report/yearly",

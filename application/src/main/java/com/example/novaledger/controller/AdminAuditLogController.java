@@ -24,16 +24,16 @@ public class AdminAuditLogController {
     }
 
     @GetMapping
-    @Operation(summary = "分頁查詢 Audit Log（支援 userId / action / 日期區間篩選）")
+    @Operation(summary = "分頁查詢 Audit Log（支援 username / action / 日期區間篩選）")
     public ResponseEntity<ApiResponse<Page<AuditLogDto>>> getLogs(
-            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String username,
             @RequestParam(required = false) String action,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.ok(
-                adminAuditLogService.getLogs(userId, action, dateFrom, dateTo, page, size)
+                adminAuditLogService.getLogs(username, action, dateFrom, dateTo, page, size)
         ));
     }
 }
