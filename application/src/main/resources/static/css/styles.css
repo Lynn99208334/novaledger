@@ -11391,6 +11391,10 @@ body {
 .preview-content { white-space: pre-wrap; }
 .pre-wrap { white-space: pre-wrap; word-break: break-all; }
 
+/* Logo */
+.navbar-logo { filter: brightness(0) invert(1); }
+.logo-card { display: block; margin: 0 auto 8px; }
+
 /* RWD */
 @media (max-width:768px){
   .cc-wrap{ padding:0 16px; }
