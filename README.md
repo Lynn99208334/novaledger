@@ -8,7 +8,7 @@ A multi-tenant personal finance SaaS application built with **Spring Boot 3.x Mo
 
 ## Live Demo
 
-🔗 **https://tableaudemov2-production.up.railway.app/page/login**
+🔗 **https://novaledger-production.up.railway.app/page/login**
 
 | Role | Email | Password |
 |------|-------|----------|
