@@ -12,6 +12,7 @@ public class AuditLogDto {
     private Long id;
     private Long tenantId;
     private Long userId;
+    private String username;
     private String action;
     private String targetType;
     private String targetId;

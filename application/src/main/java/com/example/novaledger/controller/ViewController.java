@@ -15,16 +15,8 @@ public class ViewController {
     @GetMapping("/tables")      // 表格頁
     public String tables() { return "tables"; }    // 對應 templates/tables.html
 
-    @GetMapping("/ccAnalysis")
-    public String ccAnalysis() { return "ccAnalysis"; }    // 對應 templates/tables.html
-
-    @GetMapping("/ccTest")
-    public String ccTest() { return "ccTest"; }    // 對應 templates/tables.html
-
     //開發
     @GetMapping("/bankSetting")
     public String bankSetting() { return "bankSetting"; }
 
-    @GetMapping("/ccSettingTest")
-    public String ccSettingTest() { return "ccSettingTest"; }
 }

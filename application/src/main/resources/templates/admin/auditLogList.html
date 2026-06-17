@@ -17,13 +17,15 @@
             <div class="card-body py-3">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label small text-muted mb-1">User ID</label>
-                        <input type="number" id="filterUserId" class="form-control" placeholder="輸入 User ID"/>
+                        <label class="form-label small text-muted mb-1">Username</label>
+                        <input type="text" id="filterUsername" class="form-control" placeholder="輸入 Username 即時搜尋..."/>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small text-muted mb-1">操作類型</label>
-                        <select id="filterAction" class="form-select">
+                        <select id="filterAction">
                             <option value="">全部</option>
+                            <option value="LOGIN">LOGIN</option>
+                            <option value="LOGOUT">LOGOUT</option>
                             <option value="REGISTER">REGISTER</option>
                             <option value="CREATE_ACCOUNT">CREATE_ACCOUNT</option>
                             <option value="DELETE_ACCOUNT">DELETE_ACCOUNT</option>
@@ -58,13 +60,14 @@
                     <table class="table table-bordered table-hover align-middle mb-0">
                         <thead class="table-light">
                         <tr>
-                            <th>ID</th>
+                            <th class="sortable" data-col="id" style="cursor:pointer">ID <span class="sort-icon">↕</span></th>
                             <th>User ID</th>
-                            <th>操作</th>
+                            <th>Username</th>
+                            <th class="sortable" data-col="action" style="cursor:pointer">操作 <span class="sort-icon">↕</span></th>
                             <th>目標類型</th>
                             <th>目標 ID</th>
                             <th>IP 位址</th>
-                            <th>時間</th>
+                            <th class="sortable" data-col="createdAt" style="cursor:pointer">時間 <span class="sort-icon">↕</span></th>
                             <th class="text-center">詳情</th>
                         </tr>
                         </thead>

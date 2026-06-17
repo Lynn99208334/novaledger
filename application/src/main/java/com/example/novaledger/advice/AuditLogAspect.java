@@ -38,8 +38,11 @@ public class AuditLogAspect {
     private static final Logger log = LoggerFactory.getLogger(AuditLogAspect.class);
 
     private static final Set<String> SENSITIVE_FIELDS = Set.of(
-            "password", "accountNumber", "cardNumber", "token"
+            "password", "accountNumber", "cardNumber"
     );
+
+    // 欄位名包含 "token"（不分大小寫）一律遮罩，例如 accessToken / refreshToken / resetToken
+    private static final String TOKEN_FIELD_KEYWORD = "token";
 
     private static final Set<String> EMAIL_FIELDS = Set.of("email");
 
@@ -179,6 +182,13 @@ public class AuditLogAspect {
                 map.put(field, "***");
             }
         }
+        // 欄位名包含 "token" 一律遮罩（accessToken, refreshToken, resetToken 等）
+        map.replaceAll((key, value) -> {
+            if (key.toLowerCase().contains(TOKEN_FIELD_KEYWORD)) {
+                return "***";
+            }
+            return value;
+        });
         for (String field : EMAIL_FIELDS) {
             if (map.containsKey(field) && map.get(field) instanceof String email) {
                 map.put(field, maskEmail(email));
